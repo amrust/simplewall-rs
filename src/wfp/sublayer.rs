@@ -112,5 +112,6 @@ mod tests {
             (0, 0, 0, [0u8; 8]),
             "sublayer key was nil GUID"
         );
+        engine.cleanup_provider(&prov.key()).expect("cleanup_provider failed");
     }
 }

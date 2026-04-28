@@ -77,10 +77,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut buf = String::new();
     io::stdin().lock().read_line(&mut buf)?;
 
-    f.delete(&engine)?;
-    println!("✓ filter deleted explicitly");
-
-    // Engine drops here; kernel removes the volatile provider + sublayer.
+    let report = engine.cleanup_provider(&prov.key())?;
+    println!(
+        "✓ cleanup_provider: {} filter(s), {} sublayer(s), provider_deleted={}",
+        report.filters_deleted, report.sublayers_deleted, report.provider_deleted,
+    );
     Ok(())
 }
 

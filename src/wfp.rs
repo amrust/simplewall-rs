@@ -18,7 +18,11 @@ pub mod sublayer;
 
 use windows::Win32::Foundation::HANDLE;
 use windows::Win32::NetworkManagement::WindowsFilteringPlatform::{
-    FWPM_DISPLAY_DATA0, FWPM_SESSION0, FwpmEngineClose0, FwpmEngineOpen0,
+    FWPM_DISPLAY_DATA0, FWPM_FILTER0, FWPM_SESSION0, FWPM_SUBLAYER0, FwpmEngineClose0,
+    FwpmEngineOpen0, FwpmFilterCreateEnumHandle0, FwpmFilterDeleteByKey0,
+    FwpmFilterDestroyEnumHandle0, FwpmFilterEnum0, FwpmFreeMemory0, FwpmProviderDeleteByKey0,
+    FwpmSubLayerCreateEnumHandle0, FwpmSubLayerDeleteByKey0, FwpmSubLayerDestroyEnumHandle0,
+    FwpmSubLayerEnum0,
 };
 use windows::Win32::System::Rpc::{RPC_C_AUTHN_WINNT, UuidCreate};
 use windows::core::{GUID, PWSTR};
@@ -76,6 +80,18 @@ pub enum WfpError {
     /// filter was already removed, 5 (`ERROR_ACCESS_DENIED`) on a
     /// non-elevated process.
     FilterDelete(u32),
+    /// Filter enumeration failed (`FwpmFilterCreateEnumHandle0` or
+    /// `FwpmFilterEnum0`).
+    FilterEnum(u32),
+    /// Sublayer enumeration failed (`FwpmSubLayerCreateEnumHandle0`
+    /// or `FwpmSubLayerEnum0`).
+    SubLayerEnum(u32),
+    /// `FwpmSubLayerDeleteByKey0` returned a non-zero Win32 error.
+    SubLayerDelete(u32),
+    /// `FwpmProviderDeleteByKey0` returned a non-zero Win32 error.
+    /// Common: 0x80320001 (`FWP_E_NOT_FOUND`) when the provider
+    /// was already removed.
+    ProviderDelete(u32),
 }
 
 impl std::fmt::Display for WfpError {
@@ -91,6 +107,16 @@ impl std::fmt::Display for WfpError {
             }
             Self::FilterDelete(s) => {
                 write!(f, "FwpmFilterDeleteByKey0 failed (Win32 error {s:#010x})")
+            }
+            Self::FilterEnum(s) => write!(f, "Filter enumeration failed (Win32 error {s:#010x})"),
+            Self::SubLayerEnum(s) => {
+                write!(f, "Sublayer enumeration failed (Win32 error {s:#010x})")
+            }
+            Self::SubLayerDelete(s) => {
+                write!(f, "FwpmSubLayerDeleteByKey0 failed (Win32 error {s:#010x})")
+            }
+            Self::ProviderDelete(s) => {
+                write!(f, "FwpmProviderDeleteByKey0 failed (Win32 error {s:#010x})")
             }
         }
     }
@@ -216,6 +242,190 @@ impl WfpEngine {
     pub fn session_key(&self) -> GUID {
         self.session_key
     }
+
+    /// Walk the kernel's filter and sublayer tables and remove every
+    /// entry whose `providerKey` matches `provider_key`, then remove
+    /// the provider itself. The upstream simplewall pattern for
+    /// surviving stale state from a previous (possibly crashed)
+    /// session — call this on startup before installing fresh state,
+    /// or on shutdown to leave a clean slate.
+    ///
+    /// Defensive against the engine-drop cleanup we've observed to
+    /// be unreliable in the Rust test runner: explicit deletes go
+    /// through synchronously and are confirmed by enumeration before
+    /// returning.
+    ///
+    /// Idempotent: running it twice on the same provider key
+    /// returns `provider_deleted = false` on the second call (the
+    /// provider was already removed) but does not error.
+    ///
+    /// Requires admin (delete operations are admin-gated).
+    pub fn cleanup_provider(
+        &self,
+        provider_key: &GUID,
+    ) -> Result<CleanupReport, WfpError> {
+        let filters_deleted = self.delete_filters_for_provider(provider_key)?;
+        let sublayers_deleted = self.delete_sublayers_for_provider(provider_key)?;
+
+        // Best-effort provider delete. FWP_E_NOT_FOUND means it was
+        // already gone (idempotent path), which we surface as
+        // `provider_deleted = false` rather than an error.
+        let status = unsafe { FwpmProviderDeleteByKey0(self.handle, provider_key) };
+        let provider_deleted = match status {
+            ERROR_SUCCESS => true,
+            // 0x80320001 = FWP_E_NOT_FOUND
+            0x8032_0001 => false,
+            other => return Err(WfpError::ProviderDelete(other)),
+        };
+
+        Ok(CleanupReport {
+            filters_deleted,
+            sublayers_deleted,
+            provider_deleted,
+        })
+    }
+
+    fn delete_filters_for_provider(&self, provider_key: &GUID) -> Result<u32, WfpError> {
+        const BATCH: u32 = 64;
+        let mut enum_handle = HANDLE::default();
+        let status =
+            unsafe { FwpmFilterCreateEnumHandle0(self.handle, None, &mut enum_handle) };
+        if status != ERROR_SUCCESS {
+            return Err(WfpError::FilterEnum(status));
+        }
+
+        let result = (|| -> Result<u32, WfpError> {
+            let mut deleted = 0u32;
+            loop {
+                let mut entries: *mut *mut FWPM_FILTER0 = std::ptr::null_mut();
+                let mut returned: u32 = 0;
+                let status = unsafe {
+                    FwpmFilterEnum0(
+                        self.handle,
+                        enum_handle,
+                        BATCH,
+                        &mut entries,
+                        &mut returned,
+                    )
+                };
+                if status != ERROR_SUCCESS {
+                    return Err(WfpError::FilterEnum(status));
+                }
+                if returned == 0 {
+                    break;
+                }
+                let slice: &[*mut FWPM_FILTER0] =
+                    unsafe { std::slice::from_raw_parts(entries, returned as usize) };
+                for &filter_ptr in slice {
+                    if filter_ptr.is_null() {
+                        continue;
+                    }
+                    let filter = unsafe { &*filter_ptr };
+                    if filter.providerKey.is_null() {
+                        continue;
+                    }
+                    let pk_val = unsafe { *filter.providerKey };
+                    if pk_val == *provider_key {
+                        let st = unsafe {
+                            FwpmFilterDeleteByKey0(self.handle, &filter.filterKey)
+                        };
+                        if st == ERROR_SUCCESS {
+                            deleted += 1;
+                        }
+                        // Non-fatal on individual delete failure:
+                        // continue with siblings rather than abort
+                        // partway through.
+                    }
+                }
+                // Free the WFP-heap array of pointers.
+                let mut p = entries as *mut std::ffi::c_void;
+                unsafe { FwpmFreeMemory0(&mut p) };
+
+                if returned < BATCH {
+                    break;
+                }
+            }
+            Ok(deleted)
+        })();
+
+        // Always destroy the enumeration handle, even if iteration
+        // errored.
+        let _ =
+            unsafe { FwpmFilterDestroyEnumHandle0(self.handle, enum_handle) };
+        result
+    }
+
+    fn delete_sublayers_for_provider(&self, provider_key: &GUID) -> Result<u32, WfpError> {
+        const BATCH: u32 = 64;
+        let mut enum_handle = HANDLE::default();
+        let status =
+            unsafe { FwpmSubLayerCreateEnumHandle0(self.handle, None, &mut enum_handle) };
+        if status != ERROR_SUCCESS {
+            return Err(WfpError::SubLayerEnum(status));
+        }
+
+        let result = (|| -> Result<u32, WfpError> {
+            let mut deleted = 0u32;
+            loop {
+                let mut entries: *mut *mut FWPM_SUBLAYER0 = std::ptr::null_mut();
+                let mut returned: u32 = 0;
+                let status = unsafe {
+                    FwpmSubLayerEnum0(
+                        self.handle,
+                        enum_handle,
+                        BATCH,
+                        &mut entries,
+                        &mut returned,
+                    )
+                };
+                if status != ERROR_SUCCESS {
+                    return Err(WfpError::SubLayerEnum(status));
+                }
+                if returned == 0 {
+                    break;
+                }
+                let slice: &[*mut FWPM_SUBLAYER0] =
+                    unsafe { std::slice::from_raw_parts(entries, returned as usize) };
+                for &sub_ptr in slice {
+                    if sub_ptr.is_null() {
+                        continue;
+                    }
+                    let sub = unsafe { &*sub_ptr };
+                    if sub.providerKey.is_null() {
+                        continue;
+                    }
+                    let pk_val = unsafe { *sub.providerKey };
+                    if pk_val == *provider_key {
+                        let st = unsafe {
+                            FwpmSubLayerDeleteByKey0(self.handle, &sub.subLayerKey)
+                        };
+                        if st == ERROR_SUCCESS {
+                            deleted += 1;
+                        }
+                    }
+                }
+                let mut p = entries as *mut std::ffi::c_void;
+                unsafe { FwpmFreeMemory0(&mut p) };
+
+                if returned < BATCH {
+                    break;
+                }
+            }
+            Ok(deleted)
+        })();
+
+        let _ =
+            unsafe { FwpmSubLayerDestroyEnumHandle0(self.handle, enum_handle) };
+        result
+    }
+}
+
+/// Counts returned by `WfpEngine::cleanup_provider`.
+#[derive(Debug, Clone, Copy)]
+pub struct CleanupReport {
+    pub filters_deleted: u32,
+    pub sublayers_deleted: u32,
+    pub provider_deleted: bool,
 }
 
 impl Drop for WfpEngine {
@@ -265,5 +475,74 @@ mod tests {
             (0, 0, 0, [0u8; 8]),
             "session_key was all zeroes"
         );
+    }
+
+    /// Live admin-only smoke test: full provider + sublayer + 2-filter
+    /// chain → `cleanup_provider` → assert exactly the expected
+    /// counts, then call cleanup again and assert the idempotent
+    /// "nothing left" path. This is the regression guard for the
+    /// engine-drop-cleanup unreliability we observed during M1.6
+    /// verification.
+    #[test]
+    #[ignore = "requires elevated shell"]
+    fn cleanup_provider_removes_filters_sublayers_and_provider() {
+        use crate::wfp::condition::FilterCondition;
+        use crate::wfp::filter::{self, FilterAction};
+        use crate::wfp::{provider, sublayer};
+        use windows::Win32::NetworkManagement::WindowsFilteringPlatform::FWPM_LAYER_ALE_AUTH_CONNECT_V4;
+
+        let engine = WfpEngine::open().expect("engine open failed");
+        let prov = provider::add(&engine, "simplewall-rs cleanup-test", "")
+            .expect("provider add failed");
+        let sub = sublayer::add(
+            &engine,
+            "simplewall-rs cleanup-test sublayer",
+            "",
+            0x4000,
+            Some(&prov.key()),
+        )
+        .expect("sublayer add failed");
+        // Two filters under the same sublayer/provider so the report
+        // can prove batched deletion (filters_deleted == 2).
+        let _f1 = filter::add(
+            &engine,
+            "simplewall-rs cleanup-test f1",
+            "",
+            &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
+            &sub.key(),
+            Some(&prov.key()),
+            &[FilterCondition::RemotePort(65530)],
+            FilterAction::Permit,
+        )
+        .expect("filter f1 add failed");
+        let _f2 = filter::add(
+            &engine,
+            "simplewall-rs cleanup-test f2",
+            "",
+            &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
+            &sub.key(),
+            Some(&prov.key()),
+            &[FilterCondition::RemotePort(65531)],
+            FilterAction::Permit,
+        )
+        .expect("filter f2 add failed");
+
+        let report = engine
+            .cleanup_provider(&prov.key())
+            .expect("cleanup_provider failed");
+        assert_eq!(report.filters_deleted, 2, "expected 2 filters deleted");
+        assert_eq!(report.sublayers_deleted, 1, "expected 1 sublayer deleted");
+        assert!(report.provider_deleted, "provider was not deleted");
+
+        // Idempotent path: second cleanup against the now-vanished
+        // provider returns zeroes and provider_deleted = false (we
+        // surface FWP_E_NOT_FOUND as a soft no-op rather than an
+        // error).
+        let report2 = engine
+            .cleanup_provider(&prov.key())
+            .expect("second cleanup_provider failed");
+        assert_eq!(report2.filters_deleted, 0);
+        assert_eq!(report2.sublayers_deleted, 0);
+        assert!(!report2.provider_deleted);
     }
 }

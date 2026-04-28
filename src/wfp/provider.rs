@@ -109,6 +109,8 @@ mod tests {
             (0, 0, 0, [0u8; 8]),
             "provider key was nil GUID"
         );
-        // Engine drops here → kernel removes the volatile provider.
+        // Explicit cleanup (engine-drop cleanup is unreliable in the
+        // test runner; see M1.7).
+        engine.cleanup_provider(&key).expect("cleanup_provider failed");
     }
 }

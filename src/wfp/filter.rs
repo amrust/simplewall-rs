@@ -207,6 +207,7 @@ mod tests {
             "filter key was nil GUID"
         );
         assert_ne!(f.runtime_id(), 0, "filter runtime id was 0");
+        engine.cleanup_provider(&prov.key()).expect("cleanup_provider failed");
     }
 
     /// Live admin-only smoke test: filter with an AppPath condition
@@ -247,6 +248,7 @@ mod tests {
         )
         .expect("FwpmFilterAdd0 with AppPath failed");
         assert_ne!(f.runtime_id(), 0, "filter runtime id was 0");
+        engine.cleanup_provider(&prov.key()).expect("cleanup_provider failed");
     }
 
     /// Live admin-only smoke test: full install → delete cycle.
@@ -291,6 +293,9 @@ mod tests {
             Err(e) => panic!("expected FilterDelete error on double-delete, got {e:?}"),
             Ok(()) => panic!("double-delete unexpectedly succeeded"),
         }
+        // cleanup_provider mops up the sublayer + provider; the
+        // filter itself is already gone, so filters_deleted == 0.
+        engine.cleanup_provider(&prov.key()).expect("cleanup_provider failed");
     }
 
     /// Live admin-only smoke test: filter with TCP-protocol +
@@ -334,5 +339,6 @@ mod tests {
         )
         .expect("FwpmFilterAdd0 with conditions failed");
         assert_ne!(f.runtime_id(), 0, "filter runtime id was 0");
+        engine.cleanup_provider(&prov.key()).expect("cleanup_provider failed");
     }
 }
