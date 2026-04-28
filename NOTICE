@@ -23,3 +23,23 @@ The full license text is in the LICENSE file.
 simplewall-rs is an independent reimplementation. It is not affiliated
 with, endorsed by, or sponsored by Henry++ or the original simplewall
 project.
+
+----
+
+Third-party assets
+------------------
+
+UI icons under `assets/icons/silk/` are from the FamFamFam Silk icon set
+by Mark James, licensed under the Creative Commons Attribution 2.5
+license (https://creativecommons.org/licenses/by/2.5/).
+
+  Author:  Mark James
+  Source:  https://famfamfam.com/lab/icons/silk/
+  License: CC-BY 2.5
+
+The full attribution required by CC-BY 2.5 is satisfied by this NOTICE
+plus the per-file inventory in `assets/icons/README.md`.
+
+The application icons under `assets/icons/` (100.ico, 101.ico) are
+upstream simplewall's own artwork and are redistributed under the
+same GPL-3.0-or-later license that covers the rest of the codebase.
