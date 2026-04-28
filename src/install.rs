@@ -16,6 +16,8 @@
 
 #![cfg(windows)]
 
+use std::path::PathBuf;
+
 use windows::Win32::NetworkManagement::WindowsFilteringPlatform::{
     FWPM_LAYER_ALE_AUTH_CONNECT_V4, FWPM_LAYER_ALE_AUTH_CONNECT_V6,
     FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4, FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6,
@@ -175,11 +177,11 @@ pub fn uninstall(engine: &WfpEngine) -> Result<CleanupReport, WfpError> {
 
 /// Install all the filters that come out of one `Rule`.
 ///
-/// Per upstream's semicolon-list semantics, each clause from
-/// `rule.remote` × each clause from `rule.local` becomes its own
-/// filter. Each (remote, local) pair fans out further across the
-/// `(direction, address-family)` layer pairs returned by
-/// `pick_layer_pairs` — see that function for the rules.
+/// Cross-product fan-out across four dimensions:
+/// `remote-clause × local-clause × app × (direction, family)`.
+/// The app dimension is `[None]` for rules without an `apps`
+/// attribute (one no-AppPath-condition pseudo-app), or a `Vec` of
+/// resolved file paths for rules with `apps`.
 fn install_one_rule(
     engine: &WfpEngine,
     persistent: bool,
@@ -187,6 +189,17 @@ fn install_one_rule(
 ) -> Result<u32, InstallError> {
     let remotes = parse_rule_string(&rule.name, rule.remote.as_deref())?;
     let locals = parse_rule_string(&rule.name, rule.local.as_deref())?;
+    let apps = match parse_apps(rule.apps.as_deref()) {
+        AppSet::None => vec![None],
+        AppSet::Paths(paths) => paths.into_iter().map(Some).collect(),
+        AppSet::AllSkipped => {
+            // Rule references only service names (no executable
+            // paths). Service-name → exe-path resolution isn't yet
+            // implemented; treat the whole rule as skipped so the
+            // operator sees it in `rules_skipped`.
+            return Ok(0);
+        }
+    };
 
     let action = match rule.action {
         Action::Permit => FilterAction::Permit,
@@ -207,46 +220,159 @@ fn install_one_rule(
                     continue; // unsupported layer combination
                 };
 
-                let mut conds: Vec<FilterCondition> = Vec::new();
-                if let Some(p) = rule.protocol {
-                    conds.push(FilterCondition::Protocol(IpProto::Other(p)));
-                }
-                if let Some(r) = remote {
-                    conds.extend(rules::compile(
-                        rules::Side::Remote,
-                        std::slice::from_ref(r),
-                    ));
-                }
-                if let Some(l) = local {
-                    conds.extend(rules::compile(
-                        rules::Side::Local,
-                        std::slice::from_ref(l),
-                    ));
-                }
-                // No conditions == match-all-traffic — too dangerous
-                // to install silently. Skip; surfaces in
-                // `rules_skipped` (one count per rule, not one per
-                // would-be filter).
-                if conds.is_empty() {
-                    continue;
-                }
+                for app in &apps {
+                    let mut conds: Vec<FilterCondition> = Vec::new();
+                    if let Some(p) = rule.protocol {
+                        conds.push(FilterCondition::Protocol(IpProto::Other(p)));
+                    }
+                    if let Some(r) = remote {
+                        conds.extend(rules::compile(
+                            rules::Side::Remote,
+                            std::slice::from_ref(r),
+                        ));
+                    }
+                    if let Some(l) = local {
+                        conds.extend(rules::compile(
+                            rules::Side::Local,
+                            std::slice::from_ref(l),
+                        ));
+                    }
+                    if let Some(path) = app {
+                        conds.push(FilterCondition::AppPath(path.clone()));
+                    }
+                    // No conditions == match-all-traffic — too
+                    // dangerous to install silently. Skip; surfaces
+                    // in `rules_skipped` (one count per rule, not
+                    // one per would-be filter).
+                    if conds.is_empty() {
+                        continue;
+                    }
 
-                filter::add(
-                    engine,
-                    &rule.name,
-                    rule.comment.as_deref().unwrap_or(""),
-                    layer,
-                    &SUBLAYER_KEY,
-                    Some(&PROVIDER_KEY),
-                    &conds,
-                    action,
-                    persistent,
-                )?;
-                count += 1;
+                    filter::add(
+                        engine,
+                        &rule.name,
+                        rule.comment.as_deref().unwrap_or(""),
+                        layer,
+                        &SUBLAYER_KEY,
+                        Some(&PROVIDER_KEY),
+                        &conds,
+                        action,
+                        persistent,
+                    )?;
+                    count += 1;
+                }
             }
         }
     }
     Ok(count)
+}
+
+/// Outcome of parsing a rule's `apps="..."` attribute.
+enum AppSet {
+    /// Attribute absent or empty/whitespace — no app constraint.
+    None,
+    /// One or more resolved file paths. Each becomes its own
+    /// `AppPath` condition (and its own filter, in the cross-product).
+    Paths(Vec<PathBuf>),
+    /// Attribute had tokens but every one of them was a service
+    /// name (no path separator). We don't yet resolve service
+    /// names to executable paths, so the entire rule is skipped.
+    AllSkipped,
+}
+
+/// Parse a `rule.apps` attribute. Tokens are `|`-separated. A token
+/// is treated as a path if it contains `\`, `/`, or `:` (drive-letter,
+/// directory separator, or UNC path); otherwise it's treated as a
+/// service name and dropped.
+///
+/// Path tokens go through `expand_env` first to handle entries like
+/// `%systemroot%\system32\lsass.exe` from `profile_internal.xml`.
+fn parse_apps(s: Option<&str>) -> AppSet {
+    let Some(s) = s else { return AppSet::None };
+
+    let mut had_token = false;
+    let mut paths: Vec<PathBuf> = Vec::new();
+    for tok in s.split('|') {
+        let tok = tok.trim();
+        if tok.is_empty() {
+            continue;
+        }
+        had_token = true;
+        if looks_like_path(tok) {
+            paths.push(PathBuf::from(expand_env(tok)));
+        }
+        // Service-name tokens silently skipped here. Aggregated as
+        // AllSkipped below if every token was a service name.
+    }
+
+    if !had_token {
+        AppSet::None
+    } else if paths.is_empty() {
+        AppSet::AllSkipped
+    } else {
+        AppSet::Paths(paths)
+    }
+}
+
+/// Heuristic: a token is a path iff it contains a path-separator
+/// character (`\`, `/`) or a drive-letter colon (`:`). Anything
+/// else is assumed to be a service name.
+///
+/// Edge cases:
+///   - `firefox.exe` (no separator) → service-name. Loses some real
+///     bare-exe-name profiles. Resolution: encourage full paths in
+///     user profiles. Service-name resolution is a future M4.x
+///     follow-up.
+///   - `\\server\share\app.exe` (UNC) → path (contains `\`).
+fn looks_like_path(s: &str) -> bool {
+    s.contains('\\') || s.contains('/') || s.contains(':')
+}
+
+/// Expand `%VAR%` placeholders against `std::env`. Unknown variables
+/// are emitted literally (`%FOO%`) rather than dropped, matching
+/// Win32 `ExpandEnvironmentStringsW` semantics for unmatched names.
+fn expand_env(s: &str) -> String {
+    expand_env_with(s, |k| std::env::var(k).ok())
+}
+
+fn expand_env_with<F: Fn(&str) -> Option<String>>(s: &str, lookup: F) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut chars = s.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c != '%' {
+            out.push(c);
+            continue;
+        }
+        // Collect chars until the closing `%`. If no closing `%`
+        // appears, emit the buffered text literally (with the
+        // leading `%`).
+        let mut name = String::new();
+        let mut closed = false;
+        while let Some(&peek) = chars.peek() {
+            chars.next();
+            if peek == '%' {
+                closed = true;
+                break;
+            }
+            name.push(peek);
+        }
+        if closed {
+            match lookup(&name) {
+                Some(v) => out.push_str(&v),
+                None => {
+                    // Unknown var: emit `%NAME%` literally.
+                    out.push('%');
+                    out.push_str(&name);
+                    out.push('%');
+                }
+            }
+        } else {
+            // Unmatched `%`: emit `%NAME` literally.
+            out.push('%');
+            out.push_str(&name);
+        }
+    }
+    out
 }
 
 /// Decide which `(direction, address-family)` layer pairs a rule's
@@ -444,6 +570,109 @@ mod tests {
         );
         assert_eq!(pairs, vec![(Direction::Outbound, AddressFamily::Ipv4)]);
     }
+
+    // ---- parse_apps / expand_env / looks_like_path ----
+
+    fn paths(set: AppSet) -> Vec<PathBuf> {
+        match set {
+            AppSet::Paths(v) => v,
+            AppSet::None => panic!("expected Paths, got None"),
+            AppSet::AllSkipped => panic!("expected Paths, got AllSkipped"),
+        }
+    }
+
+    #[test]
+    fn parse_apps_none_for_missing_attribute() {
+        assert!(matches!(parse_apps(None), AppSet::None));
+    }
+
+    #[test]
+    fn parse_apps_none_for_whitespace_only() {
+        assert!(matches!(parse_apps(Some("   ")), AppSet::None));
+        assert!(matches!(parse_apps(Some("|||")), AppSet::None));
+    }
+
+    #[test]
+    fn parse_apps_single_path() {
+        let p = paths(parse_apps(Some(r"C:\Windows\System32\cmd.exe")));
+        assert_eq!(p, vec![PathBuf::from(r"C:\Windows\System32\cmd.exe")]);
+    }
+
+    #[test]
+    fn parse_apps_multiple_paths() {
+        let p = paths(parse_apps(Some(r"C:\a.exe|D:\b.exe")));
+        assert_eq!(
+            p,
+            vec![PathBuf::from(r"C:\a.exe"), PathBuf::from(r"D:\b.exe")]
+        );
+    }
+
+    #[test]
+    fn parse_apps_service_name_only_yields_all_skipped() {
+        assert!(matches!(parse_apps(Some("Dnscache")), AppSet::AllSkipped));
+        assert!(matches!(
+            parse_apps(Some("Dnscache|Dhcp|Spooler")),
+            AppSet::AllSkipped
+        ));
+    }
+
+    #[test]
+    fn parse_apps_mixed_drops_services_keeps_paths() {
+        let p = paths(parse_apps(Some(r"C:\a.exe|Dnscache|D:\b.exe")));
+        assert_eq!(
+            p,
+            vec![PathBuf::from(r"C:\a.exe"), PathBuf::from(r"D:\b.exe")]
+        );
+    }
+
+    #[test]
+    fn parse_apps_unc_path_recognized() {
+        let p = paths(parse_apps(Some(r"\\server\share\app.exe")));
+        assert_eq!(p, vec![PathBuf::from(r"\\server\share\app.exe")]);
+    }
+
+    #[test]
+    fn expand_env_with_known_var() {
+        let out = expand_env_with(r"%FOO%\bar", |k| {
+            if k == "FOO" {
+                Some(r"C:\baz".to_string())
+            } else {
+                None
+            }
+        });
+        assert_eq!(out, r"C:\baz\bar");
+    }
+
+    #[test]
+    fn expand_env_with_unknown_var_keeps_literal() {
+        let out = expand_env_with("%missing%/end", |_| None);
+        assert_eq!(out, "%missing%/end");
+    }
+
+    #[test]
+    fn expand_env_with_unmatched_percent_keeps_literal() {
+        let out = expand_env_with("prefix %unmatched", |_| Some("X".into()));
+        assert_eq!(out, "prefix %unmatched");
+    }
+
+    #[test]
+    fn expand_env_with_no_percent_passes_through() {
+        let out = expand_env_with(r"C:\Windows\System32", |_| None);
+        assert_eq!(out, r"C:\Windows\System32");
+    }
+
+    #[test]
+    fn looks_like_path_known_cases() {
+        assert!(looks_like_path(r"C:\foo.exe"));
+        assert!(looks_like_path(r"D:\some\path"));
+        assert!(looks_like_path(r"\\unc\share"));
+        assert!(looks_like_path("/usr/bin/foo")); // forward-slash form
+        assert!(!looks_like_path("Dnscache"));
+        assert!(!looks_like_path("firefox.exe")); // bare exe is ambiguous; treated as service
+        assert!(!looks_like_path(""));
+    }
+
+    // ---- pick_layer_pairs (continued) ----
 
     #[test]
     fn pick_layers_other_direction_falls_back_to_outbound() {
