@@ -17,6 +17,7 @@
 pub mod app;
 pub mod connections;
 pub mod dialogs;
+pub mod font;
 pub mod icons;
 pub mod ids;
 pub mod main_window;

@@ -29,7 +29,7 @@
 use std::cell::Cell;
 
 use windows::Win32::Foundation::{FILETIME, HWND, LPARAM, LRESULT, RECT, SYSTEMTIME, WPARAM};
-use windows::Win32::Graphics::Gdi::{HBRUSH, UpdateWindow};
+use windows::Win32::Graphics::Gdi::{DeleteObject, HBRUSH, HFONT, UpdateWindow};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Time::{FileTimeToSystemTime, SystemTimeToTzSpecificLocalTime};
 use windows::Win32::UI::Controls::{
@@ -156,6 +156,13 @@ struct WndState {
     /// Monitor DPI as last reported by `GetDpiForWindow`. Cached so
     /// non-WM_DPICHANGED handlers can scale without another syscall.
     dpi: Cell<u32>,
+    /// Cached HFONT for the system message font (Segoe UI 9pt on
+    /// modern Windows). Loaded once at WM_CREATE and broadcast to
+    /// every child via WM_SETFONT — `CreateWindowEx`-built
+    /// controls otherwise default to the legacy bitmap "System"
+    /// font and render without anti-aliasing.
+    /// Deleted on WM_NCDESTROY.
+    font: Cell<HFONT>,
 }
 
 impl WndState {
@@ -176,6 +183,7 @@ impl WndState {
             ],
             status: Cell::new(HWND::default()),
             dpi: Cell::new(REFERENCE_DPI),
+            font: Cell::new(HFONT::default()),
         }
     }
 }
@@ -465,7 +473,12 @@ unsafe extern "system" fn wnd_proc(
             let raw = unsafe { GetWindowLongPtrW(hwnd, GWLP_USERDATA) } as *mut WndState;
             if !raw.is_null() {
                 unsafe {
-                    let _ = Box::from_raw(raw);
+                    let state = Box::from_raw(raw);
+                    let f = state.font.get();
+                    if !f.is_invalid() {
+                        let _ = DeleteObject(f);
+                    }
+                    drop(state);
                     SetWindowLongPtrW(hwnd, GWLP_USERDATA, 0);
                 }
             }
@@ -529,6 +542,15 @@ fn on_create(hwnd: HWND) -> Result<(), String> {
     // search-bar visibility. After this the window mirrors what
     // the user left set last time.
     apply_initial_settings(hwnd, state);
+
+    // Bind the system message font (Segoe UI 9pt + ClearType on
+    // Windows 10/11) to every child created so far — toolbar
+    // buttons, tab labels, listview items, status-bar text. Modal
+    // dialogs handle this via DS_SHELLFONT in their templates;
+    // raw CreateWindowEx-built controls need WM_SETFONT.
+    let font = super::font::load_message_font();
+    state.font.set(font);
+    super::font::apply_recursive(hwnd, font);
 
     // Triggers on_size (which lays out children) and on_tab_change.
     on_size(hwnd);
