@@ -51,7 +51,7 @@ fn full_pipeline_profile_to_kernel_to_cleanup() {
 
     // 2. Open engine, register provider + sublayer (M1.1–M1.4).
     let engine = WfpEngine::open().expect("engine open failed");
-    let prov = provider::add(&engine, "simplewall-rs e2e", "end-to-end test")
+    let prov = provider::add(&engine, "simplewall-rs e2e", "end-to-end test", false)
         .expect("provider add failed");
     let sub = sublayer::add(
         &engine,
@@ -59,6 +59,7 @@ fn full_pipeline_profile_to_kernel_to_cleanup() {
         "",
         0x4000,
         Some(&prov.key()),
+        false,
     )
     .expect("sublayer add failed");
 
@@ -99,6 +100,7 @@ fn full_pipeline_profile_to_kernel_to_cleanup() {
                 Some(&prov.key()),
                 &conds,
                 action,
+                false,
             )
             .expect("filter add failed");
             installed += 1;

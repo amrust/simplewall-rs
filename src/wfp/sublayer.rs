@@ -7,7 +7,7 @@
 // enumerated and torn down by sublayer key.
 
 use windows::Win32::NetworkManagement::WindowsFilteringPlatform::{
-    FWPM_DISPLAY_DATA0, FWPM_SUBLAYER0, FwpmSubLayerAdd0,
+    FWPM_DISPLAY_DATA0, FWPM_SUBLAYER0, FWPM_SUBLAYER_FLAG_PERSISTENT, FwpmSubLayerAdd0,
 };
 use windows::Win32::Security::PSECURITY_DESCRIPTOR;
 use windows::Win32::System::Rpc::UuidCreate;
@@ -29,7 +29,7 @@ impl Sublayer {
     }
 }
 
-/// Register a new volatile sublayer.
+/// Register a new sublayer.
 ///
 /// Calls `FwpmSubLayerAdd0(engine, &sublayer, NULL)`. Requires admin.
 ///
@@ -37,12 +37,18 @@ impl Sublayer {
 /// layer (higher = evaluated first). `provider_key`, if `Some`, ties
 /// the sublayer to a previously-registered provider so enumeration
 /// can find it later via the provider's GUID.
+///
+/// `persistent = true` sets `FWPM_SUBLAYER_FLAG_PERSISTENT`. Should
+/// match the persistence of the owning provider — a persistent
+/// sublayer with a volatile provider creates a dangling reference
+/// across reboots.
 pub fn add(
     engine: &WfpEngine,
     name: &str,
     description: &str,
     weight: u16,
     provider_key: Option<&GUID>,
+    persistent: bool,
 ) -> Result<Sublayer, WfpError> {
     let mut key = GUID::zeroed();
     let rpc_status = unsafe { UuidCreate(&mut key) };
@@ -63,6 +69,9 @@ pub fn add(
         description: PWSTR(desc_buf.as_mut_ptr()),
     };
     sublayer.weight = weight;
+    if persistent {
+        sublayer.flags = FWPM_SUBLAYER_FLAG_PERSISTENT;
+    }
     // FWPM_SUBLAYER0::providerKey is `*mut GUID`. The kernel reads but
     // does not write through this pointer; casting `&GUID` to
     // `*mut GUID` for a read-only callee is sound. The pointee
@@ -96,7 +105,7 @@ mod tests {
     #[ignore = "requires elevated shell to call FwpmSubLayerAdd0"]
     fn add_sublayer_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider")
+        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
             .expect("provider add failed");
         let sub = add(
             &engine,
@@ -104,6 +113,7 @@ mod tests {
             "test sublayer",
             0x4000, // mid-range weight
             Some(&prov.key()),
+            false,
         )
         .expect("FwpmSubLayerAdd0 failed");
         let k = sub.key();

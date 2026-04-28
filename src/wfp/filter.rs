@@ -9,7 +9,7 @@
 
 use windows::Win32::NetworkManagement::WindowsFilteringPlatform::{
     FWP_ACTION_BLOCK, FWP_ACTION_PERMIT, FWP_ACTION_TYPE, FWPM_ACTION0, FWPM_DISPLAY_DATA0,
-    FWPM_FILTER0, FwpmFilterAdd0, FwpmFilterDeleteByKey0,
+    FWPM_FILTER0, FWPM_FILTER_FLAG_PERSISTENT, FwpmFilterAdd0, FwpmFilterDeleteByKey0,
 };
 use windows::Win32::Security::PSECURITY_DESCRIPTOR;
 use windows::Win32::System::Rpc::UuidCreate;
@@ -76,11 +76,16 @@ impl FilterAction {
     }
 }
 
-/// Register a new volatile filter at `layer_key` under `sublayer_key`.
+/// Register a new filter at `layer_key` under `sublayer_key`.
 ///
 /// `conditions` describes the match clauses combined with AND
 /// semantics — a filter matches a packet only when every condition
 /// matches. An empty slice means "match all traffic at this layer."
+///
+/// `persistent = true` sets `FWPM_FILTER_FLAG_PERSISTENT`. The
+/// kernel persists the filter across reboots — needed for the
+/// upstream `simplewall -install` flow. Should match the
+/// persistence of the owning provider+sublayer.
 ///
 /// Requires admin. Returns the filter key (GUID) and runtime id.
 #[allow(clippy::too_many_arguments)]
@@ -93,6 +98,7 @@ pub fn add(
     provider_key: Option<&GUID>,
     conditions: &[FilterCondition],
     action: FilterAction,
+    persistent: bool,
 ) -> Result<Filter, WfpError> {
     let mut key = GUID::zeroed();
     let rpc_status = unsafe { UuidCreate(&mut key) };
@@ -122,6 +128,9 @@ pub fn add(
     };
     filter.layerKey = *layer_key;
     filter.subLayerKey = *sublayer_key;
+    if persistent {
+        filter.flags = FWPM_FILTER_FLAG_PERSISTENT;
+    }
     // weight stays FWP_EMPTY (zero-init) — kernel auto-assigns weight
     // in the sublayer. Explicit uint64 weight may be exposed later.
     filter.numFilterConditions = cond_slice.len() as u32;
@@ -179,7 +188,7 @@ mod tests {
     #[ignore = "requires elevated shell to call FwpmFilterAdd0"]
     fn add_filter_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider")
+        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
@@ -187,6 +196,7 @@ mod tests {
             "test sublayer",
             0x4000,
             Some(&prov.key()),
+            false,
         )
         .expect("sublayer add failed");
         let f = add(
@@ -198,6 +208,7 @@ mod tests {
             Some(&prov.key()),
             &[],
             FilterAction::Permit,
+            false,
         )
         .expect("FwpmFilterAdd0 failed");
         let k = f.key();
@@ -222,7 +233,7 @@ mod tests {
     fn add_filter_with_app_path_admin_smoke() {
         use std::path::PathBuf;
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider")
+        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
@@ -230,6 +241,7 @@ mod tests {
             "test sublayer",
             0x4000,
             Some(&prov.key()),
+            false,
         )
         .expect("sublayer add failed");
         let conds = [
@@ -245,6 +257,7 @@ mod tests {
             Some(&prov.key()),
             &conds,
             FilterAction::Permit,
+            false,
         )
         .expect("FwpmFilterAdd0 with AppPath failed");
         assert_ne!(f.runtime_id(), 0, "filter runtime id was 0");
@@ -261,7 +274,7 @@ mod tests {
     #[ignore = "requires elevated shell"]
     fn install_then_delete_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider")
+        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
@@ -269,6 +282,7 @@ mod tests {
             "test sublayer",
             0x4000,
             Some(&prov.key()),
+            false,
         )
         .expect("sublayer add failed");
         let f = add(
@@ -280,6 +294,7 @@ mod tests {
             Some(&prov.key()),
             &[],
             FilterAction::Permit,
+            false,
         )
         .expect("filter add failed");
 
@@ -309,7 +324,7 @@ mod tests {
     #[ignore = "requires elevated shell to call FwpmFilterAdd0"]
     fn add_filter_with_conditions_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider")
+        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
@@ -317,6 +332,7 @@ mod tests {
             "test sublayer",
             0x4000,
             Some(&prov.key()),
+            false,
         )
         .expect("sublayer add failed");
         let conds = [
@@ -336,6 +352,7 @@ mod tests {
             Some(&prov.key()),
             &conds,
             FilterAction::Permit,
+            false,
         )
         .expect("FwpmFilterAdd0 with conditions failed");
         assert_ne!(f.runtime_id(), 0, "filter runtime id was 0");
@@ -353,7 +370,7 @@ mod tests {
     #[ignore = "requires elevated shell to call FwpmFilterAdd0"]
     fn add_filter_with_range_conditions_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider")
+        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
@@ -361,6 +378,7 @@ mod tests {
             "test sublayer",
             0x4000,
             Some(&prov.key()),
+            false,
         )
         .expect("sublayer add failed");
         let conds = [
@@ -380,9 +398,64 @@ mod tests {
             Some(&prov.key()),
             &conds,
             FilterAction::Permit,
+            false,
         )
         .expect("FwpmFilterAdd0 with range conditions failed");
         assert_ne!(f.runtime_id(), 0, "filter runtime id was 0");
         engine.cleanup_provider(&prov.key()).expect("cleanup_provider failed");
+    }
+
+    /// Live admin-only smoke test: install a fully-persistent
+    /// provider + sublayer + filter chain (every layer's
+    /// `FWPM_*_FLAG_PERSISTENT` bit set), then tear it down via
+    /// `cleanup_provider`. Validates that the persistent path
+    /// reaches the kernel and that `cleanup_provider` correctly
+    /// deletes persistent state by key (it does — delete-by-key
+    /// works the same for persistent and volatile records).
+    ///
+    /// In-process verification: cleanup must report
+    /// `filters_deleted == 1, sublayers_deleted == 1,
+    /// provider_deleted == true`. If any count is wrong, persistent
+    /// records are landing in a place enumeration can't see — that
+    /// would be a binding bug.
+    #[test]
+    #[ignore = "requires elevated shell — installs persistent kernel state"]
+    fn add_persistent_filter_admin_smoke() {
+        let engine = WfpEngine::open().expect("engine open failed");
+        let prov = provider::add(&engine, "simplewall-rs persist-test", "", true)
+            .expect("persistent provider add failed");
+        let sub = sublayer::add(
+            &engine,
+            "simplewall-rs persist-test sublayer",
+            "",
+            0x4000,
+            Some(&prov.key()),
+            true,
+        )
+        .expect("persistent sublayer add failed");
+        let f = add(
+            &engine,
+            "simplewall-rs persist-test filter",
+            "permit at ALE_AUTH_CONNECT_V4 (persistent)",
+            &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
+            &sub.key(),
+            Some(&prov.key()),
+            &[FilterCondition::RemotePort(65530)],
+            FilterAction::Permit,
+            true,
+        )
+        .expect("persistent filter add failed");
+        assert_ne!(f.runtime_id(), 0, "filter runtime id was 0");
+
+        // Crucial: cleanup_provider must delete persistent state too,
+        // not just volatile. If this assertion fails, a
+        // -uninstall-shaped flow would leak persistent rules across
+        // reboots.
+        let report = engine
+            .cleanup_provider(&prov.key())
+            .expect("cleanup_provider failed");
+        assert_eq!(report.filters_deleted, 1);
+        assert_eq!(report.sublayers_deleted, 1);
+        assert!(report.provider_deleted);
     }
 }

@@ -7,7 +7,7 @@
 // provider per session.
 
 use windows::Win32::NetworkManagement::WindowsFilteringPlatform::{
-    FWPM_DISPLAY_DATA0, FWPM_PROVIDER0, FwpmProviderAdd0,
+    FWPM_DISPLAY_DATA0, FWPM_PROVIDER0, FWPM_PROVIDER_FLAG_PERSISTENT, FwpmProviderAdd0,
 };
 use windows::Win32::Security::PSECURITY_DESCRIPTOR;
 use windows::Win32::System::Rpc::UuidCreate;
@@ -35,17 +35,26 @@ impl Provider {
     }
 }
 
-/// Register a new volatile provider with the given engine.
+/// Register a new provider with the given engine.
 ///
 /// Calls `FwpmProviderAdd0(engine, &provider, NULL)` after generating
 /// a fresh `providerKey` GUID and populating `displayData.name` /
 /// `displayData.description`. Requires the caller to be elevated;
 /// on a non-admin process this returns `WfpError::ProviderAdd(5)`
 /// (`ERROR_ACCESS_DENIED`).
+///
+/// `persistent = false` registers a session-scoped provider that
+/// the kernel removes when the engine session ends (or on next
+/// reboot if the session leaks). `persistent = true` sets
+/// `FWPM_PROVIDER_FLAG_PERSISTENT`, which makes the provider
+/// survive across reboots — needed for the upstream-style
+/// `simplewall -install` flow where rules persist after the CLI
+/// exits.
 pub fn add(
     engine: &WfpEngine,
     name: &str,
     description: &str,
+    persistent: bool,
 ) -> Result<Provider, WfpError> {
     let mut key = GUID::zeroed();
     let rpc_status = unsafe { UuidCreate(&mut key) };
@@ -68,7 +77,9 @@ pub fn add(
         name: PWSTR(name_buf.as_mut_ptr()),
         description: PWSTR(desc_buf.as_mut_ptr()),
     };
-    // flags = 0 → volatile (FWPM_PROVIDER_FLAG_PERSISTENT not set).
+    if persistent {
+        provider.flags = FWPM_PROVIDER_FLAG_PERSISTENT;
+    }
     // providerData / serviceName stay zero.
 
     let status = unsafe {
@@ -101,7 +112,7 @@ mod tests {
     #[ignore = "requires elevated shell to call FwpmProviderAdd0"]
     fn add_provider_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let provider = add(&engine, "simplewall-rs test", "test provider")
+        let provider = add(&engine, "simplewall-rs test", "test provider", false)
             .expect("FwpmProviderAdd0 failed");
         let key = provider.key();
         assert_ne!(

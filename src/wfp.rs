@@ -492,7 +492,7 @@ mod tests {
         use windows::Win32::NetworkManagement::WindowsFilteringPlatform::FWPM_LAYER_ALE_AUTH_CONNECT_V4;
 
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs cleanup-test", "")
+        let prov = provider::add(&engine, "simplewall-rs cleanup-test", "", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
@@ -500,6 +500,7 @@ mod tests {
             "",
             0x4000,
             Some(&prov.key()),
+            false,
         )
         .expect("sublayer add failed");
         // Two filters under the same sublayer/provider so the report
@@ -513,6 +514,7 @@ mod tests {
             Some(&prov.key()),
             &[FilterCondition::RemotePort(65530)],
             FilterAction::Permit,
+            false,
         )
         .expect("filter f1 add failed");
         let _f2 = filter::add(
@@ -524,6 +526,7 @@ mod tests {
             Some(&prov.key()),
             &[FilterCondition::RemotePort(65531)],
             FilterAction::Permit,
+            false,
         )
         .expect("filter f2 add failed");
 

@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let engine = WfpEngine::open()?;
     println!("✓ engine opened");
 
-    let prov = provider::add(&engine, "simplewall-rs demo", "install_demo example")?;
+    let prov = provider::add(&engine, "simplewall-rs demo", "install_demo example", false)?;
     println!("✓ provider registered: {:?}", prov.key());
 
     let sub = sublayer::add(
@@ -40,6 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "install_demo example",
         0x4000,
         Some(&prov.key()),
+        false,
     )?;
     println!("✓ sublayer registered: {:?}", sub.key());
 
@@ -56,6 +57,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(&prov.key()),
         &conds,
         FilterAction::Permit,
+        false,
     )?;
     let key = f.key();
     println!(
