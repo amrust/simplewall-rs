@@ -1012,7 +1012,8 @@ fn on_create_rule(hwnd: HWND) {
         Some(s) => s,
         None => return,
     };
-    let new_rule = match super::rule_editor::open(hwnd, None) {
+    let apps_snapshot = state.app.profile.borrow().apps.clone();
+    let new_rule = match super::rule_editor::open(hwnd, None, &apps_snapshot) {
         Some(r) => r,
         None => return, // Cancel
     };
@@ -1057,7 +1058,8 @@ fn on_edit_selected_rule(hwnd: HWND) {
         None => return,
     };
 
-    let updated = match super::rule_editor::open(hwnd, Some(&existing)) {
+    let apps_snapshot = state.app.profile.borrow().apps.clone();
+    let updated = match super::rule_editor::open(hwnd, Some(&existing), &apps_snapshot) {
         Some(r) => r,
         None => return,
     };

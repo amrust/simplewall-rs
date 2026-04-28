@@ -36,7 +36,7 @@ Original simplewall © 2016-2026 Henry++.
 cargo build --release
 ```
 
-Requires Rust 1.85+ and the Windows SDK. Currently builds an empty placeholder binary.
+Requires Rust 1.85+ and the Windows SDK.
 
 ## Roadmap
 
