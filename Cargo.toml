@@ -10,3 +10,11 @@ authors = ["simplewall-rs contributors"]
 rust-version = "1.85"
 
 [dependencies]
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.54", features = [
+    "Win32_Foundation",
+    "Win32_NetworkManagement_WindowsFilteringPlatform",
+    "Win32_Security",
+    "Win32_System_Rpc",
+] }

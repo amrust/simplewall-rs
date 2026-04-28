@@ -6,6 +6,20 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version. See LICENSE.
 
-fn main() {
+#[cfg(windows)]
+mod wfp;
+
+#[cfg(windows)]
+fn main() -> Result<(), wfp::WfpError> {
     println!("simplewall-rs (pre-alpha) — see README.md");
+    let engine = wfp::WfpEngine::open()?;
+    println!("WFP engine handle acquired: {:?}", engine.raw());
+    // engine drops here — FwpmEngineClose0 runs
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn main() {
+    eprintln!("simplewall-rs is Windows-only (Windows Filtering Platform).");
+    std::process::exit(1);
 }
