@@ -18,4 +18,5 @@ windows = { version = "0.54", features = [
     "Win32_NetworkManagement_WindowsFilteringPlatform",
     "Win32_Security",
     "Win32_System_Rpc",
+    "Win32_UI_Shell",
 ] }

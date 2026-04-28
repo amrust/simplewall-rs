@@ -15,6 +15,10 @@ use windows::core::{GUID, PWSTR};
 
 use super::{ERROR_SUCCESS, WfpEngine, WfpError};
 
+/// `FWP_E_ALREADY_EXISTS` — same constant + tolerance pattern as
+/// `provider::add_with_key`.
+const FWP_E_ALREADY_EXISTS: u32 = 0x8032_0009;
+
 /// Handle to a registered WFP sublayer. Like `Provider`, this is
 /// volatile — kernel removes it on engine session end. No explicit
 /// `Drop` impl.
@@ -94,6 +98,55 @@ pub fn add(
         return Err(WfpError::SubLayerAdd(status));
     }
     Ok(Sublayer { key })
+}
+
+/// Like `add` but uses a caller-provided `subLayerKey`. Tolerates
+/// `FWP_E_ALREADY_EXISTS` for the re-install path. Counterpart to
+/// `provider::add_with_key`.
+#[allow(clippy::too_many_arguments)]
+pub fn add_with_key(
+    engine: &WfpEngine,
+    name: &str,
+    description: &str,
+    weight: u16,
+    provider_key: Option<&GUID>,
+    persistent: bool,
+    key: &GUID,
+) -> Result<Sublayer, WfpError> {
+    let mut name_buf: Vec<u16> = name.encode_utf16().chain(std::iter::once(0)).collect();
+    let mut desc_buf: Vec<u16> = description
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
+
+    let mut sublayer: FWPM_SUBLAYER0 = unsafe { std::mem::zeroed() };
+    sublayer.subLayerKey = *key;
+    sublayer.displayData = FWPM_DISPLAY_DATA0 {
+        name: PWSTR(name_buf.as_mut_ptr()),
+        description: PWSTR(desc_buf.as_mut_ptr()),
+    };
+    sublayer.weight = weight;
+    if persistent {
+        sublayer.flags = FWPM_SUBLAYER_FLAG_PERSISTENT;
+    }
+    if let Some(pk) = provider_key {
+        sublayer.providerKey = pk as *const GUID as *mut GUID;
+    }
+
+    let status = unsafe {
+        FwpmSubLayerAdd0(
+            engine.raw(),
+            &sublayer,
+            PSECURITY_DESCRIPTOR(std::ptr::null_mut()),
+        )
+    };
+    drop(name_buf);
+    drop(desc_buf);
+
+    match status {
+        ERROR_SUCCESS | FWP_E_ALREADY_EXISTS => Ok(Sublayer { key: *key }),
+        other => Err(WfpError::SubLayerAdd(other)),
+    }
 }
 
 #[cfg(test)]

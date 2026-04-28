@@ -15,6 +15,11 @@ use windows::core::{GUID, PWSTR};
 
 use super::{ERROR_SUCCESS, WfpEngine, WfpError};
 
+/// `FWP_E_ALREADY_EXISTS` — returned by `FwpmProviderAdd0` when a
+/// provider with the given key already exists in the kernel. Treated
+/// as a soft-success by `add_with_key` (re-install path).
+const FWP_E_ALREADY_EXISTS: u32 = 0x8032_0009;
+
 /// Handle to a registered WFP provider. Holds the GUID assigned at
 /// `add()` time; sublayers and filters reference this key to identify
 /// themselves as belonging to this provider.
@@ -96,6 +101,54 @@ pub fn add(
         return Err(WfpError::ProviderAdd(status));
     }
     Ok(Provider { key })
+}
+
+/// Like `add` but uses a caller-provided `providerKey` instead of
+/// generating one with `UuidCreate`. Tolerates
+/// `FWP_E_ALREADY_EXISTS` (returns Ok with the given key) so a
+/// re-run of `simplewall-rs -install` doesn't fail when the
+/// previous install's persistent provider is still in the kernel.
+///
+/// Use this for the upstream-style "well-known provider GUID"
+/// install pattern; use `add` when the caller wants a fresh
+/// session-scoped provider with no key-collision risk.
+pub fn add_with_key(
+    engine: &WfpEngine,
+    name: &str,
+    description: &str,
+    persistent: bool,
+    key: &GUID,
+) -> Result<Provider, WfpError> {
+    let mut name_buf: Vec<u16> = name.encode_utf16().chain(std::iter::once(0)).collect();
+    let mut desc_buf: Vec<u16> = description
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
+
+    let mut provider: FWPM_PROVIDER0 = unsafe { std::mem::zeroed() };
+    provider.providerKey = *key;
+    provider.displayData = FWPM_DISPLAY_DATA0 {
+        name: PWSTR(name_buf.as_mut_ptr()),
+        description: PWSTR(desc_buf.as_mut_ptr()),
+    };
+    if persistent {
+        provider.flags = FWPM_PROVIDER_FLAG_PERSISTENT;
+    }
+
+    let status = unsafe {
+        FwpmProviderAdd0(
+            engine.raw(),
+            &provider,
+            PSECURITY_DESCRIPTOR(std::ptr::null_mut()),
+        )
+    };
+    drop(name_buf);
+    drop(desc_buf);
+
+    match status {
+        ERROR_SUCCESS | FWP_E_ALREADY_EXISTS => Ok(Provider { key: *key }),
+        other => Err(WfpError::ProviderAdd(other)),
+    }
 }
 
 #[cfg(test)]
