@@ -1,0 +1,23 @@
+// simplewall-rs — Win32 resource script.
+// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+//
+// Compiled by build.rs via the `embed-resource` crate. Two
+// resources for now: the application icon (so Explorer / taskbar
+// show the simplewall icon, not the default Rust binary icon) and
+// the application manifest (ComCtl32 v6 + DPI awareness — see
+// manifest.xml for the rationale).
+//
+// Resource IDs match upstream simplewall's resource.h where it
+// matters. `1 ICON` is the standard "main application icon" slot
+// Windows looks at for the .exe's display icon.
+
+#include <winres.h>
+
+// Main application icon.
+1 ICON "icons/100.ico"
+
+// Application manifest (CREATEPROCESS_MANIFEST_RESOURCE_ID = 1,
+// RT_MANIFEST = 24). Embedding here means Windows reads the
+// manifest before our process starts up, which is required for
+// ComCtl32 v6 binding.
+1 24 "manifest.xml"
