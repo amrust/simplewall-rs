@@ -163,6 +163,11 @@ struct WndState {
     /// font and render without anti-aliasing.
     /// Deleted on WM_NCDESTROY.
     font: Cell<HFONT>,
+    /// Current substring entered in the rebar's search edit. The
+    /// populator helpers read this and skip rows whose name
+    /// doesn't contain it (case-insensitive). Empty string = no
+    /// filtering.
+    search_text: std::cell::RefCell<String>,
 }
 
 impl WndState {
@@ -184,6 +189,7 @@ impl WndState {
             status: Cell::new(HWND::default()),
             dpi: Cell::new(REFERENCE_DPI),
             font: Cell::new(HFONT::default()),
+            search_text: std::cell::RefCell::new(String::new()),
         }
     }
 }
@@ -449,7 +455,9 @@ unsafe extern "system" fn wnd_proc(
             LRESULT(0)
         }
         WM_COMMAND => {
-            on_command(hwnd, wparam.0 as u32 & 0xFFFF);
+            let id = (wparam.0 as u32) & 0xFFFF;
+            let notif = ((wparam.0 as u32) >> 16) & 0xFFFF;
+            on_command(hwnd, id, notif);
             LRESULT(0)
         }
         WM_DPICHANGED => {
@@ -808,8 +816,18 @@ fn on_tab_change(hwnd: HWND) {
     }
 }
 
-/// `WM_COMMAND` dispatch.
-fn on_command(hwnd: HWND, id: u32) {
+/// `WM_COMMAND` dispatch. `id` is LOWORD(wParam) — the menu /
+/// control identifier. `notif` is HIWORD(wParam) — for control
+/// notifications (EN_CHANGE, etc.); 0 for menu / accelerator
+/// messages.
+fn on_command(hwnd: HWND, id: u32, notif: u32) {
+    // Search edit notification: refilter active tab as the user
+    // types. EN_CHANGE = 0x0300.
+    const EN_CHANGE: u32 = 0x0300;
+    if (id as i32) == IDC_SEARCH && notif == EN_CHANGE {
+        on_search_changed(hwnd);
+        return;
+    }
     let id = id as u16;
     match id {
         IDM_EXIT => unsafe {
@@ -1738,7 +1756,14 @@ fn populate_user_rules(state: &WndState) {
     }
 
     let profile = state.app.profile.borrow();
-    for (idx, rule) in profile.custom_rules.iter().enumerate() {
+    let filter = state.search_text.borrow().clone();
+    let mut row = 0i32;
+    for rule in profile.custom_rules.iter() {
+        if !search_match(&rule.name, &filter) {
+            continue;
+        }
+        let idx = row as usize;
+        row += 1;
         let mut name_buf = wide(&rule.name);
         let item = LVITEMW {
             mask: LVIF_TEXT,
@@ -1805,7 +1830,9 @@ fn populate_apps_tab(state: &WndState) {
 
     let profile = state.app.profile.borrow();
     let filenames_only = state.app.settings.borrow().show_filenames_only;
-    for (idx, app) in profile.apps.iter().enumerate() {
+    let filter = state.search_text.borrow().clone();
+    let mut row = 0i32;
+    for app in profile.apps.iter() {
         // View → Show filenames only chooses between basename and
         // full path. Default-on matches upstream behaviour.
         let display_name = if filenames_only {
@@ -1816,6 +1843,11 @@ fn populate_apps_tab(state: &WndState) {
         } else {
             app.path.display().to_string()
         };
+        if !search_match(&display_name, &filter) {
+            continue;
+        }
+        let idx = row as usize;
+        row += 1;
         let mut name_buf = wide(&display_name);
 
         // INDEXTOSTATEIMAGEMASK(2) = checked, (1) = unchecked.
@@ -1901,7 +1933,14 @@ fn populate_connections_tab(state: &WndState) {
     unsafe {
         let _ = SendMessageW(lv, LVM_DELETEALLITEMS, WPARAM(0), LPARAM(0));
     }
-    for (idx, c) in conns.iter().enumerate() {
+    let filter = state.search_text.borrow().clone();
+    let mut row = 0i32;
+    for c in conns.iter() {
+        if !search_match(&c.process, &filter) {
+            continue;
+        }
+        let idx = row as usize;
+        row += 1;
         let mut name_buf = wide(&c.process);
         let item = LVITEMW {
             mask: LVIF_TEXT,
@@ -1939,6 +1978,69 @@ fn populate_connections_tab(state: &WndState) {
     }
 }
 
+/// EN_CHANGE on the rebar's search edit. Reads the new text,
+/// stores it on the WndState, repopulates whichever tab is
+/// currently visible — that's the cheapest option that handles
+/// every tab uniformly without a separate "filter visible rows"
+/// codepath per listview.
+fn on_search_changed(hwnd: HWND) {
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+    let rebar = state.rebar.get();
+    if rebar.0 == 0 {
+        return;
+    }
+    use windows::Win32::UI::WindowsAndMessaging::GetDlgItem;
+    let edit = unsafe { GetDlgItem(rebar, IDC_SEARCH) };
+    if edit.0 == 0 {
+        return;
+    }
+    let mut buf = [0u16; 256];
+    let n = unsafe {
+        windows::Win32::UI::WindowsAndMessaging::GetWindowTextW(edit, &mut buf)
+    } as usize;
+    let new_text = String::from_utf16_lossy(&buf[..n]);
+    *state.search_text.borrow_mut() = new_text;
+
+    // Repopulate just the active tab — switching tabs runs its
+    // own populate path which also reads search_text.
+    let tab = state.tab.get();
+    if tab.0 == 0 {
+        return;
+    }
+    let sel =
+        unsafe { SendMessageW(tab, TCM_GETCURSEL, WPARAM(0), LPARAM(0)) }.0 as isize;
+    let slot = if sel < 0 { 0 } else { sel as usize };
+    repopulate_tab(state, slot);
+    on_tab_change(hwnd); // refreshes the count in the status bar
+}
+
+/// Re-run whichever populator covers the given tab slot.
+fn repopulate_tab(state: &WndState, slot: usize) {
+    match slot {
+        0 => populate_apps_tab(state),
+        3 => populate_internal_rules(state, IDC_RULES_BLOCKLIST),
+        4 => populate_internal_rules(state, IDC_RULES_SYSTEM),
+        5 => populate_user_rules(state),
+        6 => populate_connections_tab(state),
+        // Slots 1 (Services), 2 (UWP), 7 (Log) are not yet
+        // populated from any source — search filter is a no-op
+        // there.
+        _ => {}
+    }
+}
+
+/// Case-insensitive substring match used by every populator.
+/// Empty filter = pass-through.
+fn search_match(haystack: &str, filter: &str) -> bool {
+    if filter.is_empty() {
+        return true;
+    }
+    haystack.to_lowercase().contains(&filter.to_lowercase())
+}
+
 /// Populate one of the two internal-profile listviews
 /// (`IDC_RULES_SYSTEM` or `IDC_RULES_BLOCKLIST`) from the bundled
 /// `internal_profile`. Same column shape as the user rules tab —
@@ -1972,7 +2074,14 @@ fn populate_internal_rules(state: &WndState, id: i32) {
         _ => return,
     };
 
-    for (idx, rule) in rules.iter().enumerate() {
+    let filter = state.search_text.borrow().clone();
+    let mut row = 0i32;
+    for rule in rules.iter() {
+        if !search_match(&rule.name, &filter) {
+            continue;
+        }
+        let idx = row as usize;
+        row += 1;
         let mut name_buf = wide(&rule.name);
         let state_image = if rule.is_enabled { 2u32 } else { 1u32 };
         let item = LVITEMW {
