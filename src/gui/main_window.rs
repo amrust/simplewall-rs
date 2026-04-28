@@ -592,6 +592,7 @@ fn apply_initial_settings(hwnd: HWND, state: &WndState) {
     }
     apply_always_on_top(hwnd, s.always_on_top);
     apply_search_bar_visibility(hwnd, s.show_search_bar);
+    super::font::set_dark_mode(hwnd, s.use_dark_theme);
     let autosize = s.autosize_columns;
     drop(s);
 
@@ -906,6 +907,7 @@ fn on_toggle(hwnd: HWND, id: u16) {
     match id {
         IDM_ALWAYSONTOP_CHK => apply_always_on_top(hwnd, new_value),
         IDM_SHOWSEARCHBAR_CHK => apply_search_bar_visibility(hwnd, new_value),
+        IDM_USEDARKTHEME_CHK => super::font::set_dark_mode(hwnd, new_value),
         IDM_SHOWFILENAMESONLY_CHK => {
             // Filename / full-path display affects Apps tab rendering.
             populate_apps_tab(state);
@@ -915,10 +917,9 @@ fn on_toggle(hwnd: HWND, id: u16) {
                 autosize_active_listview_columns(state);
             }
         }
-        // The remaining toggles are display-only at boot time
-        // (load_on_startup wires into the registry on a future
-        // commit; dark theme is M5.9; etc.) — flipping the menu
-        // check is the entire visible behaviour for now.
+        // The remaining toggles are persisted but have no visible
+        // effect yet — load_on_startup wires into the registry
+        // when M9 lands, etc.
         _ => {}
     }
 }
