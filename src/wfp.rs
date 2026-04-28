@@ -6,8 +6,10 @@
 // FWPM_SESSION0 — display data + session-key GUID + transaction
 // timeout — and the open call retries on EPT_S_NOT_REGISTERED to
 // tolerate the BFE service still warming up at boot.
-
-#![cfg(windows)]
+//
+// Windows-gating is applied at the parent module declaration in
+// `lib.rs` (`#[cfg(windows)] pub mod wfp;`), so this file does not
+// repeat the cfg attribute.
 
 use windows::Win32::Foundation::HANDLE;
 use windows::Win32::NetworkManagement::WindowsFilteringPlatform::{

@@ -7,12 +7,11 @@
 // (at your option) any later version. See LICENSE.
 
 #[cfg(windows)]
-mod wfp;
+fn main() -> Result<(), simplewall_rs::wfp::WfpError> {
+    use simplewall_rs::wfp::WfpEngine;
 
-#[cfg(windows)]
-fn main() -> Result<(), wfp::WfpError> {
     println!("simplewall-rs (pre-alpha) — see README.md");
-    let engine = wfp::WfpEngine::open()?;
+    let engine = WfpEngine::open()?;
     println!("WFP engine handle acquired: {:?}", engine.raw());
     let key = engine.session_key();
     println!(
