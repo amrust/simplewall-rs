@@ -2,34 +2,29 @@
 // Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
 //
 // Direct Win32 via `windows-rs`. Programmatic UI (no .rc files).
-// Main window is created in `main_window`; this module owns the
-// message-loop driver and wires the App state into the window
-// class via the standard `GWLP_USERDATA` pattern.
+// Layout matches upstream simplewall 3.8.7 — same menu structure,
+// same eight tabs in the same order, same per-tab columns. See
+// `main_window` for the structural rewrite; `app` for the in-memory
+// state; `ids` for the IDM_* / IDC_* constants mirrored from
+// upstream's resource.h.
 //
-// Architecture in one paragraph:
-//   - `App` (in `app.rs`) holds the in-memory profile + any other
-//     persistent UI state. The address of a heap-allocated `App`
-//     is stuffed into the main window's `GWLP_USERDATA` slot at
-//     `WM_NCCREATE` time and retrieved by every subsequent
-//     message handler.
-//   - The main window class registers a `wnd_proc` that fans out
-//     to typed handlers (`on_create`, `on_command`, etc.).
-//   - The ListView control showing the profile's custom rules is
-//     a child of the main window; population is driven from the
-//     `App` whenever the profile changes.
-//
-// Future M5 sub-milestones layer additional windows (rules editor,
-// settings dialog, log tab) on top of this foundation.
+// `run` enables Per-Monitor v2 DPI awareness up-front so the window
+// is sharp on hi-DPI displays (4K @ 200%+ scaling), then drives the
+// standard Win32 message loop until WM_QUIT.
 
 #![cfg(windows)]
 
 pub mod app;
+pub mod ids;
 pub mod main_window;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 use windows::Win32::Foundation::HWND;
+use windows::Win32::UI::HiDpi::{
+    DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetProcessDpiAwarenessContext,
+};
 use windows::Win32::UI::WindowsAndMessaging::{
     DispatchMessageW, GetMessageW, MSG, PostQuitMessage, TranslateMessage,
 };
@@ -45,6 +40,15 @@ use app::App;
 /// path the CLI uses; if the file isn't present yet, the GUI starts
 /// with an empty `Profile`.
 pub fn run(default_profile_path: PathBuf) -> ExitCode {
+    // Per-Monitor v2 DPI awareness: hi-DPI displays (4K @ 200%+ scaling)
+    // get sharp text and correctly-scaled controls. Must be set before
+    // any HWND is created, otherwise Win32 caches "system DPI" mode.
+    // Failure (e.g. older Windows that doesn't expose v2) is non-fatal —
+    // we fall back to the system default scaling.
+    unsafe {
+        let _ = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    }
+
     let profile = match try_load_profile(&default_profile_path) {
         Ok(p) => p,
         Err(e) => {
