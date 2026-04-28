@@ -69,8 +69,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     println!("    runtime id: {}", f.runtime_id());
 
-    println!("\nVerify in another terminal:");
-    println!("    netsh wfp show filters | findstr \"simplewall-rs\"");
+    println!("\nVerify in another elevated terminal:");
+    println!("    cd $env:TEMP; netsh wfp show filters; findstr /i \"simplewall-rs\" filters.xml");
+    println!("(`netsh wfp show filters` writes filters.xml to cwd; it does NOT print to stdout.)");
     println!("\nPress Enter to delete the filter and exit.");
     io::stdout().flush()?;
     let mut buf = String::new();
