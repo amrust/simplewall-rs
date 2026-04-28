@@ -62,8 +62,8 @@ pub fn run(default_profile_path: PathBuf) -> ExitCode {
     };
 
     let app = Box::new(App {
-        profile,
-        profile_path: default_profile_path,
+        profile: std::cell::RefCell::new(profile),
+        profile_path: std::cell::RefCell::new(default_profile_path),
     });
 
     let hwnd = match main_window::create(app) {

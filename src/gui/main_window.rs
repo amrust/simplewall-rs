@@ -28,18 +28,19 @@
 
 use std::cell::Cell;
 
-use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
+use windows::Win32::Foundation::{FILETIME, HWND, LPARAM, LRESULT, RECT, SYSTEMTIME, WPARAM};
 use windows::Win32::Graphics::Gdi::{HBRUSH, UpdateWindow};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+use windows::Win32::System::Time::{FileTimeToSystemTime, SystemTimeToTzSpecificLocalTime};
 use windows::Win32::UI::Controls::{
     ICC_BAR_CLASSES, ICC_COOL_CLASSES, ICC_LISTVIEW_CLASSES, ICC_TAB_CLASSES, INITCOMMONCONTROLSEX,
-    InitCommonControlsEx, LVCF_TEXT, LVCF_WIDTH, LVCFMT_LEFT, LVCFMT_RIGHT, LVCOLUMNW,
-    LVIF_TEXT, LVITEMW, LVM_DELETEALLITEMS, LVM_INSERTCOLUMNW, LVM_INSERTITEMW,
-    LVM_SETCOLUMNWIDTH, LVM_SETEXTENDEDLISTVIEWSTYLE, LVM_SETITEMTEXTW, LVS_EX_CHECKBOXES,
+    InitCommonControlsEx, LIST_VIEW_ITEM_STATE_FLAGS, LVCF_TEXT, LVCF_WIDTH, LVCFMT_LEFT,
+    LVCFMT_RIGHT, LVCOLUMNW, LVIF_STATE, LVIF_TEXT, LVIS_STATEIMAGEMASK, LVITEMW,
+    LVM_DELETEALLITEMS, LVM_INSERTCOLUMNW, LVM_INSERTITEMW, LVM_SETCOLUMNWIDTH,
+    LVM_SETEXTENDEDLISTVIEWSTYLE, LVM_SETITEMTEXTW, LVS_EX_CHECKBOXES,
     LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT, LVS_REPORT, LVS_SHOWSELALWAYS, NMHDR,
-    SBARS_TOOLTIPS, SB_SETPARTS,
-    SB_SETTEXTW, STATUSCLASSNAMEW, TCIF_TEXT, TCITEMW, TCM_ADJUSTRECT, TCM_GETCURSEL,
-    TCM_INSERTITEMW, TCN_SELCHANGE, WC_LISTVIEWW, WC_TABCONTROLW,
+    SBARS_TOOLTIPS, SB_SETPARTS, SB_SETTEXTW, STATUSCLASSNAMEW, TCIF_TEXT, TCITEMW,
+    TCM_ADJUSTRECT, TCM_GETCURSEL, TCM_INSERTITEMW, TCN_SELCHANGE, WC_LISTVIEWW, WC_TABCONTROLW,
 };
 use windows::Win32::UI::HiDpi::GetDpiForWindow;
 use windows::Win32::UI::Shell::ShellExecuteW;
@@ -206,11 +207,7 @@ pub fn create(app: Box<App>) -> Result<HWND, String> {
             return Err("RegisterClassExW failed".into());
         }
 
-        // Build the title string from the profile path *before*
-        // moving App into WndState — once we Box::into_raw the
-        // state, we can't easily reach back into it from this
-        // synchronous code.
-        let title = wide(&format_window_title(&app.profile_path));
+        let title = wide(&format_window_title(&app.profile_path.borrow()));
 
         // Wrap the App in WndState and pass the raw pointer through
         // CreateWindowExW. Consumed by WM_NCCREATE; reclaimed by
@@ -472,7 +469,12 @@ fn on_create(hwnd: HWND) -> Result<(), String> {
     set_status_text(status, 0, "Filters are disabled.");
     set_status_text(status, 1, "");
 
-    // Initial population: only User rules tab is fed from the profile.
+    // Populate the tabs that are driven from `profile.*`. Apps tab
+    // gets the user's per-application list (with checkbox + Added
+    // timestamp); User rules tab gets the custom rules. The other
+    // tabs (Services / UWP / Blocklist / System rules / Connections
+    // / Log) need separate enumeration sources and ship later.
+    populate_apps_tab(state);
     populate_user_rules(state);
 
     // Triggers on_size (which lays out children) and on_tab_change.
@@ -674,10 +676,7 @@ fn on_tab_change(hwnd: HWND) {
     }
 }
 
-/// `WM_COMMAND` dispatch. M5.3 wires File → Exit and the toolbar's
-/// Releases button (which opens our GitHub releases page in the
-/// default browser); the rest log a TODO line and ship with their
-/// feature milestones.
+/// `WM_COMMAND` dispatch.
 fn on_command(hwnd: HWND, id: u32) {
     let id = id as u16;
     match id {
@@ -685,8 +684,46 @@ fn on_command(hwnd: HWND, id: u32) {
             let _ = DestroyWindow(hwnd);
         },
         IDM_RELEASES => open_releases_page(hwnd),
+        IDM_REFRESH => on_refresh(hwnd),
         other => eprintln!("simplewall-rs: menu id {other} not yet wired up"),
     }
+}
+
+/// Reload the current profile from disk and re-populate the
+/// listviews. Triggered by Edit → Refresh and the toolbar's
+/// Refresh button. If the file is missing or malformed, leave the
+/// in-memory profile untouched and surface the error on the status
+/// bar so the user notices.
+fn on_refresh(hwnd: HWND) {
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+    let path = state.app.profile_path.borrow().clone();
+    let xml = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!(
+                "simplewall-rs: refresh: read failed for {}: {e}",
+                path.display(),
+            );
+            set_status_text(state.status.get(), 0, "Refresh failed: read error.");
+            return;
+        }
+    };
+    let new_profile = match crate::profile::parse_str(&xml) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("simplewall-rs: refresh: parse failed: {e}");
+            set_status_text(state.status.get(), 0, "Refresh failed: parse error.");
+            return;
+        }
+    };
+    state.app.profile.replace(new_profile);
+    populate_apps_tab(state);
+    populate_user_rules(state);
+    on_tab_change(hwnd); // refresh status-bar item count
+    set_status_text(state.status.get(), 0, "Profile reloaded.");
 }
 
 /// Open https://github.com/simplewall-rs/simplewall-rs/releases in
@@ -917,9 +954,9 @@ fn add_column(
 }
 
 /// Wipe the User rules ListView and re-fill from the current
-/// profile's custom rules. This is the only tab driven by the
-/// in-memory profile in M5.2 — the others stay empty until M5.4
-/// (Apps tabs from `profile.apps`) and M6 (Connections / Log).
+/// profile's custom rules. The Apps / Services / UWP / Blocklist /
+/// System rules / Connections / Log tabs follow their own
+/// populators (Apps from `profile.apps`; the rest are M6+).
 fn populate_user_rules(state: &WndState) {
     use crate::profile::{Action, Direction};
 
@@ -933,7 +970,8 @@ fn populate_user_rules(state: &WndState) {
         let _ = SendMessageW(lv, LVM_DELETEALLITEMS, WPARAM(0), LPARAM(0));
     }
 
-    for (idx, rule) in state.app.profile.custom_rules.iter().enumerate() {
+    let profile = state.app.profile.borrow();
+    for (idx, rule) in profile.custom_rules.iter().enumerate() {
         let mut name_buf = wide(&rule.name);
         let item = LVITEMW {
             mask: LVIF_TEXT,
@@ -975,6 +1013,104 @@ fn populate_user_rules(state: &WndState) {
         set_subitem(lv, idx as i32, 1, &protocol);
         set_subitem(lv, idx as i32, 2, direction);
     }
+}
+
+/// Wipe the Apps ListView (IDC_APPS_PROFILE) and re-fill from
+/// `profile.apps`. Each row carries:
+///   col 0  - filename (basename of the .exe path)
+///   col 1  - "Added" timestamp formatted as local-time
+///            "yyyy-MM-dd HH:mm:ss"
+///   checkbox state - reflects `App.is_enabled`.
+///
+/// Toggling the checkbox is wired in a follow-up (it mutates the
+/// in-memory App.is_enabled; actual filter (re-)install fires off
+/// an Apply or the Enable filters toolbar button).
+fn populate_apps_tab(state: &WndState) {
+    // Index 0 in TAB_LISTVIEW_IDS is IDC_APPS_PROFILE.
+    let lv = state.listviews[0].get();
+    if lv.0 == 0 {
+        return;
+    }
+
+    unsafe {
+        let _ = SendMessageW(lv, LVM_DELETEALLITEMS, WPARAM(0), LPARAM(0));
+    }
+
+    let profile = state.app.profile.borrow();
+    for (idx, app) in profile.apps.iter().enumerate() {
+        // File name only by default — full path is too long for
+        // the column. View → Show filenames only is on by default
+        // upstream and we'll pick that up when settings persistence
+        // wires the toggle.
+        let display_name = app
+            .path
+            .file_name()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_else(|| app.path.display().to_string());
+        let mut name_buf = wide(&display_name);
+
+        // INDEXTOSTATEIMAGEMASK(2) = checked, (1) = unchecked.
+        // The state image bits live in the high nibble of `state`
+        // (mask LVIS_STATEIMAGEMASK). LVIF_STATE in `mask` plus the
+        // matching `stateMask` is the documented way to set this
+        // alongside the row insert.
+        let state_image_index = if app.is_enabled { 2u32 } else { 1u32 };
+        let item = LVITEMW {
+            mask: LVIF_TEXT | LVIF_STATE,
+            iItem: idx as i32,
+            iSubItem: 0,
+            pszText: PWSTR(name_buf.as_mut_ptr()),
+            stateMask: LVIS_STATEIMAGEMASK,
+            state: LIST_VIEW_ITEM_STATE_FLAGS(state_image_index << 12),
+            ..Default::default()
+        };
+        let _ = unsafe {
+            SendMessageW(
+                lv,
+                LVM_INSERTITEMW,
+                WPARAM(0),
+                LPARAM(&item as *const _ as isize),
+            )
+        };
+
+        let added = if app.timestamp > 0 {
+            format_timestamp_local(app.timestamp)
+        } else {
+            String::new()
+        };
+        set_subitem(lv, idx as i32, 1, &added);
+    }
+}
+
+/// Convert a Unix timestamp (seconds since 1970-01-01 UTC) into a
+/// local-time string formatted as "yyyy-MM-dd HH:mm:ss". Returns
+/// an empty string if any of the three Win32 conversions fail —
+/// callers treat empty as "no timestamp" for display purposes, so
+/// silent failure is acceptable here.
+fn format_timestamp_local(unix_ts: i64) -> String {
+    // FILETIME counts 100-nanosecond intervals since 1601-01-01 UTC.
+    // Unix epoch is 1970-01-01 UTC = 11_644_473_600 seconds later =
+    // 116_444_736_000_000_000 hundred-nanosecond ticks.
+    if unix_ts < 0 {
+        return String::new();
+    }
+    let ticks = (unix_ts as u64).saturating_mul(10_000_000) + 116_444_736_000_000_000u64;
+    let ft = FILETIME {
+        dwLowDateTime: (ticks & 0xFFFF_FFFF) as u32,
+        dwHighDateTime: (ticks >> 32) as u32,
+    };
+    let mut utc = SYSTEMTIME::default();
+    if unsafe { FileTimeToSystemTime(&ft, &mut utc) }.is_err() {
+        return String::new();
+    }
+    let mut local = SYSTEMTIME::default();
+    if unsafe { SystemTimeToTzSpecificLocalTime(None, &utc, &mut local) }.is_err() {
+        return String::new();
+    }
+    format!(
+        "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+        local.wYear, local.wMonth, local.wDay, local.wHour, local.wMinute, local.wSecond,
+    )
 }
 
 fn set_subitem(lv: HWND, row: i32, sub: i32, text: &str) {
