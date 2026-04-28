@@ -15,6 +15,16 @@
 // (filter management is admin-gated by WFP). When run unelevated
 // the binary prints an error and exits 1; auto-relaunch via
 // ShellExecuteW "runas" is a follow-up.
+//
+// Subsystem: windows (not console). Without `windows_subsystem =
+// "windows"`, launching the GUI from Explorer / Start Menu briefly
+// flashes a console window. The trade-off is that CLI subcommands
+// (-install / -uninstall / -h) won't show output unless we
+// explicitly attach to the parent process's console first — see
+// `cli::run` which calls `attach_to_parent_console` before any
+// println!/eprintln! fires.
+
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
 #[cfg(windows)]
 fn main() -> std::process::ExitCode {
@@ -126,7 +136,17 @@ mod cli {
     }
 
     pub fn run(args: Vec<String>) -> ExitCode {
-        match parse_args(args) {
+        let parsed = parse_args(args);
+        // Anything other than the GUI launch is going to want to
+        // print to a terminal. With windows_subsystem = "windows"
+        // we have no console handles by default, so attach to the
+        // parent shell's console *before* any println!/eprintln!.
+        // No-op if this binary was launched from Explorer / Start
+        // Menu — there's no parent console to attach to.
+        if !matches!(parsed, Command::Gui) {
+            attach_to_parent_console();
+        }
+        match parsed {
             // No CLI subcommand → launch the GUI. The GUI doesn't
             // require admin to start (admin is only needed for the
             // install/uninstall actions, which the GUI routes
@@ -153,6 +173,36 @@ mod cli {
                 eprintln!("simplewall-rs: {msg}");
                 print_usage();
                 ExitCode::from(2)
+            }
+        }
+    }
+
+    /// Attach this (windows-subsystem) process to the parent
+    /// process's console, if any, so println!/eprintln! show up
+    /// in the launching shell. After AttachConsole succeeds we
+    /// re-fetch the standard handles via SetStdHandle so Rust's
+    /// stdio picks up the freshly-attached console — without that
+    /// step the Win32 docs say handles are usually inherited but
+    /// in practice with windows_subsystem = "windows" the std
+    /// handles start as INVALID_HANDLE_VALUE and need the explicit
+    /// re-bind.
+    ///
+    /// No-op when launched without a parent console (Explorer /
+    /// Start Menu / a service host) — AttachConsole returns Err
+    /// and we silently skip the redirect.
+    fn attach_to_parent_console() {
+        use windows::Win32::System::Console::{
+            ATTACH_PARENT_PROCESS, AttachConsole, GetStdHandle, STD_ERROR_HANDLE,
+            STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, SetStdHandle,
+        };
+        unsafe {
+            if AttachConsole(ATTACH_PARENT_PROCESS).is_err() {
+                return;
+            }
+            for std_id in [STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE] {
+                if let Ok(h) = GetStdHandle(std_id) {
+                    let _ = SetStdHandle(std_id, h);
+                }
             }
         }
     }
