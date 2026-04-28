@@ -688,6 +688,9 @@ fn on_command(hwnd: HWND, id: u32) {
         IDM_REFRESH => on_refresh(hwnd),
         IDM_IMPORT => on_import(hwnd),
         IDM_EXPORT => on_export(hwnd),
+        IDM_ABOUT => on_about(hwnd),
+        IDM_WEBSITE => open_website(hwnd),
+        IDM_CHECKUPDATES => open_releases_page(hwnd),
         other => eprintln!("simplewall-rs: menu id {other} not yet wired up"),
     }
 }
@@ -803,21 +806,111 @@ fn on_refresh(hwnd: HWND) {
     set_status_text(state.status.get(), 0, "Profile reloaded.");
 }
 
+/// Open the project's main GitHub page (Help → Website).
+fn open_website(hwnd: HWND) {
+    shell_open_url(hwnd, w!("https://github.com/simplewall-rs/simplewall-rs"));
+}
+
+/// Help → About: modern TaskDialog with version, copyright, GPL
+/// notice, and a clickable repo link. ENABLE_HYPERLINKS routes
+/// link clicks to our callback which fires ShellExecuteW.
+fn on_about(hwnd: HWND) {
+    use windows::Win32::UI::Controls::{
+        TASKDIALOG_FLAGS, TASKDIALOGCONFIG, TASKDIALOGCONFIG_0, TASKDIALOGCONFIG_1,
+        TDCBF_OK_BUTTON, TDF_ENABLE_HYPERLINKS, TaskDialogIndirect,
+    };
+
+    let title = wide("About simplewall-rs");
+    let main_instr = wide("simplewall-rs");
+    let version = env!("CARGO_PKG_VERSION");
+    let content_str = format!(
+        concat!(
+            "Version {version}\n",
+            "\n",
+            "A Rust port of simplewall, a Windows Filtering Platform (WFP) firewall.\n",
+            "\n",
+            "Copyright \u{00A9} 2026 simplewall-rs contributors.\n",
+            "Licensed under the GNU General Public License v3.0 or later.\n",
+            "\n",
+            "Original simplewall \u{00A9} 2016\u{2013}2026 Henry++.\n",
+            "\n",
+            "<a href=\"https://github.com/simplewall-rs/simplewall-rs\">",
+            "github.com/simplewall-rs/simplewall-rs</a>",
+        ),
+        version = version,
+    );
+    let content = wide(&content_str);
+
+    let cfg = TASKDIALOGCONFIG {
+        cbSize: std::mem::size_of::<TASKDIALOGCONFIG>() as u32,
+        hwndParent: hwnd,
+        dwFlags: TASKDIALOG_FLAGS(TDF_ENABLE_HYPERLINKS.0),
+        dwCommonButtons: TDCBF_OK_BUTTON,
+        pszWindowTitle: PCWSTR(title.as_ptr()),
+        pszMainInstruction: PCWSTR(main_instr.as_ptr()),
+        pszContent: PCWSTR(content.as_ptr()),
+        pfCallback: Some(about_dialog_callback),
+        Anonymous1: TASKDIALOGCONFIG_0::default(),
+        Anonymous2: TASKDIALOGCONFIG_1::default(),
+        ..Default::default()
+    };
+
+    unsafe {
+        let _ = TaskDialogIndirect(&cfg, None, None, None);
+    }
+}
+
+/// TaskDialog notification callback. We only care about
+/// TDN_HYPERLINK_CLICKED — when the user clicks the GitHub link
+/// in the About box, route it through ShellExecuteW so it opens
+/// in their default browser.
+unsafe extern "system" fn about_dialog_callback(
+    hwnd: HWND,
+    msg: windows::Win32::UI::Controls::TASKDIALOG_NOTIFICATIONS,
+    _wparam: WPARAM,
+    lparam: LPARAM,
+    _ref_data: isize,
+) -> windows::core::HRESULT {
+    use windows::Win32::UI::Controls::TDN_HYPERLINK_CLICKED;
+    if msg == TDN_HYPERLINK_CLICKED {
+        let url_ptr = lparam.0 as *const u16;
+        if !url_ptr.is_null() {
+            unsafe {
+                let _ = ShellExecuteW(
+                    hwnd,
+                    w!("open"),
+                    PCWSTR(url_ptr),
+                    PCWSTR::null(),
+                    PCWSTR::null(),
+                    SW_SHOWNORMAL,
+                );
+            }
+        }
+    }
+    windows::core::HRESULT(0) // S_OK
+}
+
 /// Open https://github.com/simplewall-rs/simplewall-rs/releases in
 /// the system's default browser. Replaces upstream's PayPal donate
 /// flow — same toolbar slot, friendlier action.
 fn open_releases_page(hwnd: HWND) {
-    // ShellExecuteW returns a HINSTANCE > 32 on success; <= 32 is
-    // an error code. We don't surface failure beyond a stderr line
-    // because the user-visible failure mode (browser doesn't open)
-    // is already self-explanatory.
-    let url = w!("https://github.com/simplewall-rs/simplewall-rs/releases");
-    let verb = w!("open");
+    shell_open_url(
+        hwnd,
+        w!("https://github.com/simplewall-rs/simplewall-rs/releases"),
+    );
+}
+
+/// Pop the user's default browser at `url`. ShellExecuteW returns
+/// a HINSTANCE > 32 on success and an error code <= 32 on
+/// failure. We don't surface failure beyond a stderr line since
+/// the user-visible failure mode (browser doesn't open) is
+/// already self-explanatory.
+fn shell_open_url(hwnd: HWND, url: PCWSTR) {
     let result = unsafe {
-        ShellExecuteW(hwnd, verb, url, PCWSTR::null(), PCWSTR::null(), SW_SHOWNORMAL)
+        ShellExecuteW(hwnd, w!("open"), url, PCWSTR::null(), PCWSTR::null(), SW_SHOWNORMAL)
     };
     if result.0 as usize <= 32 {
-        eprintln!("simplewall-rs: ShellExecuteW(releases) failed: code {}", result.0);
+        eprintln!("simplewall-rs: ShellExecuteW failed: code {}", result.0);
     }
 }
 
