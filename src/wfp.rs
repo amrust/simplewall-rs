@@ -4,8 +4,8 @@
 // Thin wrapper around the user-mode Windows Filtering Platform engine
 // handle (`fwpuclnt.dll`). The engine is opened with a populated
 // FWPM_SESSION0 — display data + session-key GUID + transaction
-// timeout — matching upstream simplewall. The EPT_S_NOT_REGISTERED
-// retry loop lands in M1.3.
+// timeout — and the open call retries on EPT_S_NOT_REGISTERED to
+// tolerate the BFE service still warming up at boot.
 
 #![cfg(windows)]
 
@@ -25,6 +25,20 @@ const APP_NAME: &str = "simplewall-rs";
 /// Per-transaction timeout for the WFP session, in milliseconds.
 /// Matches upstream's `TRANSACTION_TIMEOUT` (`main.h:138`).
 const TRANSACTION_TIMEOUT_MS: u32 = 9000;
+
+/// RPC endpoint not registered. BFE returns this while the service is
+/// still starting up (e.g. very early in boot). Numerically identical
+/// to `windows::Win32::System::Rpc::EPT_S_NOT_REGISTERED.0 as u32`,
+/// inlined as `u32` because `FwpmEngineOpen0` returns `u32`.
+const EPT_S_NOT_REGISTERED: u32 = 1753;
+
+/// Maximum attempts to open the engine before giving up. Matches
+/// upstream's `attempts = 6` (`wfp.c:84`).
+const OPEN_MAX_ATTEMPTS: u32 = 6;
+
+/// Sleep between retry attempts. Matches upstream's `_r_sys_sleep
+/// (500)` (`wfp.c:115`). Total worst-case wait = 6 × 500 ms = 3 s.
+const OPEN_RETRY_SLEEP_MS: u64 = 500;
 
 #[derive(Debug)]
 pub enum WfpError {
@@ -72,19 +86,27 @@ impl WfpEngine {
     /// &session, &handle)`. Requires the Base Filtering Engine (BFE)
     /// service to be running; does NOT require administrator
     /// privileges (only filter mutations do).
+    ///
+    /// Retries up to `OPEN_MAX_ATTEMPTS` times with
+    /// `OPEN_RETRY_SLEEP_MS` between attempts when BFE returns
+    /// `EPT_S_NOT_REGISTERED` (service is still warming up). All
+    /// other Win32 errors fail immediately. Worst-case block: 3 s.
     pub fn open() -> Result<Self, WfpError> {
         // Generate a per-session GUID. Filter / sublayer / provider
         // operations later in M1 will key off this so the running
         // process can identify its own filters in WFP enumerations.
+        // Generated once, before the retry loop — matches upstream
+        // wfp.c:89 (_r_math_generateguid runs before the do-while).
         let mut session_key = GUID::zeroed();
         let rpc_status = unsafe { UuidCreate(&mut session_key) };
         if rpc_status.0 != 0 {
             return Err(WfpError::UuidCreate(rpc_status.0));
         }
 
-        // Display-data buffer must outlive the FwpmEngineOpen0 call.
-        // The kernel copies the strings into its own storage during
-        // the call, so this Vec can be dropped at end of `open()`.
+        // Display-data buffer must outlive every FwpmEngineOpen0
+        // attempt in the retry loop. The kernel copies the strings
+        // into its own storage during each call, so this Vec can be
+        // freed at end of `open()`.
         let mut name_buf: Vec<u16> = APP_NAME
             .encode_utf16()
             .chain(std::iter::once(0))
@@ -96,28 +118,51 @@ impl WfpEngine {
 
         // Zero-init the rest (matches upstream's RtlZeroMemory),
         // then fill the fields we care about. processId / sid /
-        // username / kernelMode / flags stay zero.
+        // username / kernelMode / flags stay zero. Built once and
+        // re-used across retries — the session description doesn't
+        // change between attempts.
         let mut session: FWPM_SESSION0 = unsafe { std::mem::zeroed() };
         session.sessionKey = session_key;
         session.displayData = display_data;
         session.txnWaitTimeoutInMSec = TRANSACTION_TIMEOUT_MS;
 
+        let mut last_status = ERROR_SUCCESS;
         let mut handle = HANDLE::default();
-        let status = unsafe {
-            FwpmEngineOpen0(
-                windows::core::PCWSTR::null(),
-                RPC_C_AUTHN_WINNT,
-                None,
-                Some(&session),
-                &mut handle,
-            )
-        };
-        // name_buf is borrowed until here via the raw PWSTRs in
-        // `session.displayData`. Keep it alive across the call.
+        for attempt in 0..OPEN_MAX_ATTEMPTS {
+            handle = HANDLE::default();
+            last_status = unsafe {
+                FwpmEngineOpen0(
+                    windows::core::PCWSTR::null(),
+                    RPC_C_AUTHN_WINNT,
+                    None,
+                    Some(&session),
+                    &mut handle,
+                )
+            };
+            if last_status == ERROR_SUCCESS {
+                break;
+            }
+            // Only EPT_S_NOT_REGISTERED is worth waiting on — anything
+            // else is a structural error (bad parameters, ACL denial,
+            // etc.) and another sleep won't help. Match upstream's
+            // discriminator at wfp.c:110.
+            if last_status != EPT_S_NOT_REGISTERED {
+                break;
+            }
+            // Don't sleep after the final attempt — pointless wait.
+            if attempt + 1 < OPEN_MAX_ATTEMPTS {
+                std::thread::sleep(std::time::Duration::from_millis(
+                    OPEN_RETRY_SLEEP_MS,
+                ));
+            }
+        }
+        // name_buf is borrowed via the raw PWSTRs in
+        // `session.displayData` until here. Keep it alive across the
+        // entire retry loop.
         drop(name_buf);
 
-        if status != ERROR_SUCCESS {
-            return Err(WfpError::Open(status));
+        if last_status != ERROR_SUCCESS {
+            return Err(WfpError::Open(last_status));
         }
         Ok(Self { handle, session_key })
     }
