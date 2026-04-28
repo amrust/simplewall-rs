@@ -15,6 +15,7 @@
 #![cfg(windows)]
 
 pub mod app;
+pub mod dialogs;
 pub mod ids;
 pub mod main_window;
 pub mod toolbar;
@@ -23,6 +24,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use windows::Win32::Foundation::HWND;
+use windows::Win32::System::Com::{COINIT_APARTMENTTHREADED, CoInitializeEx, CoUninitialize};
 use windows::Win32::UI::HiDpi::{
     DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetProcessDpiAwarenessContext,
 };
@@ -49,6 +51,18 @@ pub fn run(default_profile_path: PathBuf) -> ExitCode {
     unsafe {
         let _ = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     }
+
+    // Initialise COM in apartment-threaded mode so the standard Win32
+    // file-open / file-save dialogs (IFileOpenDialog / IFileSaveDialog)
+    // can be created from the GUI thread. STA is the right model for
+    // single-threaded UI; MTA breaks the dialog's interaction with
+    // shell objects. CoUninitialize at end of run pairs with this.
+    // RPC_E_CHANGED_MODE (0x80010106) means COM is already initialised
+    // in another mode — harmless, ignore.
+    let com_initialized = unsafe {
+        let hr = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
+        hr.is_ok() || hr.0 == 0x8001_0106u32 as i32
+    };
 
     let profile = match try_load_profile(&default_profile_path) {
         Ok(p) => p,
@@ -82,6 +96,12 @@ pub fn run(default_profile_path: PathBuf) -> ExitCode {
         while GetMessageW(&mut msg, HWND::default(), 0, 0).as_bool() {
             let _ = TranslateMessage(&msg);
             DispatchMessageW(&msg);
+        }
+    }
+
+    if com_initialized {
+        unsafe {
+            CoUninitialize();
         }
     }
 

@@ -71,6 +71,7 @@ use super::ids::{
     IDM_SHOWSEARCHBAR_CHK, IDM_SKIPUACWARNING_CHK, IDM_STARTMINIMIZED_CHK, IDM_USEDARKTHEME_CHK,
     IDM_WEBSITE, TAB_LISTVIEW_IDS,
 };
+use super::dialogs;
 use super::toolbar::{self, Toolbar};
 use super::{post_quit, wide};
 
@@ -685,8 +686,84 @@ fn on_command(hwnd: HWND, id: u32) {
         },
         IDM_RELEASES => open_releases_page(hwnd),
         IDM_REFRESH => on_refresh(hwnd),
+        IDM_IMPORT => on_import(hwnd),
+        IDM_EXPORT => on_export(hwnd),
         other => eprintln!("simplewall-rs: menu id {other} not yet wired up"),
     }
+}
+
+/// File → Import: pick a `.xml` profile, parse it, swap it in as
+/// the active profile, repopulate the listviews, and update the
+/// title bar to reflect the new path.
+fn on_import(hwnd: HWND) {
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+    let Some(path) = dialogs::open_profile(hwnd) else {
+        return;
+    };
+    let xml = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!(
+                "simplewall-rs: import: read failed for {}: {e}",
+                path.display()
+            );
+            set_status_text(state.status.get(), 0, "Import failed: read error.");
+            return;
+        }
+    };
+    let new_profile = match crate::profile::parse_str(&xml) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("simplewall-rs: import: parse failed: {e}");
+            set_status_text(state.status.get(), 0, "Import failed: parse error.");
+            return;
+        }
+    };
+    state.app.profile.replace(new_profile);
+    state.app.profile_path.replace(path.clone());
+    populate_apps_tab(state);
+    populate_user_rules(state);
+    on_tab_change(hwnd);
+    set_window_title(hwnd, &path);
+    set_status_text(state.status.get(), 0, "Imported.");
+}
+
+/// File → Export: pick a destination, serialize the current
+/// profile to XML, write it. After a successful save we update the
+/// active profile_path + title bar so subsequent Refresh/Save
+/// targets the new path.
+fn on_export(hwnd: HWND) {
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+    // Suggest the current filename so quick "save a copy" flows
+    // don't make the user retype it.
+    let default_name = state
+        .app
+        .profile_path
+        .borrow()
+        .file_name()
+        .map(|s| s.to_string_lossy().into_owned());
+    let Some(target) = dialogs::save_profile(hwnd, default_name.as_deref()) else {
+        return;
+    };
+
+    let xml = crate::profile::to_string(&state.app.profile.borrow());
+    if let Err(e) = std::fs::write(&target, xml) {
+        eprintln!(
+            "simplewall-rs: export: write failed for {}: {e}",
+            target.display()
+        );
+        set_status_text(state.status.get(), 0, "Export failed: write error.");
+        return;
+    }
+    state.app.profile_path.replace(target.clone());
+    set_window_title(hwnd, &target);
+    set_status_text(state.status.get(), 0, "Exported.");
 }
 
 /// Reload the current profile from disk and re-populate the

@@ -18,6 +18,7 @@ windows = { version = "0.54", features = [
     "Win32_Graphics_Gdi",
     "Win32_NetworkManagement_WindowsFilteringPlatform",
     "Win32_Security",
+    "Win32_System_Com",
     "Win32_System_Console",
     "Win32_System_LibraryLoader",
     "Win32_System_Rpc",
@@ -25,6 +26,7 @@ windows = { version = "0.54", features = [
     "Win32_UI_Controls",
     "Win32_UI_HiDpi",
     "Win32_UI_Shell",
+    "Win32_UI_Shell_Common",
     "Win32_UI_WindowsAndMessaging",
 ] }
 
