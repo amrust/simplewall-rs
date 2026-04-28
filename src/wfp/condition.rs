@@ -4,28 +4,30 @@
 // `FilterCondition` is the high-level user-facing description of a
 // match clause on a WFP filter. The mapping to native
 // `FWPM_FILTER_CONDITION0` arrays + their backing pointer storage
-// happens in `filter::add` via `compile_into`. The intermediate
+// happens via `compile()`, called from `filter::add`. The intermediate
 // `CompiledConditions` value owns all the heap-allocated auxiliary
-// structs (FWP_V4_ADDR_AND_MASK, FWP_V6_ADDR_AND_MASK) so the raw
-// pointers in `FWPM_FILTER_CONDITION0::conditionValue` stay valid for
-// the duration of `FwpmFilterAdd0`.
-//
-// M1.5a covers network-only conditions: protocol, ports, IPs (v4/v6
-// with optional CIDR mask), direction. App-path conditions land in
-// M1.5b — that needs `FwpmGetAppIdFromFileName0` plus a separate
-// post-call cleanup with `FwpmFreeMemory0`.
+// structs (FWP_V4_ADDR_AND_MASK, FWP_V6_ADDR_AND_MASK,
+// FWP_BYTE_ARRAY16) AND any WFP-heap-allocated app-id blobs, so the
+// raw pointers in `FWPM_FILTER_CONDITION0::conditionValue` stay valid
+// for the duration of `FwpmFilterAdd0`. Drop releases the WFP blobs
+// via `FwpmFreeMemory0` and lets Rust's allocator reclaim the rest.
 
 use std::net::{Ipv4Addr, Ipv6Addr};
+use std::os::windows::ffi::OsStrExt;
+use std::path::{Path, PathBuf};
 
 use windows::Win32::NetworkManagement::WindowsFilteringPlatform::{
-    FWP_BYTE_ARRAY16, FWP_CONDITION_VALUE0, FWP_CONDITION_VALUE0_0, FWP_DIRECTION,
-    FWP_DIRECTION_INBOUND, FWP_DIRECTION_OUTBOUND, FWP_MATCH_EQUAL, FWP_UINT8, FWP_UINT16,
-    FWP_UINT32, FWP_V4_ADDR_AND_MASK, FWP_V4_ADDR_MASK, FWP_V6_ADDR_AND_MASK, FWP_V6_ADDR_MASK,
-    FWPM_CONDITION_DIRECTION, FWPM_CONDITION_IP_LOCAL_ADDRESS, FWPM_CONDITION_IP_LOCAL_PORT,
-    FWPM_CONDITION_IP_PROTOCOL, FWPM_CONDITION_IP_REMOTE_ADDRESS,
-    FWPM_CONDITION_IP_REMOTE_PORT, FWPM_FILTER_CONDITION0,
+    FWP_BYTE_ARRAY16, FWP_BYTE_BLOB, FWP_BYTE_BLOB_TYPE, FWP_CONDITION_VALUE0,
+    FWP_CONDITION_VALUE0_0, FWP_DIRECTION, FWP_DIRECTION_INBOUND, FWP_DIRECTION_OUTBOUND,
+    FWP_MATCH_EQUAL, FWP_UINT8, FWP_UINT16, FWP_UINT32, FWP_V4_ADDR_AND_MASK, FWP_V4_ADDR_MASK,
+    FWP_V6_ADDR_AND_MASK, FWP_V6_ADDR_MASK, FWPM_CONDITION_ALE_APP_ID, FWPM_CONDITION_DIRECTION,
+    FWPM_CONDITION_IP_LOCAL_ADDRESS, FWPM_CONDITION_IP_LOCAL_PORT, FWPM_CONDITION_IP_PROTOCOL,
+    FWPM_CONDITION_IP_REMOTE_ADDRESS, FWPM_CONDITION_IP_REMOTE_PORT, FWPM_FILTER_CONDITION0,
+    FwpmFreeMemory0, FwpmGetAppIdFromFileName0,
 };
-use windows::core::GUID;
+use windows::core::{GUID, PCWSTR};
+
+use super::WfpError;
 
 /// IP protocol number (the `IPPROTO_*` family). Upstream simplewall
 /// rules can match TCP, UDP, ICMP and a few others by number.
@@ -83,7 +85,13 @@ impl Direction {
 /// `FWP_UINT32`/`FWP_BYTE_ARRAY16`); when `Some`, it compiles to
 /// `FWP_V4_ADDR_MASK` / `FWP_V6_ADDR_MASK` with the prefix expanded
 /// to a full 32-bit / 128-bit mask.
-#[derive(Debug, Clone, Copy)]
+///
+/// `AppPath` matches the originating application by full Win32 path
+/// (e.g. `C:\Windows\System32\svchost.exe`). The path is resolved to
+/// an "app id" `FWP_BYTE_BLOB` via `FwpmGetAppIdFromFileName0` at
+/// compile time, which means the file must exist and be readable
+/// when `filter::add` runs.
+#[derive(Debug, Clone)]
 pub enum FilterCondition {
     Protocol(IpProto),
     LocalPort(u16),
@@ -93,6 +101,7 @@ pub enum FilterCondition {
     LocalAddrV6 { addr: Ipv6Addr, prefix: Option<u8> },
     RemoteAddrV6 { addr: Ipv6Addr, prefix: Option<u8> },
     Direction(Direction),
+    AppPath(PathBuf),
 }
 
 /// Compile a slice of `FilterCondition` into a parallel array of
@@ -104,65 +113,70 @@ pub enum FilterCondition {
 /// `CompiledConditions` AFTER the call returns. The kernel copies
 /// pointed-to data into its own storage during the call so the
 /// auxiliary backing can be freed at end of the caller's scope.
-pub(super) fn compile(conditions: &[FilterCondition]) -> CompiledConditions {
+///
+/// Fails when an `AppPath` condition references a missing or
+/// unreadable file (returns `WfpError::AppIdFromFileName`). When that
+/// happens any app-id blobs already obtained for earlier conditions
+/// are released through `CompiledConditions`'s `Drop` impl as the
+/// partial value goes out of scope.
+pub(super) fn compile(
+    conditions: &[FilterCondition],
+) -> Result<CompiledConditions, WfpError> {
     let mut storage = CompiledConditions {
         v4_masks: Vec::with_capacity(conditions.len()),
         v6_masks: Vec::with_capacity(conditions.len()),
         v6_addrs: Vec::with_capacity(conditions.len()),
+        app_id_blobs: Vec::new(),
         natives: Vec::with_capacity(conditions.len()),
     };
 
     for cond in conditions {
-        let native = match *cond {
-            FilterCondition::Protocol(proto) => fc_uint8(FWPM_CONDITION_IP_PROTOCOL, proto.as_u8()),
+        let native = match cond {
+            FilterCondition::Protocol(proto) => {
+                fc_uint8(FWPM_CONDITION_IP_PROTOCOL, proto.as_u8())
+            }
 
-            FilterCondition::LocalPort(port) => fc_uint16(FWPM_CONDITION_IP_LOCAL_PORT, port),
-            FilterCondition::RemotePort(port) => fc_uint16(FWPM_CONDITION_IP_REMOTE_PORT, port),
+            FilterCondition::LocalPort(port) => fc_uint16(FWPM_CONDITION_IP_LOCAL_PORT, *port),
+            FilterCondition::RemotePort(port) => fc_uint16(FWPM_CONDITION_IP_REMOTE_PORT, *port),
 
             FilterCondition::LocalAddrV4 { addr, prefix: None } => {
-                fc_uint32(FWPM_CONDITION_IP_LOCAL_ADDRESS, u32::from(addr))
+                fc_uint32(FWPM_CONDITION_IP_LOCAL_ADDRESS, u32::from(*addr))
             }
             FilterCondition::RemoteAddrV4 { addr, prefix: None } => {
-                fc_uint32(FWPM_CONDITION_IP_REMOTE_ADDRESS, u32::from(addr))
+                fc_uint32(FWPM_CONDITION_IP_REMOTE_ADDRESS, u32::from(*addr))
             }
 
-            FilterCondition::LocalAddrV4 { addr, prefix: Some(p) } => storage.fc_v4_mask(
-                FWPM_CONDITION_IP_LOCAL_ADDRESS,
-                addr,
-                p,
-            ),
-            FilterCondition::RemoteAddrV4 { addr, prefix: Some(p) } => storage.fc_v4_mask(
-                FWPM_CONDITION_IP_REMOTE_ADDRESS,
-                addr,
-                p,
-            ),
+            FilterCondition::LocalAddrV4 { addr, prefix: Some(p) } => {
+                storage.fc_v4_mask(FWPM_CONDITION_IP_LOCAL_ADDRESS, *addr, *p)
+            }
+            FilterCondition::RemoteAddrV4 { addr, prefix: Some(p) } => {
+                storage.fc_v4_mask(FWPM_CONDITION_IP_REMOTE_ADDRESS, *addr, *p)
+            }
 
             FilterCondition::LocalAddrV6 { addr, prefix: None } => {
-                storage.fc_v6_addr(FWPM_CONDITION_IP_LOCAL_ADDRESS, addr)
+                storage.fc_v6_addr(FWPM_CONDITION_IP_LOCAL_ADDRESS, *addr)
             }
             FilterCondition::RemoteAddrV6 { addr, prefix: None } => {
-                storage.fc_v6_addr(FWPM_CONDITION_IP_REMOTE_ADDRESS, addr)
+                storage.fc_v6_addr(FWPM_CONDITION_IP_REMOTE_ADDRESS, *addr)
             }
 
-            FilterCondition::LocalAddrV6 { addr, prefix: Some(p) } => storage.fc_v6_mask(
-                FWPM_CONDITION_IP_LOCAL_ADDRESS,
-                addr,
-                p,
-            ),
-            FilterCondition::RemoteAddrV6 { addr, prefix: Some(p) } => storage.fc_v6_mask(
-                FWPM_CONDITION_IP_REMOTE_ADDRESS,
-                addr,
-                p,
-            ),
+            FilterCondition::LocalAddrV6 { addr, prefix: Some(p) } => {
+                storage.fc_v6_mask(FWPM_CONDITION_IP_LOCAL_ADDRESS, *addr, *p)
+            }
+            FilterCondition::RemoteAddrV6 { addr, prefix: Some(p) } => {
+                storage.fc_v6_mask(FWPM_CONDITION_IP_REMOTE_ADDRESS, *addr, *p)
+            }
 
             FilterCondition::Direction(d) => {
                 fc_uint32(FWPM_CONDITION_DIRECTION, d.as_fwp().0 as u32)
             }
+
+            FilterCondition::AppPath(path) => storage.fc_app_id(path)?,
         };
         storage.natives.push(native);
     }
 
-    storage
+    Ok(storage)
 }
 
 /// Owning storage for compiled conditions. Drop only AFTER
@@ -188,9 +202,14 @@ pub(super) struct CompiledConditions {
     /// Heap-allocated v6 raw addresses for the no-mask path
     /// (referenced by `byteArray16` pointers).
     v6_addrs: Vec<Box<FWP_BYTE_ARRAY16>>,
+    /// `FWP_BYTE_BLOB*` pointers returned by
+    /// `FwpmGetAppIdFromFileName0`. These point at the **WFP heap**
+    /// (NOT Rust's heap) and must be released via `FwpmFreeMemory0`
+    /// in `Drop`.
+    app_id_blobs: Vec<*mut FWP_BYTE_BLOB>,
     /// The compiled native conditions, in the same order as the
     /// input slice. Pointers within these reference into the three
-    /// `Box` vecs above.
+    /// `Box` vecs above and into the WFP-heap blobs.
     natives: Vec<FWPM_FILTER_CONDITION0>,
 }
 
@@ -250,6 +269,38 @@ impl CompiledConditions {
         }
     }
 
+    /// Resolve `path` to an "app id" `FWP_BYTE_BLOB` via
+    /// `FwpmGetAppIdFromFileName0`, store the WFP-heap pointer for
+    /// later release in `Drop`, and build the matching
+    /// `FWPM_CONDITION_ALE_APP_ID` condition.
+    fn fc_app_id(&mut self, path: &Path) -> Result<FWPM_FILTER_CONDITION0, WfpError> {
+        // Encode the OsStr as UTF-16 + NUL — handles any Windows path
+        // including those that aren't valid UTF-8.
+        let wide: Vec<u16> = path
+            .as_os_str()
+            .encode_wide()
+            .chain(std::iter::once(0))
+            .collect();
+
+        let mut blob_ptr: *mut FWP_BYTE_BLOB = std::ptr::null_mut();
+        let status = unsafe { FwpmGetAppIdFromFileName0(PCWSTR(wide.as_ptr()), &mut blob_ptr) };
+        if status != 0 {
+            return Err(WfpError::AppIdFromFileName(status));
+        }
+        // Track for release. Safety: blob_ptr is a WFP-heap pointer
+        // owned by us; no aliasing with anything else.
+        self.app_id_blobs.push(blob_ptr);
+
+        Ok(FWPM_FILTER_CONDITION0 {
+            fieldKey: FWPM_CONDITION_ALE_APP_ID,
+            matchType: FWP_MATCH_EQUAL,
+            conditionValue: FWP_CONDITION_VALUE0 {
+                r#type: FWP_BYTE_BLOB_TYPE,
+                Anonymous: FWP_CONDITION_VALUE0_0 { byteBlob: blob_ptr },
+            },
+        })
+    }
+
     fn fc_v6_addr(&mut self, field: GUID, addr: Ipv6Addr) -> FWPM_FILTER_CONDITION0 {
         let arr = Box::new(FWP_BYTE_ARRAY16 {
             byteArray16: addr.octets(),
@@ -265,6 +316,26 @@ impl CompiledConditions {
                     windows::Win32::NetworkManagement::WindowsFilteringPlatform::FWP_BYTE_ARRAY16_TYPE,
                 Anonymous: FWP_CONDITION_VALUE0_0 { byteArray16: raw_ptr },
             },
+        }
+    }
+}
+
+impl Drop for CompiledConditions {
+    fn drop(&mut self) {
+        // Release every WFP-heap `FWP_BYTE_BLOB` we obtained from
+        // `FwpmGetAppIdFromFileName0`. The Vec<Box<T>> fields above
+        // free themselves through their normal Drop impls; only the
+        // app-id blobs need an explicit Win32 free.
+        for blob_ptr in self.app_id_blobs.drain(..) {
+            if !blob_ptr.is_null() {
+                // FwpmFreeMemory0 takes `*mut *mut c_void` — it null-
+                // patches the caller's pointer after freeing. We
+                // keep a local copy so the cast is to a stack slot
+                // rather than to a Vec element pointer that could
+                // theoretically be re-borrowed elsewhere in the loop.
+                let mut local = blob_ptr as *mut std::ffi::c_void;
+                unsafe { FwpmFreeMemory0(&mut local) };
+            }
         }
     }
 }
@@ -362,7 +433,7 @@ mod tests {
                 prefix: Some(8),
             },
         ];
-        let compiled = compile(&conds);
+        let compiled = compile(&conds).expect("compile failed");
         assert_eq!(compiled.as_native_slice().len(), 4);
     }
 
@@ -380,8 +451,45 @@ mod tests {
                 prefix: Some(16),
             },
         ];
-        let compiled = compile(&conds);
+        let compiled = compile(&conds).expect("compile failed");
         assert_eq!(compiled.v4_masks.len(), 2);
         assert_eq!(compiled.v6_masks.len(), 0);
+    }
+
+    /// AppPath against a real always-present file resolves to a
+    /// non-null FWP_BYTE_BLOB pointer, and Drop releases it cleanly
+    /// without panicking. `FwpmGetAppIdFromFileName0` is documented
+    /// as not requiring admin (only path-resolution rights), so this
+    /// runs in the default `cargo test` profile.
+    #[test]
+    fn compile_app_path_resolves_blob() {
+        let conds = [FilterCondition::AppPath(PathBuf::from(
+            r"C:\Windows\System32\cmd.exe",
+        ))];
+        let compiled = compile(&conds).expect("compile against cmd.exe failed");
+        assert_eq!(compiled.app_id_blobs.len(), 1);
+        assert!(
+            !compiled.app_id_blobs[0].is_null(),
+            "FwpmGetAppIdFromFileName0 returned a null blob pointer"
+        );
+        // Compiled drops here — Drop calls FwpmFreeMemory0 on the
+        // blob. No panic == release path is sound.
+    }
+
+    /// Compilation against a missing path surfaces the
+    /// `FwpmGetAppIdFromFileName0` error instead of panicking. Uses
+    /// a path that cannot exist on any Windows install (drive letter
+    /// `Z:` is conventionally unmapped on default installs; the
+    /// filename is also a sentinel).
+    #[test]
+    fn compile_app_path_missing_file_returns_error() {
+        let conds = [FilterCondition::AppPath(PathBuf::from(
+            r"Z:\simplewall_rs_does_not_exist_53b8b2d8.exe",
+        ))];
+        match compile(&conds) {
+            Err(WfpError::AppIdFromFileName(_)) => {} // expected
+            Err(e) => panic!("expected AppIdFromFileName, got {e:?}"),
+            Ok(_) => panic!("expected error, got Ok"),
+        }
     }
 }

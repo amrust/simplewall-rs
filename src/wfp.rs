@@ -66,6 +66,11 @@ pub enum WfpError {
     /// `FwpmFilterAdd0` returned a non-zero Win32 error. Same
     /// admin-elevation requirement as `ProviderAdd`.
     FilterAdd(u32),
+    /// `FwpmGetAppIdFromFileName0` returned a non-zero Win32 error.
+    /// Common: 2 (`ERROR_FILE_NOT_FOUND`) when the path doesn't
+    /// exist, 5 (`ERROR_ACCESS_DENIED`) when the path exists but
+    /// isn't readable by the current user.
+    AppIdFromFileName(u32),
 }
 
 impl std::fmt::Display for WfpError {
@@ -76,6 +81,9 @@ impl std::fmt::Display for WfpError {
             Self::ProviderAdd(s) => write!(f, "FwpmProviderAdd0 failed (Win32 error {s:#010x})"),
             Self::SubLayerAdd(s) => write!(f, "FwpmSubLayerAdd0 failed (Win32 error {s:#010x})"),
             Self::FilterAdd(s) => write!(f, "FwpmFilterAdd0 failed (Win32 error {s:#010x})"),
+            Self::AppIdFromFileName(s) => {
+                write!(f, "FwpmGetAppIdFromFileName0 failed (Win32 error {s:#010x})")
+            }
         }
     }
 }

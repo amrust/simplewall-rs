@@ -93,8 +93,9 @@ pub fn add(
     // Compile conditions into FWPM_FILTER_CONDITION0 + backing
     // pointer storage. `compiled` must outlive the FwpmFilterAdd0
     // call below — every pointer in compiled.as_native_slice()
-    // references into its `Box`-owned storage.
-    let compiled = condition::compile(conditions);
+    // references into either Box<T>-owned heap storage or the
+    // WFP-heap app-id blobs released by Drop on `compiled`.
+    let compiled = condition::compile(conditions)?;
     let cond_slice = compiled.as_native_slice();
 
     let mut filter: FWPM_FILTER0 = unsafe { std::mem::zeroed() };
@@ -189,6 +190,46 @@ mod tests {
             (0, 0, 0, [0u8; 8]),
             "filter key was nil GUID"
         );
+        assert_ne!(f.runtime_id(), 0, "filter runtime id was 0");
+    }
+
+    /// Live admin-only smoke test: filter with an AppPath condition
+    /// matching a real always-present executable, plus a remote-port
+    /// guard that won't fire on real traffic. Validates that the
+    /// `FwpmGetAppIdFromFileName0` blob pointer survives through
+    /// `FwpmFilterAdd0` and that `Drop` on the compiled conditions
+    /// (which calls `FwpmFreeMemory0`) runs cleanly AFTER the kernel
+    /// has finished consuming the pointer.
+    #[test]
+    #[ignore = "requires elevated shell to call FwpmFilterAdd0"]
+    fn add_filter_with_app_path_admin_smoke() {
+        use std::path::PathBuf;
+        let engine = WfpEngine::open().expect("engine open failed");
+        let prov = provider::add(&engine, "simplewall-rs test", "test provider")
+            .expect("provider add failed");
+        let sub = sublayer::add(
+            &engine,
+            "simplewall-rs apppath test sublayer",
+            "test sublayer",
+            0x4000,
+            Some(&prov.key()),
+        )
+        .expect("sublayer add failed");
+        let conds = [
+            FilterCondition::AppPath(PathBuf::from(r"C:\Windows\System32\cmd.exe")),
+            FilterCondition::RemotePort(65530),
+        ];
+        let f = add(
+            &engine,
+            "simplewall-rs apppath test filter",
+            "permit cmd.exe outbound to remote port 65530",
+            &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
+            &sub.key(),
+            Some(&prov.key()),
+            &conds,
+            FilterAction::Permit,
+        )
+        .expect("FwpmFilterAdd0 with AppPath failed");
         assert_ne!(f.runtime_id(), 0, "filter runtime id was 0");
     }
 
