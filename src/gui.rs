@@ -80,9 +80,27 @@ pub fn run(default_profile_path: PathBuf) -> ExitCode {
     let settings_path = settings::default_settings_path();
     let settings = settings::Settings::load(&settings_path);
 
+    // Bundled internal profile — `<rules_system>` + `<rules_blocklist>`
+    // shipped with the binary. Same XML format as the user profile
+    // so the same parser works. Failure here is fatal because we
+    // built the .xml into our binary; if it's malformed the build
+    // itself shipped a bug.
+    let internal_xml = include_str!("../assets/profile_internal.xml");
+    let internal_profile = match profile::parse_str(internal_xml) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!(
+                "simplewall-rs: BUG: bundled profile_internal.xml \
+                 failed to parse: {e}; system rules + blocklist tabs will be empty.",
+            );
+            empty_profile()
+        }
+    };
+
     let app = Box::new(App {
         profile: std::cell::RefCell::new(profile),
         profile_path: std::cell::RefCell::new(default_profile_path),
+        internal_profile,
         settings: std::cell::RefCell::new(settings),
         settings_path: std::cell::RefCell::new(settings_path),
     });

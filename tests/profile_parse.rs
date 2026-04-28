@@ -15,7 +15,7 @@
 use simplewall_rs::profile::{self, Action, Direction, ProfileKind};
 
 const PROFILE_INTERNAL: &str =
-    include_str!("fixtures/profile_internal.xml");
+    include_str!("../assets/profile_internal.xml");
 
 #[test]
 fn parses_upstream_profile_internal_xml() {

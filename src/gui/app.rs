@@ -19,13 +19,20 @@ use super::settings::Settings;
 /// won't surprise us at runtime — borrows always finish inside one
 /// message handler.
 pub struct App {
-    /// The currently-loaded profile. Refresh re-reads from disk;
-    /// Open Profile… replaces wholesale.
+    /// The currently-loaded *user* profile (apps + custom rules +
+    /// rule_configs). Refresh re-reads from disk; Open Profile…
+    /// replaces wholesale.
     pub profile: RefCell<Profile>,
-    /// Path the profile was loaded from (and where Save Profile…
-    /// would write). Defaults to `%APPDATA%\simplewall-rs\profile.xml`,
-    /// matching the CLI.
+    /// Path the user profile was loaded from (and where Save
+    /// Profile… would write). Defaults to
+    /// `%APPDATA%\simplewall-rs\profile.xml`, matching the CLI.
     pub profile_path: RefCell<PathBuf>,
+    /// Bundled internal profile — system rules + blocklist rules
+    /// shipped with simplewall-rs. Loaded once at startup from the
+    /// embedded `assets/profile_internal.xml`. Read-only at
+    /// runtime; the user can't mutate this (matches upstream
+    /// behaviour).
+    pub internal_profile: Profile,
     /// Persistent UI settings (View / Settings menu toggles).
     /// Mutated by the toggle handlers, saved back to
     /// `settings_path` after each change.

@@ -483,11 +483,15 @@ fn on_create(hwnd: HWND) -> Result<(), String> {
 
     // Populate the tabs that are driven from `profile.*`. Apps tab
     // gets the user's per-application list (with checkbox + Added
-    // timestamp); User rules tab gets the custom rules. The other
-    // tabs (Services / UWP / Blocklist / System rules / Connections
-    // / Log) need separate enumeration sources and ship later.
+    // timestamp); User rules tab gets the custom rules. System
+    // Rules + Blocklist come from the bundled internal profile.
+    // Services / UWP need separate enumeration sources (Win32 SCM
+    // and Package Manager respectively); Connections + Log are
+    // M5.7+ work.
     populate_apps_tab(state);
     populate_user_rules(state);
+    populate_internal_rules(state, IDC_RULES_SYSTEM);
+    populate_internal_rules(state, IDC_RULES_BLOCKLIST);
 
     // Apply persisted UI settings: menu checks + always-on-top +
     // search-bar visibility. After this the window mirrors what
@@ -1568,6 +1572,79 @@ fn format_timestamp_local(unix_ts: i64) -> String {
         "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
         local.wYear, local.wMonth, local.wDay, local.wHour, local.wMinute, local.wSecond,
     )
+}
+
+/// Populate one of the two internal-profile listviews
+/// (`IDC_RULES_SYSTEM` or `IDC_RULES_BLOCKLIST`) from the bundled
+/// `internal_profile`. Same column shape as the user rules tab —
+/// Name / Protocol / Direction — and same rule struct, just a
+/// different source slice.
+///
+/// Each row's checkbox is initially set from `Rule.is_enabled` so
+/// users can see at a glance which built-in rules are active. The
+/// `rule_configs` overrides aren't applied yet — that's M5.5 (the
+/// rules editor's "edit override" path).
+fn populate_internal_rules(state: &WndState, id: i32) {
+    use crate::profile::{Direction, Rule};
+
+    let slot = match id {
+        IDC_RULES_BLOCKLIST => 3, // index in TAB_LISTVIEW_IDS
+        IDC_RULES_SYSTEM => 4,
+        _ => return,
+    };
+    let lv = state.listviews[slot].get();
+    if lv.0 == 0 {
+        return;
+    }
+
+    unsafe {
+        let _ = SendMessageW(lv, LVM_DELETEALLITEMS, WPARAM(0), LPARAM(0));
+    }
+
+    let rules: &[Rule] = match id {
+        IDC_RULES_BLOCKLIST => &state.app.internal_profile.blocklist_rules,
+        IDC_RULES_SYSTEM => &state.app.internal_profile.system_rules,
+        _ => return,
+    };
+
+    for (idx, rule) in rules.iter().enumerate() {
+        let mut name_buf = wide(&rule.name);
+        let state_image = if rule.is_enabled { 2u32 } else { 1u32 };
+        let item = LVITEMW {
+            mask: LVIF_TEXT | LVIF_STATE,
+            iItem: idx as i32,
+            iSubItem: 0,
+            pszText: PWSTR(name_buf.as_mut_ptr()),
+            stateMask: LVIS_STATEIMAGEMASK,
+            state: LIST_VIEW_ITEM_STATE_FLAGS(state_image << 12),
+            ..Default::default()
+        };
+        let _ = unsafe {
+            SendMessageW(
+                lv,
+                LVM_INSERTITEMW,
+                WPARAM(0),
+                LPARAM(&item as *const _ as isize),
+            )
+        };
+
+        let protocol = match rule.protocol {
+            Some(1) => "ICMP".to_string(),
+            Some(6) => "TCP".to_string(),
+            Some(17) => "UDP".to_string(),
+            Some(58) => "ICMPv6".to_string(),
+            Some(other) => other.to_string(),
+            None => "Any".to_string(),
+        };
+        let direction = match rule.direction {
+            Direction::Outbound => "Outbound",
+            Direction::Inbound => "Inbound",
+            Direction::Any => "Both",
+            Direction::Other(_) => "Other",
+        };
+        set_subitem(lv, idx as i32, 1, &protocol);
+        set_subitem(lv, idx as i32, 2, direction);
+    }
 }
 
 fn set_subitem(lv: HWND, row: i32, sub: i32, text: &str) {
