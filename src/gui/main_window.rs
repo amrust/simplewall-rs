@@ -609,6 +609,10 @@ unsafe extern "system" fn wnd_proc(
             on_dpi_changed(hwnd, wparam, lparam);
             LRESULT(0)
         }
+        m if m == super::notification::WM_USER_TOAST_MOVED => {
+            on_toast_moved(hwnd, wparam, lparam);
+            LRESULT(0)
+        }
         WM_TIMER => {
             if wparam.0 == TIMER_CONNECTIONS_REFRESH {
                 if let Some(state) = unsafe { state_ref(hwnd) } {
@@ -855,6 +859,37 @@ fn update_enable_filters_button(state: &WndState, active: bool) {
     }
 }
 
+/// Handler for `notification::WM_USER_TOAST_MOVED`. Posted by the
+/// toast wndproc when the user finishes dragging — wparam carries
+/// the new top-left x, lparam carries y, both as i32 round-tripped
+/// through usize/isize. Cast back symmetrically and persist to
+/// settings so the position survives across runs.
+fn on_toast_moved(hwnd: HWND, wparam: WPARAM, lparam: LPARAM) {
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+    let x = wparam.0 as isize as i32;
+    let y = lparam.0 as i32;
+
+    {
+        let mut s = state.app.settings.borrow_mut();
+        s.notification_x = x;
+        s.notification_y = y;
+    }
+
+    // Same per-toggle persistence pattern used by on_toggle —
+    // disk write failures stay in-memory-correct, just don't
+    // survive a restart, and we log to stderr.
+    let path = state.app.settings_path.borrow().clone();
+    if let Err(e) = state.app.settings.borrow().save(&path) {
+        eprintln!(
+            "amwall: settings: save failed for {}: {e}",
+            path.display()
+        );
+    }
+}
+
 /// Drain any pending events from the channel into the log buffer,
 /// trimming the front to keep the buffer at most `EVENT_LOG_CAP`
 /// entries. If the Log tab is currently visible, repopulate the
@@ -896,9 +931,10 @@ fn drain_events(hwnd: HWND, state: &WndState) {
     }
     drop(writer);
     drop(log);
+    let settings_snapshot = settings.clone();
     drop(settings);
     if let Some(ev) = last_drop {
-        super::notification::show_drop_notification(&ev);
+        super::notification::show_drop_notification(&ev, &settings_snapshot, hwnd);
     }
 
     if !new_arrivals {

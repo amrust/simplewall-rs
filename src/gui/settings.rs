@@ -108,6 +108,15 @@ pub struct Settings {
     pub notification_on_tray: bool,
     /// Seconds between similar notifications.
     pub notification_timeout: u32,
+    /// Last user-dragged toast top-left in virtual-screen coords.
+    /// `i32::MIN` is the unset sentinel — toast picks the default
+    /// (bottom-right of the foreground window's monitor work area).
+    /// Saved on drag-and-release, validated against the current
+    /// monitor layout on every show. Signed because virtual-screen
+    /// coords on multi-monitor setups can be negative (e.g. a
+    /// secondary monitor positioned to the left of the primary).
+    pub notification_x: i32,
+    pub notification_y: i32,
 
     // ---- Settings → Logging ----
     pub enable_log: bool,
@@ -159,6 +168,8 @@ impl Default for Settings {
             notification_fullscreen_silent: false,
             notification_on_tray: false,
             notification_timeout: 30,
+            notification_x: i32::MIN,
+            notification_y: i32::MIN,
             enable_log: false,
             log_path: String::new(),
             log_size_limit: 4096,
@@ -253,6 +264,8 @@ impl Settings {
         );
         kv(&mut buf, "notification_on_tray", self.notification_on_tray);
         kv_u32(&mut buf, "notification_timeout", self.notification_timeout);
+        kv_i32(&mut buf, "notification_x", self.notification_x);
+        kv_i32(&mut buf, "notification_y", self.notification_y);
         kv(&mut buf, "enable_log", self.enable_log);
         kv_str(&mut buf, "log_path", &self.log_path);
         kv_u32(&mut buf, "log_size_limit", self.log_size_limit);
@@ -295,6 +308,18 @@ fn apply_kv(s: &mut Settings, key: &str, value: &str) {
         "notification_timeout" => {
             if let Ok(n) = value.parse::<u32>() {
                 s.notification_timeout = n;
+            }
+            return;
+        }
+        "notification_x" => {
+            if let Ok(n) = value.parse::<i32>() {
+                s.notification_x = n;
+            }
+            return;
+        }
+        "notification_y" => {
+            if let Ok(n) = value.parse::<i32>() {
+                s.notification_y = n;
             }
             return;
         }
@@ -383,6 +408,11 @@ fn kv_u32(buf: &mut String, key: &str, value: u32) {
     let _ = writeln!(buf, "{key}={value}");
 }
 
+fn kv_i32(buf: &mut String, key: &str, value: i32) {
+    use std::fmt::Write;
+    let _ = writeln!(buf, "{key}={value}");
+}
+
 /// Standard location: `%APPDATA%\amwall\settings.txt`,
 /// matching the same pattern used by `default_profile_path` in the
 /// CLI entry point. Falls back to a relative `settings.txt` when
@@ -442,6 +472,41 @@ mod tests {
         assert_eq!(loaded, s);
 
         let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn notification_position_round_trips_negative_coords() {
+        // On a multi-monitor setup with a secondary panel positioned
+        // to the left of (or above) the primary, the virtual-screen
+        // origin is offset and saved coords end up negative. Round-
+        // trip must preserve sign.
+        let dir = std::env::temp_dir().join("amwall-tests");
+        let _ = std::fs::create_dir_all(&dir);
+        let path = dir.join("settings_notif_pos.txt");
+        let _ = std::fs::remove_file(&path);
+
+        let s = Settings {
+            notification_x: -1024,
+            notification_y: -50,
+            ..Settings::default()
+        };
+        s.save(&path).expect("save should succeed");
+        let loaded = Settings::load(&path);
+        assert_eq!(loaded.notification_x, -1024);
+        assert_eq!(loaded.notification_y, -50);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn notification_position_default_is_unset_sentinel() {
+        // The default is `i32::MIN`, signalling "no position saved"
+        // — toast must fall back to the bottom-right-of-foreground-
+        // monitor default. A literal 0,0 would mean top-left, which
+        // is an explicit user choice, so the sentinel can't be 0.
+        let s = Settings::default();
+        assert_eq!(s.notification_x, i32::MIN);
+        assert_eq!(s.notification_y, i32::MIN);
     }
 
     #[test]
