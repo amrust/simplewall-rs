@@ -206,6 +206,17 @@ struct WndState {
     /// the per-pixel WM_SIZE flood coalesces paints and lands
     /// the listview in a half-painted state.
     resizing: Cell<bool>,
+    /// `filterId`s of every filter currently installed under
+    /// amwall's `PROVIDER_KEY`. Drop-packet toast is gated on
+    /// `event.filter_id ∈ this set` so we don't pop notifications
+    /// for Windows Firewall / third-party WFP-provider drops.
+    /// Populated at WM_CREATE and refreshed after every successful
+    /// install / uninstall.
+    amwall_filter_ids: std::cell::RefCell<std::collections::HashSet<u64>>,
+    /// `true` when amwall has filters live in WFP (i.e.
+    /// `amwall_filter_ids` is non-empty). Drives the toolbar
+    /// "Enable filters" ↔ "Disable filters" toggle.
+    filters_active: Cell<bool>,
 }
 
 impl WndState {
@@ -234,6 +245,8 @@ impl WndState {
             event_engine: std::cell::RefCell::new(None),
             event_log: std::cell::RefCell::new(std::collections::VecDeque::new()),
             resizing: Cell::new(false),
+            amwall_filter_ids: std::cell::RefCell::new(std::collections::HashSet::new()),
+            filters_active: Cell::new(false),
         }
     }
 }
@@ -755,6 +768,11 @@ fn try_subscribe_events(state: &WndState) {
     };
     match crate::wfp::events::subscribe(&engine) {
         Ok((sub, rx)) => {
+            // Snapshot the current set of amwall filters before
+            // moving the engine into state — used by drain_events
+            // to gate toast notifications to drops from our own
+            // filters.
+            refresh_amwall_filter_ids_with(&engine, state);
             *state.event_subscription.borrow_mut() = Some(sub);
             *state.event_rx.borrow_mut() = Some(rx);
             *state.event_engine.borrow_mut() = Some(engine);
@@ -769,15 +787,91 @@ fn try_subscribe_events(state: &WndState) {
     }
 }
 
+/// Repopulate the `amwall_filter_ids` cache + toolbar
+/// "Enable filters" ↔ "Disable filters" appearance. Called at
+/// startup (with the event-subscription engine) and after every
+/// successful install/uninstall (with the engine that did the
+/// mutation) so the cache always reflects live kernel state.
+/// Repopulate the toast-gating filter-id cache. Does NOT touch
+/// `filters_active` — that's driven by the install/uninstall
+/// outcome, not by the filter count, so an empty profile still
+/// flips the toggle button when the user enables the engine.
+fn refresh_amwall_filter_ids_with(engine: &crate::wfp::WfpEngine, state: &WndState) {
+    match engine.enumerate_filter_ids_for_provider(&crate::install::PROVIDER_KEY) {
+        Ok(ids) => {
+            *state.amwall_filter_ids.borrow_mut() = ids.into_iter().collect();
+        }
+        Err(e) => {
+            eprintln!("amwall: failed to enumerate amwall filter ids: {e:?}");
+        }
+    }
+}
+
+/// Swap the toolbar's "Enable filters" button between its enabled
+/// and disabled appearance: green tick-shield + "Enable filters"
+/// when no amwall filters are installed, red cross-shield +
+/// "Disable filters" when they are. Same `IDM_TRAY_START` command
+/// id either way — the click handler branches on
+/// `state.filters_active`.
+fn update_enable_filters_button(state: &WndState, active: bool) {
+    use windows::Win32::UI::Controls::{TBBUTTONINFOW, TBIF_IMAGE, TBIF_TEXT, TB_SETBUTTONINFOW};
+    let toolbar = state.toolbar.get();
+    if toolbar.0 == 0 {
+        return;
+    }
+    let dpi = state.dpi.get();
+    let icons = super::icons::build(dpi);
+    let lookup_id = if active {
+        super::icons::FILTER_DISABLE_MARKER
+    } else {
+        IDM_TRAY_START
+    };
+    let img_idx = super::icons::index_for(&icons, lookup_id);
+
+    let label = if active { "Disable filters" } else { "Enable filters" };
+    let mut wlabel = wide(label);
+    let mut info = TBBUTTONINFOW {
+        cbSize: std::mem::size_of::<TBBUTTONINFOW>() as u32,
+        dwMask: TBIF_IMAGE | TBIF_TEXT,
+        iImage: img_idx,
+        pszText: PWSTR(wlabel.as_mut_ptr()),
+        ..Default::default()
+    };
+    unsafe {
+        SendMessageW(
+            toolbar,
+            TB_SETBUTTONINFOW,
+            WPARAM(IDM_TRAY_START as usize),
+            LPARAM(&mut info as *mut _ as isize),
+        );
+    }
+}
+
 /// Drain any pending events from the channel into the log buffer,
 /// trimming the front to keep the buffer at most `EVENT_LOG_CAP`
 /// entries. If the Log tab is currently visible, repopulate the
 /// listview so the new rows show up live.
 fn drain_events(hwnd: HWND, state: &WndState) {
+    let notify = state.app.settings.borrow().enable_notifications;
     let mut log = state.event_log.borrow_mut();
     let mut new_arrivals = false;
+    let mut last_drop: Option<crate::wfp::events::NetEvent> = None;
     if let Some(rx) = state.event_rx.borrow().as_ref() {
         while let Ok(event) = rx.try_recv() {
+            // Toast the most recent drop in this batch and only
+            // when the drop came from one of OUR filters — bare
+            // FwpmNetEventSubscribe0 sees every drop in the
+            // kernel (Windows Firewall, other WFP providers, …),
+            // so notifying on all of them spams the user with
+            // events that have nothing to do with amwall. Multi-
+            // drop batches collapse to a single toast.
+            if notify
+                && let crate::wfp::events::NetEvent::Drop(d) = &event
+                && let Some(filter_id) = d.filter_id
+                && state.amwall_filter_ids.borrow().contains(&filter_id)
+            {
+                last_drop = Some(event.clone());
+            }
             if log.len() >= EVENT_LOG_CAP {
                 log.pop_front();
             }
@@ -786,6 +880,9 @@ fn drain_events(hwnd: HWND, state: &WndState) {
         }
     }
     drop(log);
+    if let Some(ev) = last_drop {
+        super::notification::show_drop_notification(&ev);
+    }
 
     if !new_arrivals {
         return;
@@ -1332,27 +1429,64 @@ fn on_enable_filters(hwnd: HWND) {
             return;
         }
     };
-    let report = match crate::install::install_profile(
-        &engine,
-        &state.app.profile.borrow(),
-        true, // persistent: reboots keep the filters
-    ) {
-        Ok(r) => r,
-        Err(e) => {
-            eprintln!("amwall: install_profile failed: {e}");
-            set_status_text(state.status.get(), 0, "Filter install failed.");
-            return;
+
+    let new_active;
+    if state.filters_active.get() {
+        // ---- Disable path ----
+        match crate::install::uninstall(&engine) {
+            Ok(report) => {
+                set_status_text(state.status.get(), 0, "Filters are disabled.");
+                set_status_text(
+                    state.status.get(),
+                    1,
+                    &format!(
+                        "{} filter(s) removed, {} sublayer(s) cleared.",
+                        report.filters_deleted, report.sublayers_deleted
+                    ),
+                );
+                new_active = false;
+            }
+            Err(e) => {
+                eprintln!("amwall: uninstall failed: {e:?}");
+                set_status_text(state.status.get(), 0, "Filter uninstall failed.");
+                return;
+            }
         }
-    };
-    set_status_text(state.status.get(), 0, "Filters are enabled.");
-    set_status_text(
-        state.status.get(),
-        1,
-        &format!(
-            "{} filter(s) installed, {} skipped.",
-            report.filters_added, report.rules_skipped
-        ),
-    );
+    } else {
+        // ---- Enable path ----
+        let report = match crate::install::install_profile(
+            &engine,
+            &state.app.profile.borrow(),
+            true, // persistent: reboots keep the filters
+        ) {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("amwall: install_profile failed: {e}");
+                set_status_text(state.status.get(), 0, "Filter install failed.");
+                return;
+            }
+        };
+        set_status_text(state.status.get(), 0, "Filters are enabled.");
+        set_status_text(
+            state.status.get(),
+            1,
+            &format!(
+                "{} filter(s) installed, {} skipped.",
+                report.filters_added, report.rules_skipped
+            ),
+        );
+        new_active = true;
+    }
+
+    // Drive the toolbar toggle from the install/uninstall outcome
+    // directly — even if the profile is empty (0 filters), the
+    // provider+sublayer registration that install_profile does is
+    // enough to consider us "active" and we want the button to
+    // flip to red. The cache refresh is a separate, toast-only
+    // concern.
+    state.filters_active.set(new_active);
+    update_enable_filters_button(state, new_active);
+    refresh_amwall_filter_ids_with(&engine, state);
 }
 
 /// Mark a menu item as checked or unchecked. We get the top-level

@@ -292,6 +292,69 @@ impl WfpEngine {
         })
     }
 
+    /// Enumerate every filter currently installed against
+    /// `provider_key` and return their `filterId` values. Used by
+    /// the GUI to know which `CLASSIFY_DROP` events came from
+    /// amwall's own filters (so we don't pop notifications for
+    /// drops by Windows Firewall, third-party WFP providers, etc.).
+    pub fn enumerate_filter_ids_for_provider(
+        &self,
+        provider_key: &GUID,
+    ) -> Result<Vec<u64>, WfpError> {
+        const BATCH: u32 = 64;
+        let mut enum_handle = HANDLE::default();
+        let status =
+            unsafe { FwpmFilterCreateEnumHandle0(self.handle, None, &mut enum_handle) };
+        if status != ERROR_SUCCESS {
+            return Err(WfpError::FilterEnum(status));
+        }
+        let result = (|| -> Result<Vec<u64>, WfpError> {
+            let mut ids = Vec::new();
+            loop {
+                let mut entries: *mut *mut FWPM_FILTER0 = std::ptr::null_mut();
+                let mut returned: u32 = 0;
+                let status = unsafe {
+                    FwpmFilterEnum0(
+                        self.handle,
+                        enum_handle,
+                        BATCH,
+                        &mut entries,
+                        &mut returned,
+                    )
+                };
+                if status != ERROR_SUCCESS {
+                    return Err(WfpError::FilterEnum(status));
+                }
+                if returned == 0 {
+                    break;
+                }
+                let slice: &[*mut FWPM_FILTER0] =
+                    unsafe { std::slice::from_raw_parts(entries, returned as usize) };
+                for &filter_ptr in slice {
+                    if filter_ptr.is_null() {
+                        continue;
+                    }
+                    let filter = unsafe { &*filter_ptr };
+                    if filter.providerKey.is_null() {
+                        continue;
+                    }
+                    let pk_val = unsafe { *filter.providerKey };
+                    if pk_val == *provider_key {
+                        ids.push(filter.filterId);
+                    }
+                }
+                let mut p = entries as *mut std::ffi::c_void;
+                unsafe { FwpmFreeMemory0(&mut p) };
+                if returned < BATCH {
+                    break;
+                }
+            }
+            Ok(ids)
+        })();
+        let _ = unsafe { FwpmFilterDestroyEnumHandle0(self.handle, enum_handle) };
+        result
+    }
+
     fn delete_filters_for_provider(&self, provider_key: &GUID) -> Result<u32, WfpError> {
         const BATCH: u32 = 64;
         let mut enum_handle = HANDLE::default();

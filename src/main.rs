@@ -138,15 +138,16 @@ mod cli {
 
     pub fn run(args: Vec<String>) -> ExitCode {
         let parsed = parse_args(args);
-        // Anything other than the GUI launch is going to want to
-        // print to a terminal. With windows_subsystem = "windows"
-        // we have no console handles by default, so attach to the
-        // parent shell's console *before* any println!/eprintln!.
-        // No-op if this binary was launched from Explorer / Start
-        // Menu — there's no parent console to attach to.
-        if !matches!(parsed, Command::Gui) {
-            attach_to_parent_console();
-        }
+        // Always attach to the parent console (if any). With
+        // windows_subsystem = "windows" we have no inherited stdio
+        // handles by default, so eprintln! goes nowhere even when
+        // the parent shell did `> log` / `2>> log` redirection.
+        // AttachConsole + re-binding stdio gives us a working
+        // stderr in both CLI mode (printing operation results) and
+        // GUI mode (debug logging into swaplog.txt).
+        // No-op if launched from Explorer / Start Menu — there's
+        // no parent console to attach to.
+        attach_to_parent_console();
         match parsed {
             // No CLI subcommand → launch the GUI. The GUI doesn't
             // require admin to start (admin is only needed for the
@@ -192,11 +193,26 @@ mod cli {
     /// Start Menu / a service host) — AttachConsole returns Err
     /// and we silently skip the redirect.
     fn attach_to_parent_console() {
+        use windows::Win32::Foundation::{HANDLE, INVALID_HANDLE_VALUE};
         use windows::Win32::System::Console::{
             ATTACH_PARENT_PROCESS, AttachConsole, GetStdHandle, STD_ERROR_HANDLE,
             STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, SetStdHandle,
         };
+
+        // Skip the AttachConsole + re-bind dance if our parent
+        // already gave us valid stdio handles via a redirect like
+        // `cmd /c amwall 2>> log`. In that case STD_ERROR_HANDLE
+        // already points at the log file; calling AttachConsole +
+        // SetStdHandle would overwrite it with the parent's console
+        // buffer, sending eprintln! to the visible console instead
+        // of the redirected file.
         unsafe {
+            let stderr = GetStdHandle(STD_ERROR_HANDLE).unwrap_or_default();
+            let already_redirected =
+                stderr.0 != 0 && stderr != INVALID_HANDLE_VALUE && stderr != HANDLE(0);
+            if already_redirected {
+                return;
+            }
             if AttachConsole(ATTACH_PARENT_PROCESS).is_err() {
                 return;
             }

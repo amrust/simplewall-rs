@@ -96,7 +96,20 @@ const SILK_PNGS: &[(u16, &[u8])] = &[
         IDM_RELEASES,
         include_bytes!("../../assets/icons/silk/resultset_next.png"),
     ),
+    // 10: Disable filters    -> cross_shield (red cross on shield).
+    //     Same command id as Enable filters (IDM_TRAY_START) — the
+    //     click handler decides install vs uninstall by the live
+    //     filters-active state. Looked up via FILTER_DISABLE_MARKER.
+    (
+        FILTER_DISABLE_MARKER,
+        include_bytes!("../../assets/icons/silk/cross_shield.png"),
+    ),
 ];
+
+/// Synthetic id used to look up the "Disable filters" red-shield
+/// icon via `index_for`. Not a real `WM_COMMAND` value — the
+/// command id stays IDM_TRAY_START, only the icon swaps.
+pub const FILTER_DISABLE_MARKER: u16 = 0xFFF0;
 
 pub struct IconSet {
     pub himagelist: HIMAGELIST,

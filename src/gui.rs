@@ -21,6 +21,7 @@ pub mod font;
 pub mod icons;
 pub mod ids;
 pub mod main_window;
+pub mod notification;
 pub mod rule_editor;
 pub mod settings;
 pub mod settings_dialog;
@@ -52,6 +53,24 @@ use app::App;
 /// path the CLI uses; if the file isn't present yet, the GUI starts
 /// with an empty `Profile`.
 pub fn run(default_profile_path: PathBuf) -> ExitCode {
+    // Log elevation up front so the user can tell at a glance
+    // whether filter-management actions will succeed (admin) or
+    // bounce off ERROR_ACCESS_DENIED (user-mode). `IsUserAnAdmin`
+    // returns TRUE only when the process is running with the
+    // unfiltered admin token under UAC — i.e. true elevation.
+    {
+        use windows::Win32::UI::Shell::IsUserAnAdmin;
+        let admin = unsafe { IsUserAnAdmin() }.as_bool();
+        eprintln!(
+            "amwall: starting GUI ({})",
+            if admin {
+                "elevated / admin"
+            } else {
+                "user mode — filter management + WFP event subscription will fail"
+            }
+        );
+    }
+
     // Per-Monitor v2 DPI awareness: hi-DPI displays (4K @ 200%+ scaling)
     // get sharp text and correctly-scaled controls. Must be set before
     // any HWND is created, otherwise Win32 caches "system DPI" mode.
