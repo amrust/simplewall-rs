@@ -30,8 +30,9 @@ use std::time::{Duration, SystemTime};
 
 use windows::Win32::Foundation::{FILETIME, HANDLE};
 use windows::Win32::NetworkManagement::WindowsFilteringPlatform::{
-    FWP_BYTE_BLOB, FWP_IP_VERSION, FWP_IP_VERSION_V4, FWP_IP_VERSION_V6, FWP_UINT32, FWP_VALUE0,
-    FWP_VALUE0_0, FWPM_ENGINE_COLLECT_NET_EVENTS, FWPM_NET_EVENT1, FWPM_NET_EVENT_FLAG_APP_ID_SET,
+    FWP_BYTE_BLOB, FWP_DIRECTION, FWP_DIRECTION_INBOUND, FWP_DIRECTION_OUTBOUND, FWP_IP_VERSION,
+    FWP_IP_VERSION_V4, FWP_IP_VERSION_V6, FWP_UINT32, FWP_VALUE0, FWP_VALUE0_0,
+    FWPM_ENGINE_COLLECT_NET_EVENTS, FWPM_NET_EVENT1, FWPM_NET_EVENT_FLAG_APP_ID_SET,
     FWPM_NET_EVENT_FLAG_IP_PROTOCOL_SET, FWPM_NET_EVENT_FLAG_LOCAL_ADDR_SET,
     FWPM_NET_EVENT_FLAG_LOCAL_PORT_SET, FWPM_NET_EVENT_FLAG_REMOTE_ADDR_SET,
     FWPM_NET_EVENT_FLAG_REMOTE_PORT_SET, FWPM_NET_EVENT_HEADER1, FWPM_NET_EVENT_HEADER1_0,
@@ -62,7 +63,12 @@ pub enum NetEvent {
 
 /// Common per-event data lifted out of `FWPM_NET_EVENT_HEADER1`.
 /// Optional fields reflect the header's `flags` bitmap — fields the
-/// kernel didn't populate land as `None`.
+/// kernel didn't populate land as `None`. `direction` and
+/// `filter_id` come from the type-specific union after the header
+/// (`classifyDrop` for drops); they're `None` for events whose
+/// payload `FwpmNetEventSubscribe0` doesn't carry (notably
+/// CLASSIFY_ALLOW, which only ships full detail through
+/// `FwpmNetEventSubscribe2`+).
 #[derive(Debug, Clone)]
 pub struct NetEventDetails {
     pub timestamp: SystemTime,
@@ -75,6 +81,17 @@ pub struct NetEventDetails {
     /// event (`\device\harddiskvolume3\…`). Empty / absent on system
     /// traffic that isn't tied to a specific image.
     pub app_path: Option<String>,
+    pub direction: Option<NetDirection>,
+    pub filter_id: Option<u64>,
+}
+
+/// Outbound = traffic this machine originates. Inbound = traffic
+/// destined here. Mapped from `FWP_DIRECTION_*` in the kernel
+/// payload.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NetDirection {
+    Outbound,
+    Inbound,
 }
 
 /// RAII subscription handle. Drop unsubscribes synchronously.
@@ -185,9 +202,25 @@ unsafe extern "system" fn raw_callback(
 }
 
 fn parse_event(event: &FWPM_NET_EVENT1) -> NetEvent {
-    let details = parse_header(&event.header);
+    let mut details = parse_header(&event.header);
     match event.r#type {
-        FWPM_NET_EVENT_TYPE_CLASSIFY_DROP => NetEvent::Drop(details),
+        FWPM_NET_EVENT_TYPE_CLASSIFY_DROP => {
+            // `classifyDrop` is a `*mut FWPM_NET_EVENT_CLASSIFY_DROP1`
+            // — only valid to read when the event type is
+            // CLASSIFY_DROP. Other type codes leave the union in
+            // an undefined state, so do NOT read it for them.
+            let drop_ptr = unsafe { event.Anonymous.classifyDrop };
+            if !drop_ptr.is_null() {
+                let drop = unsafe { &*drop_ptr };
+                details.filter_id = Some(drop.filterId);
+                details.direction = match FWP_DIRECTION(drop.msFwpDirection as i32) {
+                    FWP_DIRECTION_OUTBOUND => Some(NetDirection::Outbound),
+                    FWP_DIRECTION_INBOUND => Some(NetDirection::Inbound),
+                    _ => None,
+                };
+            }
+            NetEvent::Drop(details)
+        }
         FWPM_NET_EVENT_TYPE_CLASSIFY_ALLOW => NetEvent::Allow(details),
         FWPM_NET_EVENT_TYPE(other) => NetEvent::Other(other as u32),
     }
@@ -235,6 +268,8 @@ fn parse_header(h: &FWPM_NET_EVENT_HEADER1) -> NetEventDetails {
         remote_port,
         protocol,
         app_path,
+        direction: None,
+        filter_id: None,
     }
 }
 

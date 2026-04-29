@@ -169,6 +169,28 @@ struct WndState {
     /// doesn't contain it (case-insensitive). Empty string = no
     /// filtering.
     search_text: std::cell::RefCell<String>,
+
+    // ---- WFP net-event subscription (M5.10 / M6.1) ----
+    //
+    // Drop order matters: `event_subscription` must drop BEFORE
+    // `event_engine` so unsubscribe runs against a still-open
+    // engine handle. Rust drops fields in declaration order,
+    // hence subscription before rx before engine.
+    event_subscription:
+        std::cell::RefCell<Option<crate::wfp::events::EventSubscription>>,
+    event_rx: std::cell::RefCell<
+        Option<std::sync::mpsc::Receiver<crate::wfp::events::NetEvent>>,
+    >,
+    /// Owner of the WFP engine handle the event subscription
+    /// borrows from. `Option` because subscribe can fail (most
+    /// commonly: not running as admin) and we want the GUI to
+    /// keep working with an empty Packets log tab in that case.
+    event_engine: std::cell::RefCell<Option<crate::wfp::WfpEngine>>,
+    /// Capped ring of decoded events for the Packets log tab.
+    /// New events get pushed at the back; if the buffer is full,
+    /// the oldest is dropped. `EVENT_LOG_CAP` rows is enough to
+    /// see recent activity without unbounded memory growth.
+    event_log: std::cell::RefCell<std::collections::VecDeque<crate::wfp::events::NetEvent>>,
 }
 
 impl WndState {
@@ -191,9 +213,27 @@ impl WndState {
             dpi: Cell::new(REFERENCE_DPI),
             font: Cell::new(HFONT::default()),
             search_text: std::cell::RefCell::new(String::new()),
+            event_subscription: std::cell::RefCell::new(None),
+            event_rx: std::cell::RefCell::new(None),
+            event_engine: std::cell::RefCell::new(None),
+            event_log: std::cell::RefCell::new(std::collections::VecDeque::new()),
         }
     }
 }
+
+/// Maximum number of events kept in `WndState.event_log`. Older
+/// events are dropped as new ones arrive.
+const EVENT_LOG_CAP: usize = 1000;
+
+/// Win32 timer id for the event-drain pump. Picks up any
+/// callback-pushed events from `event_rx` and appends them to
+/// `event_log`, refreshing the listview if the Log tab is visible.
+const TIMER_EVENT_DRAIN: usize = 9002;
+
+/// How often to drain the event channel, in milliseconds. 500 ms is
+/// frequent enough to feel live without burning CPU when no events
+/// are firing.
+const EVENT_DRAIN_INTERVAL_MS: u32 = 500;
 
 /// Register the window class, create the main window, show it.
 /// Ownership of `app` is transferred into the window's
@@ -483,6 +523,10 @@ unsafe extern "system" fn wnd_proc(
                 if let Some(state) = unsafe { state_ref(hwnd) } {
                     populate_connections_tab(state);
                 }
+            } else if wparam.0 == TIMER_EVENT_DRAIN {
+                if let Some(state) = unsafe { state_ref(hwnd) } {
+                    drain_events(hwnd, state);
+                }
             }
             LRESULT(0)
         }
@@ -590,7 +634,80 @@ fn on_create(hwnd: HWND) -> Result<(), String> {
     on_size(hwnd);
     on_tab_change(hwnd);
 
+    // Best-effort subscribe to WFP net events so the Packets log
+    // tab can fill in. Failures (most commonly: not running as
+    // admin) are logged and swallowed — the rest of the GUI works
+    // fine without an event feed.
+    try_subscribe_events(state);
+    unsafe {
+        SetTimer(hwnd, TIMER_EVENT_DRAIN, EVENT_DRAIN_INTERVAL_MS, None);
+    }
+
     Ok(())
+}
+
+/// Open a separate WFP engine handle and subscribe to net events.
+/// Stores the handles on `state`; on failure logs to stderr and
+/// leaves the state's event fields as `None`.
+fn try_subscribe_events(state: &WndState) {
+    let engine = match crate::wfp::WfpEngine::open() {
+        Ok(e) => e,
+        Err(e) => {
+            eprintln!("amwall: WFP engine open failed for events: {e:?}");
+            return;
+        }
+    };
+    match crate::wfp::events::subscribe(&engine) {
+        Ok((sub, rx)) => {
+            *state.event_subscription.borrow_mut() = Some(sub);
+            *state.event_rx.borrow_mut() = Some(rx);
+            *state.event_engine.borrow_mut() = Some(engine);
+        }
+        Err(e) => {
+            eprintln!(
+                "amwall: net-event subscribe failed (admin may be required): {e}"
+            );
+            // Drop the engine — no subscription means no point
+            // holding it open.
+        }
+    }
+}
+
+/// Drain any pending events from the channel into the log buffer,
+/// trimming the front to keep the buffer at most `EVENT_LOG_CAP`
+/// entries. If the Log tab is currently visible, repopulate the
+/// listview so the new rows show up live.
+fn drain_events(hwnd: HWND, state: &WndState) {
+    let mut log = state.event_log.borrow_mut();
+    let mut new_arrivals = false;
+    if let Some(rx) = state.event_rx.borrow().as_ref() {
+        while let Ok(event) = rx.try_recv() {
+            if log.len() >= EVENT_LOG_CAP {
+                log.pop_front();
+            }
+            log.push_back(event);
+            new_arrivals = true;
+        }
+    }
+    drop(log);
+
+    if !new_arrivals {
+        return;
+    }
+    // Repopulate only if Log tab is the active one — otherwise
+    // we'd be doing UI work nobody sees. Switching to Log will
+    // populate from the buffer regardless.
+    let tab = state.tab.get();
+    if tab.0 == 0 {
+        return;
+    }
+    let sel =
+        unsafe { SendMessageW(tab, TCM_GETCURSEL, WPARAM(0), LPARAM(0)) }.0 as isize;
+    if sel == 7 {
+        populate_log_tab(state);
+        // Update the count segment on the status bar too.
+        on_tab_change(hwnd);
+    }
 }
 
 /// Apply the persisted Settings to the live window: menu check
@@ -866,6 +983,13 @@ fn on_tab_change(hwnd: HWND) {
                 let _ = ShowWindow(lv, SW_HIDE);
             }
         }
+    }
+
+    // Slot 7 is IDC_LOG (Packets log) — populate from the
+    // accumulated event_log buffer when user lands on the tab. The
+    // drain timer keeps it live while the tab stays visible.
+    if sel_slot == 7 {
+        populate_log_tab(state);
     }
 
     // Index 6 in TAB_LISTVIEW_IDS is IDC_NETWORK (Connections tab).
@@ -2062,6 +2186,179 @@ fn populate_connections_tab(state: &WndState) {
     }
 }
 
+/// Populate the Packets log tab (`IDC_LOG`, slot 7) from the
+/// in-memory event ring. Called when the user switches to the tab
+/// and on every drain-timer tick that accepted new arrivals while
+/// the tab was visible. Search text filters by app basename.
+///
+/// Columns set up in `configure_listview` for IDC_LOG:
+///   # | Name | Date | Address(Source) | Host(Source) | Port(Source) |
+///   Address(Destination) | Host(Destination) | Port(Destination) |
+///   Protocol | Direction | Filter
+fn populate_log_tab(state: &WndState) {
+    // Slot 7 in TAB_LISTVIEW_IDS is IDC_LOG.
+    let lv = state.listviews[7].get();
+    if lv.0 == 0 {
+        return;
+    }
+    unsafe {
+        let _ = SendMessageW(lv, LVM_DELETEALLITEMS, WPARAM(0), LPARAM(0));
+    }
+    let log = state.event_log.borrow();
+    let filter = state.search_text.borrow().clone();
+
+    let mut row = 0i32;
+    for (event_idx, event) in log.iter().enumerate() {
+        let details = match event {
+            crate::wfp::events::NetEvent::Drop(d)
+            | crate::wfp::events::NetEvent::Allow(d) => d,
+            // Other event types (IKE / IPsec / capability) don't
+            // carry the per-packet info the Log tab columns expect
+            // — skip rather than render rows full of blanks.
+            crate::wfp::events::NetEvent::Other(_) => continue,
+        };
+        let app_path = details.app_path.as_deref().unwrap_or("");
+        let app_name = log_basename(app_path);
+        if !search_match(app_name, &filter) {
+            continue;
+        }
+        let i = row;
+        row += 1;
+        let mut idx_buf = wide(&format!("{}", event_idx + 1));
+        let item = LVITEMW {
+            mask: LVIF_TEXT,
+            iItem: i,
+            iSubItem: 0,
+            pszText: PWSTR(idx_buf.as_mut_ptr()),
+            ..Default::default()
+        };
+        let _ = unsafe {
+            SendMessageW(
+                lv,
+                LVM_INSERTITEMW,
+                WPARAM(0),
+                LPARAM(&item as *const _ as isize),
+            )
+        };
+        set_subitem(lv, i, 1, app_name);
+        set_subitem(lv, i, 2, &format_event_time(details.timestamp));
+        set_subitem(
+            lv,
+            i,
+            3,
+            &details
+                .local_addr
+                .map(|a| a.to_string())
+                .unwrap_or_default(),
+        );
+        // col 4 (Host source) intentionally empty — DNS would block
+        // the UI thread.
+        set_subitem(
+            lv,
+            i,
+            5,
+            &details
+                .local_port
+                .map(|p| p.to_string())
+                .unwrap_or_default(),
+        );
+        set_subitem(
+            lv,
+            i,
+            6,
+            &details
+                .remote_addr
+                .map(|a| a.to_string())
+                .unwrap_or_default(),
+        );
+        // col 7 (Host destination) intentionally empty — same reason
+        // as col 4.
+        set_subitem(
+            lv,
+            i,
+            8,
+            &details
+                .remote_port
+                .map(|p| p.to_string())
+                .unwrap_or_default(),
+        );
+        set_subitem(lv, i, 9, &log_protocol_label(details.protocol));
+        set_subitem(lv, i, 10, log_direction_label(details.direction));
+        set_subitem(
+            lv,
+            i,
+            11,
+            &details
+                .filter_id
+                .map(|f| f.to_string())
+                .unwrap_or_default(),
+        );
+    }
+}
+
+/// Last component of an NT-form path
+/// (`\device\harddiskvolume3\…\chrome.exe` → `chrome.exe`). Returns
+/// the full input if there's no `\`.
+fn log_basename(path: &str) -> &str {
+    path.rsplit_once('\\')
+        .map(|(_, tail)| tail)
+        .unwrap_or(path)
+}
+
+/// IP-protocol number → display label. Numbers we don't recognise
+/// render as their decimal form (`"47"` for GRE etc.).
+fn log_protocol_label(p: Option<u8>) -> String {
+    match p {
+        Some(1) => "ICMPv4".to_string(),
+        Some(6) => "TCP".to_string(),
+        Some(17) => "UDP".to_string(),
+        Some(58) => "ICMPv6".to_string(),
+        Some(n) => n.to_string(),
+        None => String::new(),
+    }
+}
+
+fn log_direction_label(d: Option<crate::wfp::events::NetDirection>) -> &'static str {
+    match d {
+        Some(crate::wfp::events::NetDirection::Inbound) => "Inbound",
+        Some(crate::wfp::events::NetDirection::Outbound) => "Outbound",
+        None => "",
+    }
+}
+
+/// SystemTime → "HH:MM:SS" in the user's local timezone. Round-trip
+/// via FILETIME → SYSTEMTIME (UTC) → SystemTimeToTzSpecificLocalTime
+/// is the standard Win32 idiom; falling back to UTC if the local
+/// conversion fails (which it shouldn't for any sane time).
+fn format_event_time(t: std::time::SystemTime) -> String {
+    use windows::Win32::Foundation::{FILETIME, SYSTEMTIME};
+    use windows::Win32::System::Time::{
+        FileTimeToSystemTime, SystemTimeToTzSpecificLocalTime,
+    };
+
+    let dur = t
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default();
+    // FILETIME = 100-ns intervals since 1601-01-01. Add the
+    // 1601→1970 offset (11_644_473_600 s) to get from a UNIX-epoch
+    // duration to a FILETIME value.
+    let intervals: u64 = (dur.as_secs() + 11_644_473_600) * 10_000_000
+        + (dur.subsec_nanos() as u64) / 100;
+    let ft = FILETIME {
+        dwLowDateTime: (intervals & 0xFFFF_FFFF) as u32,
+        dwHighDateTime: (intervals >> 32) as u32,
+    };
+    let mut utc = SYSTEMTIME::default();
+    if unsafe { FileTimeToSystemTime(&ft, &mut utc) }.is_err() {
+        return String::new();
+    }
+    let mut local = SYSTEMTIME::default();
+    if unsafe { SystemTimeToTzSpecificLocalTime(None, &utc, &mut local) }.is_err() {
+        return format!("{:02}:{:02}:{:02}", utc.wHour, utc.wMinute, utc.wSecond);
+    }
+    format!("{:02}:{:02}:{:02}", local.wHour, local.wMinute, local.wSecond)
+}
+
 /// EN_CHANGE on the rebar's search edit. Reads the new text,
 /// stores it on the WndState, repopulates whichever tab is
 /// currently visible — that's the cheapest option that handles
@@ -2109,9 +2406,9 @@ fn repopulate_tab(state: &WndState, slot: usize) {
         4 => populate_internal_rules(state, IDC_RULES_SYSTEM),
         5 => populate_user_rules(state),
         6 => populate_connections_tab(state),
-        // Slots 1 (Services), 2 (UWP), 7 (Log) are not yet
-        // populated from any source — search filter is a no-op
-        // there.
+        7 => populate_log_tab(state),
+        // Slots 1 (Services) and 2 (UWP) are not yet populated
+        // from any source — search filter is a no-op there.
         _ => {}
     }
 }
