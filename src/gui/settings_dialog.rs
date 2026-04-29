@@ -56,6 +56,7 @@ const IDC_LOADONSTARTUP_CHK: i32 = 721;
 const IDC_STARTMINIMIZED_CHK: i32 = 722;
 const IDC_SKIPUACWARNING_CHK: i32 = 723;
 const IDC_CHECKUPDATES_CHK: i32 = 724;
+const IDC_LANGUAGE: i32 = 725;
 // Interface
 const IDC_CONFIRMEXIT_CHK: i32 = 730;
 const IDC_CONFIRMEXITTIMER_CHK: i32 = 731;
@@ -273,6 +274,7 @@ unsafe extern "system" fn general_proc(
                 set_check(hwnd, IDC_STARTMINIMIZED_CHK, s.start_minimized);
                 set_check(hwnd, IDC_SKIPUACWARNING_CHK, s.skip_uac_warning);
                 set_check(hwnd, IDC_CHECKUPDATES_CHK, s.check_updates);
+                populate_language_combo(hwnd, &s.language);
             }
             1
         }
@@ -284,12 +286,173 @@ unsafe extern "system" fn general_proc(
                 s.start_minimized = read_check(hwnd, IDC_STARTMINIMIZED_CHK);
                 s.skip_uac_warning = read_check(hwnd, IDC_SKIPUACWARNING_CHK);
                 s.check_updates = read_check(hwnd, IDC_CHECKUPDATES_CHK);
+                s.language = read_language_combo(hwnd);
             }
             unsafe { accept_apply(hwnd) };
             1
         }
         _ => 0,
     }
+}
+
+/// Walk the same candidate paths `gui::load_locale` uses and feed
+/// every `[Section]` header into the IDC_LANGUAGE combobox. The
+/// first item is always "(System default)" mapping to the empty
+/// string — selected when `current` is empty so users can opt out
+/// of a localization.
+fn populate_language_combo(hwnd: HWND, current: &str) {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        CB_ADDSTRING, CB_RESETCONTENT, CB_SETCURSEL,
+    };
+
+    let combo = unsafe {
+        windows::Win32::UI::WindowsAndMessaging::GetDlgItem(hwnd, IDC_LANGUAGE)
+    };
+    if combo.0 == 0 {
+        return;
+    }
+
+    unsafe {
+        windows::Win32::UI::WindowsAndMessaging::SendMessageW(
+            combo,
+            CB_RESETCONTENT,
+            WPARAM(0),
+            LPARAM(0),
+        );
+    }
+
+    let mut items: Vec<String> = vec!["(System default)".to_string()];
+    for path in language_file_candidates() {
+        if !path.is_file() {
+            continue;
+        }
+        for lang in crate::locale::Locale::list_languages_in(&path) {
+            if !items.iter().any(|i| i.eq_ignore_ascii_case(&lang)) {
+                items.push(lang);
+            }
+        }
+    }
+
+    let mut sel: usize = 0;
+    for (idx, item) in items.iter().enumerate() {
+        let mut wbuf = wide(item);
+        unsafe {
+            windows::Win32::UI::WindowsAndMessaging::SendMessageW(
+                combo,
+                CB_ADDSTRING,
+                WPARAM(0),
+                LPARAM(wbuf.as_mut_ptr() as isize),
+            );
+        }
+        if idx > 0 && current.eq_ignore_ascii_case(item) {
+            sel = idx;
+        }
+    }
+
+    unsafe {
+        windows::Win32::UI::WindowsAndMessaging::SendMessageW(
+            combo,
+            CB_SETCURSEL,
+            WPARAM(sel),
+            LPARAM(0),
+        );
+    }
+}
+
+/// Read the IDC_LANGUAGE combobox selection. Returns the empty
+/// string when "(System default)" (index 0) is picked.
+fn read_language_combo(hwnd: HWND) -> String {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        CB_GETCURSEL, CB_GETLBTEXT, CB_GETLBTEXTLEN,
+    };
+
+    let combo = unsafe {
+        windows::Win32::UI::WindowsAndMessaging::GetDlgItem(hwnd, IDC_LANGUAGE)
+    };
+    if combo.0 == 0 {
+        return String::new();
+    }
+
+    let sel = unsafe {
+        windows::Win32::UI::WindowsAndMessaging::SendMessageW(
+            combo,
+            CB_GETCURSEL,
+            WPARAM(0),
+            LPARAM(0),
+        )
+    }
+    .0 as isize;
+    if sel <= 0 {
+        return String::new();
+    }
+
+    let len = unsafe {
+        windows::Win32::UI::WindowsAndMessaging::SendMessageW(
+            combo,
+            CB_GETLBTEXTLEN,
+            WPARAM(sel as usize),
+            LPARAM(0),
+        )
+    }
+    .0;
+    if len <= 0 {
+        return String::new();
+    }
+    let mut buf = vec![0u16; len as usize + 1];
+    unsafe {
+        windows::Win32::UI::WindowsAndMessaging::SendMessageW(
+            combo,
+            CB_GETLBTEXT,
+            WPARAM(sel as usize),
+            LPARAM(buf.as_mut_ptr() as isize),
+        );
+    }
+    let s = String::from_utf16_lossy(&buf[..len as usize]);
+    s.trim_end_matches('\u{0}').to_string()
+}
+
+/// Same candidate paths `gui::run::load_locale` uses, kept in sync
+/// here so the language combo lists exactly the languages a future
+/// reload would actually find.
+fn language_file_candidates() -> Vec<std::path::PathBuf> {
+    let mut out = Vec::new();
+    if let Some(d) = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|p| p.to_path_buf()))
+    {
+        out.push(d.join("simplewall.lng"));
+        // Also any *.ini under <exe>/i18n/ — picked up by listing
+        // section headers per file (one section per file is the
+        // convention upstream uses for the source-language form).
+        let i18n = d.join("i18n");
+        if i18n.is_dir() {
+            if let Ok(rd) = std::fs::read_dir(&i18n) {
+                for entry in rd.flatten() {
+                    let p = entry.path();
+                    if p.extension().and_then(|e| e.to_str()) == Some("ini") {
+                        out.push(p);
+                    }
+                }
+            }
+        }
+    }
+    if let Some(d) = std::env::var_os("APPDATA")
+        .map(|p| std::path::PathBuf::from(p).join("amwall"))
+    {
+        out.push(d.join("simplewall.lng"));
+        let i18n = d.join("i18n");
+        if i18n.is_dir() {
+            if let Ok(rd) = std::fs::read_dir(&i18n) {
+                for entry in rd.flatten() {
+                    let p = entry.path();
+                    if p.extension().and_then(|e| e.to_str()) == Some("ini") {
+                        out.push(p);
+                    }
+                }
+            }
+        }
+    }
+    out
 }
 
 unsafe extern "system" fn interface_proc(

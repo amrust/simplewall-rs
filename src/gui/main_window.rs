@@ -1069,6 +1069,7 @@ fn apply_initial_settings(hwnd: HWND, state: &WndState) {
     drop(s);
 
     refresh_blocklist_menu_checks(hwnd, state);
+    localize_top_menu(hwnd, state);
 
     // Apps tab basename-vs-fullpath rendering depends on
     // `show_filenames_only`, so refresh it on every settings
@@ -2007,6 +2008,54 @@ fn set_menu_check(hwnd: HWND, id: u16, checked: bool) {
     let flag = if checked { MF_CHECKED } else { MF_UNCHECKED };
     unsafe {
         let _ = CheckMenuItem(menu, id as u32, (MF_BYCOMMAND | flag).0);
+    }
+}
+
+/// Replace the six top-level menu labels with localized strings
+/// (M8). Each lookup falls back to the English baseline so an
+/// empty / partial locale leaves the unaffected entries in
+/// English. `SetMenuItemInfoW(MIIM_STRING, MF_BYPOSITION)` updates
+/// just the label without touching the popup handle hanging off
+/// the position. `DrawMenuBar` forces the title strip to repaint
+/// at the new widths.
+fn localize_top_menu(hwnd: HWND, state: &WndState) {
+    use crate::locale::ids::{
+        IDS_EDIT, IDS_FILE, IDS_HELP, IDS_SETTINGS, IDS_TRAY_BLOCKLIST_RULES, IDS_VIEW,
+    };
+    use windows::Win32::UI::WindowsAndMessaging::{
+        DrawMenuBar, MENUITEMINFOW, MIIM_STRING, SetMenuItemInfoW,
+    };
+
+    let menu = unsafe { GetMenu(hwnd) };
+    if menu.0 == 0 {
+        return;
+    }
+    let locale = &state.app.locale;
+
+    let entries: [(u32, u32, &str); 6] = [
+        (0, IDS_FILE, "&File"),
+        (1, IDS_EDIT, "&Edit"),
+        (2, IDS_VIEW, "&View"),
+        (3, IDS_SETTINGS, "&Settings"),
+        (4, IDS_TRAY_BLOCKLIST_RULES, "&Blocklist"),
+        (5, IDS_HELP, "&Help"),
+    ];
+
+    for (pos, ids, fallback) in entries {
+        let text = locale.lookup(ids).unwrap_or(fallback);
+        let mut wbuf = wide(text);
+        let info = MENUITEMINFOW {
+            cbSize: std::mem::size_of::<MENUITEMINFOW>() as u32,
+            fMask: MIIM_STRING,
+            dwTypeData: PWSTR(wbuf.as_mut_ptr()),
+            ..Default::default()
+        };
+        unsafe {
+            let _ = SetMenuItemInfoW(menu, pos, true, &info);
+        }
+    }
+    unsafe {
+        let _ = DrawMenuBar(hwnd);
     }
 }
 

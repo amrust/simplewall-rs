@@ -4,6 +4,7 @@
 use std::cell::RefCell;
 use std::path::PathBuf;
 
+use crate::locale::Locale;
 use crate::profile::Profile;
 
 use super::settings::Settings;
@@ -40,4 +41,8 @@ pub struct App {
     /// Path settings persist to —
     /// `%APPDATA%\amwall\settings.txt` by default.
     pub settings_path: RefCell<PathBuf>,
+    /// Loaded UI translation table (M8). Empty if no language is
+    /// selected or the lookup file isn't present — the GUI falls
+    /// back to the English baseline baked into the source.
+    pub locale: Locale,
 }

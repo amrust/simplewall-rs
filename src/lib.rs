@@ -11,6 +11,7 @@
 // non-Windows `cargo check` or `cargo doc` still produces a valid
 // library. `profile` is pure-Rust XML I/O and compiles on every host.
 
+pub mod locale;
 pub mod profile;
 pub mod rules;
 
