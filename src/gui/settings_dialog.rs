@@ -584,9 +584,24 @@ fn read_check(parent: HWND, id: i32) -> bool {
 }
 
 fn set_radio_blocklist(parent: HWND, mode: BlocklistMode, dis: i32, allow: i32, block: i32) {
-    set_check(parent, dis, matches!(mode, BlocklistMode::Disable));
-    set_check(parent, allow, matches!(mode, BlocklistMode::Allow));
-    set_check(parent, block, matches!(mode, BlocklistMode::Block));
+    // CheckRadioButton is the canonical Win32 idiom for radio
+    // groups: it unchecks every button in the [first..=last] id
+    // range and checks the chosen one in a single call. Plain
+    // BM_SETCHECK on each radio individually leaves AUTORADIOBUTTON's
+    // internal "current group member" state out of sync, which
+    // shows up as the visual dot not appearing on reload even
+    // though the underlying check state is correct.
+    use windows::Win32::UI::Controls::CheckRadioButton;
+    let pick = match mode {
+        BlocklistMode::Disable => dis,
+        BlocklistMode::Allow => allow,
+        BlocklistMode::Block => block,
+    };
+    let lo = dis.min(allow).min(block);
+    let hi = dis.max(allow).max(block);
+    unsafe {
+        let _ = CheckRadioButton(parent, lo, hi, pick);
+    }
 }
 
 fn read_radio_blocklist(parent: HWND, _dis: i32, allow: i32, block: i32) -> BlocklistMode {

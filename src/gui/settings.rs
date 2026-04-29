@@ -160,9 +160,14 @@ impl Default for Settings {
             use_certificates: false,
             use_hashes: false,
             use_network_resolution: false,
-            blocklist_spy: BlocklistMode::default(),
-            blocklist_update: BlocklistMode::default(),
-            blocklist_extra: BlocklistMode::default(),
+            // Match upstream simplewall's defaults: Spy = Block (the
+            // WindowsSpyBlocker telemetry blocks are the headline
+            // reason most users install simplewall in the first place);
+            // Update = Disable (most users want Windows Update to
+            // work); Extra = Disable (Microsoft Apps blocks).
+            blocklist_spy: BlocklistMode::Block,
+            blocklist_update: BlocklistMode::Disable,
+            blocklist_extra: BlocklistMode::Disable,
             enable_notifications: true,
             notification_sound: true,
             notification_fullscreen_silent: false,

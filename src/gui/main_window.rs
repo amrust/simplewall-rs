@@ -1068,6 +1068,8 @@ fn apply_initial_settings(hwnd: HWND, state: &WndState) {
     let autosize = s.autosize_columns;
     drop(s);
 
+    refresh_blocklist_menu_checks(hwnd, state);
+
     // Apps tab basename-vs-fullpath rendering depends on
     // `show_filenames_only`, so refresh it on every settings
     // apply. Other tabs aren't affected.
@@ -1475,8 +1477,59 @@ fn on_command(hwnd: HWND, id: u32, notif: u32) {
         IDM_COPY => on_context_copy(hwnd),
         IDM_PROPERTIES => on_context_properties(hwnd),
 
+        // Blocklist top-menu mode toggles (M7). Each pair updates
+        // `Settings.blocklist_*` and re-renders the radio check
+        // marks across the three sub-menus. The new mode takes
+        // effect on the next "Enable filters" install.
+        IDM_BLOCKLIST_SPY_DISABLE
+        | IDM_BLOCKLIST_SPY_ALLOW
+        | IDM_BLOCKLIST_SPY_BLOCK
+        | IDM_BLOCKLIST_UPDATE_DISABLE
+        | IDM_BLOCKLIST_UPDATE_ALLOW
+        | IDM_BLOCKLIST_UPDATE_BLOCK
+        | IDM_BLOCKLIST_EXTRA_DISABLE
+        | IDM_BLOCKLIST_EXTRA_ALLOW
+        | IDM_BLOCKLIST_EXTRA_BLOCK => on_blocklist_mode_pick(hwnd, id),
+
         other => eprintln!("amwall: menu id {other} not yet wired up"),
     }
+}
+
+/// Handle a click on one of the Blocklist top-menu items. Updates
+/// `Settings.blocklist_*` to the chosen mode, persists to disk, and
+/// refreshes the radio check marks.
+fn on_blocklist_mode_pick(hwnd: HWND, id: u16) {
+    use super::settings::BlocklistMode;
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+
+    {
+        let mut s = state.app.settings.borrow_mut();
+        match id {
+            IDM_BLOCKLIST_SPY_DISABLE => s.blocklist_spy = BlocklistMode::Disable,
+            IDM_BLOCKLIST_SPY_ALLOW => s.blocklist_spy = BlocklistMode::Allow,
+            IDM_BLOCKLIST_SPY_BLOCK => s.blocklist_spy = BlocklistMode::Block,
+            IDM_BLOCKLIST_UPDATE_DISABLE => s.blocklist_update = BlocklistMode::Disable,
+            IDM_BLOCKLIST_UPDATE_ALLOW => s.blocklist_update = BlocklistMode::Allow,
+            IDM_BLOCKLIST_UPDATE_BLOCK => s.blocklist_update = BlocklistMode::Block,
+            IDM_BLOCKLIST_EXTRA_DISABLE => s.blocklist_extra = BlocklistMode::Disable,
+            IDM_BLOCKLIST_EXTRA_ALLOW => s.blocklist_extra = BlocklistMode::Allow,
+            IDM_BLOCKLIST_EXTRA_BLOCK => s.blocklist_extra = BlocklistMode::Block,
+            _ => return,
+        }
+    }
+
+    let path = state.app.settings_path.borrow().clone();
+    if let Err(e) = state.app.settings.borrow().save(&path) {
+        eprintln!(
+            "amwall: settings: save failed for {}: {e}",
+            path.display()
+        );
+    }
+
+    refresh_blocklist_menu_checks(hwnd, state);
 }
 
 /// Build + show the apps context menu, then route the chosen
@@ -1827,6 +1880,20 @@ fn on_toggle(hwnd: HWND, id: u16) {
 /// the same `install_profile` path the CLI uses. Requires admin;
 /// if not elevated we surface a friendly error instead of crashing
 /// when WFP refuses the call.
+/// Map the GUI-side `BlocklistMode` (enum used by Settings →
+/// Blocklist tri-state radios) to the install-time `BlocklistAction`.
+/// Same shape — kept as separate types so `crate::install` doesn't
+/// need to depend on GUI code.
+fn blocklist_mode_to_action(
+    m: super::settings::BlocklistMode,
+) -> crate::install::BlocklistAction {
+    match m {
+        super::settings::BlocklistMode::Disable => crate::install::BlocklistAction::Disable,
+        super::settings::BlocklistMode::Allow => crate::install::BlocklistAction::Allow,
+        super::settings::BlocklistMode::Block => crate::install::BlocklistAction::Block,
+    }
+}
+
 fn on_enable_filters(hwnd: HWND) {
     use windows::Win32::UI::Shell::IsUserAnAdmin;
     let state = match unsafe { state_ref(hwnd) } {
@@ -1884,14 +1951,24 @@ fn on_enable_filters(hwnd: HWND) {
         }
     } else {
         // ---- Enable path ----
-        let report = match crate::install::install_profile(
+        let blocklist = {
+            let s = state.app.settings.borrow();
+            crate::install::BlocklistConfig {
+                spy: blocklist_mode_to_action(s.blocklist_spy),
+                update: blocklist_mode_to_action(s.blocklist_update),
+                extra: blocklist_mode_to_action(s.blocklist_extra),
+            }
+        };
+        let report = match crate::install::install_with_internal(
             &engine,
             &state.app.profile.borrow(),
+            Some(&state.app.internal_profile),
+            &blocklist,
             true, // persistent: reboots keep the filters
         ) {
             Ok(r) => r,
             Err(e) => {
-                eprintln!("amwall: install_profile failed: {e}");
+                eprintln!("amwall: install failed: {e}");
                 set_status_text(state.status.get(), 0, "Filter install failed.");
                 return;
             }
@@ -1930,6 +2007,62 @@ fn set_menu_check(hwnd: HWND, id: u16, checked: bool) {
     let flag = if checked { MF_CHECKED } else { MF_UNCHECKED };
     unsafe {
         let _ = CheckMenuItem(menu, id as u32, (MF_BYCOMMAND | flag).0);
+    }
+}
+
+/// Apply CheckMenuRadioItem-style filled-bullet marks to the
+/// Blocklist top-menu's three Spy/Update/Extra mode groups so the
+/// user can tell at a glance which mode is active. Called at
+/// startup (from `apply_initial_settings`) and every time a mode
+/// toggle fires.
+fn refresh_blocklist_menu_checks(hwnd: HWND, state: &WndState) {
+    use super::settings::BlocklistMode;
+    use windows::Win32::UI::WindowsAndMessaging::{CheckMenuRadioItem, MF_BYCOMMAND};
+    let menu = unsafe { GetMenu(hwnd) };
+    if menu.0 == 0 {
+        return;
+    }
+    let s = state.app.settings.borrow();
+
+    let pick = |mode: BlocklistMode, dis: u16, allow: u16, block: u16| -> u16 {
+        match mode {
+            BlocklistMode::Disable => dis,
+            BlocklistMode::Allow => allow,
+            BlocklistMode::Block => block,
+        }
+    };
+
+    let trios = [
+        (
+            s.blocklist_spy,
+            IDM_BLOCKLIST_SPY_DISABLE,
+            IDM_BLOCKLIST_SPY_ALLOW,
+            IDM_BLOCKLIST_SPY_BLOCK,
+        ),
+        (
+            s.blocklist_update,
+            IDM_BLOCKLIST_UPDATE_DISABLE,
+            IDM_BLOCKLIST_UPDATE_ALLOW,
+            IDM_BLOCKLIST_UPDATE_BLOCK,
+        ),
+        (
+            s.blocklist_extra,
+            IDM_BLOCKLIST_EXTRA_DISABLE,
+            IDM_BLOCKLIST_EXTRA_ALLOW,
+            IDM_BLOCKLIST_EXTRA_BLOCK,
+        ),
+    ];
+    for (mode, dis, allow, block) in trios {
+        let chosen = pick(mode, dis, allow, block);
+        unsafe {
+            let _ = CheckMenuRadioItem(
+                menu,
+                dis as u32,
+                block as u32,
+                chosen as u32,
+                MF_BYCOMMAND.0,
+            );
+        }
     }
 }
 

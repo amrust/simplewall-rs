@@ -100,6 +100,44 @@ pub struct InstallReport {
     pub rules_skipped: u32,
 }
 
+/// Per-category mode for the bundled blocklist (M7). Matches the
+/// upstream simplewall Settings → Blocklist tri-state radio groups
+/// (Spy / Update / Extra each get one). `Disable` skips loading
+/// that category entirely; `Allow` installs the category as
+/// permit filters (a whitelist for those endpoints); `Block`
+/// installs them as block filters (a blacklist).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum BlocklistAction {
+    #[default]
+    Disable,
+    Allow,
+    Block,
+}
+
+/// Per-category blocklist configuration. Three categories are
+/// derived from the rule name's prefix in `profile_internal.xml`
+/// (`spy_*`, `update_*`, `extra_*`).
+#[derive(Debug, Clone, Copy, Default)]
+pub struct BlocklistConfig {
+    pub spy: BlocklistAction,
+    pub update: BlocklistAction,
+    pub extra: BlocklistAction,
+}
+
+impl BlocklistConfig {
+    /// Resolve which action to apply to a single blocklist rule
+    /// based on its name prefix. Returns `Disable` for unknown
+    /// prefixes — better to no-op than misclassify.
+    fn action_for(&self, name: &str) -> BlocklistAction {
+        match name.split_once('_').map(|(p, _)| p) {
+            Some("spy") => self.spy,
+            Some("update") => self.update,
+            Some("extra") => self.extra,
+            _ => BlocklistAction::Disable,
+        }
+    }
+}
+
 /// Install all enabled rules in `profile` into the kernel.
 ///
 /// Idempotent in the provider/sublayer sense: re-running this
@@ -129,6 +167,37 @@ pub fn install_profile(
     profile: &Profile,
     persistent: bool,
 ) -> Result<InstallReport, InstallError> {
+    install_with_internal(engine, profile, None, &BlocklistConfig::default(), persistent)
+}
+
+/// Like `install_profile`, but also installs the bundled internal
+/// profile (system rules + categorized blocklist) per the user's
+/// `BlocklistConfig`. The internal profile is amwall's
+/// `profile_internal.xml` — embedded at build time and loaded into
+/// `App.internal_profile` on startup.
+///
+/// System rules from the internal profile are installed
+/// unconditionally (they're things like DHCP / DNS that need to
+/// remain reachable for the OS to function), with the exception of
+/// any whose `is_enabled = false`.
+///
+/// Blocklist rules from the internal profile are installed
+/// per-category according to `BlocklistConfig.action_for(name)`:
+///   - `Disable` → skip the rule (counted in `rules_skipped`).
+///   - `Allow`   → install with `FilterAction::Permit`.
+///   - `Block`   → install with `FilterAction::Block`.
+///
+/// `internal_profile` may be `None` to mirror the bare
+/// `install_profile` behaviour (used by `-install` from the CLI,
+/// which currently doesn't have access to the bundled profile —
+/// future M9 work brings that in).
+pub fn install_with_internal(
+    engine: &WfpEngine,
+    user_profile: &Profile,
+    internal_profile: Option<&Profile>,
+    blocklist: &BlocklistConfig,
+    persistent: bool,
+) -> Result<InstallReport, InstallError> {
     provider::add_with_key(
         engine,
         PROVIDER_NAME,
@@ -148,22 +217,67 @@ pub fn install_profile(
 
     let mut filters_added = 0u32;
     let mut rules_skipped = 0u32;
-    for rule in &profile.custom_rules {
+
+    // 1. User custom rules — same flow as before.
+    for rule in &user_profile.custom_rules {
         if !rule.is_enabled {
             rules_skipped += 1;
             continue;
         }
-        let added = install_one_rule(engine, persistent, rule)?;
+        let action = filter_action_from_rule(rule);
+        let added = install_one_rule(engine, persistent, rule, action)?;
         if added == 0 {
             rules_skipped += 1;
         }
         filters_added += added;
     }
 
+    // 2. System rules (DHCP, DNS, NetBIOS, etc.) — always Permit.
+    //    The XML's per-rule `is_enabled` still gates application,
+    //    matching upstream's behaviour where users can disable
+    //    individual system rules via the rules_config overrides.
+    if let Some(internal) = internal_profile {
+        for rule in &internal.system_rules {
+            if !rule.is_enabled {
+                rules_skipped += 1;
+                continue;
+            }
+            let added = install_one_rule(engine, persistent, rule, FilterAction::Permit)?;
+            if added == 0 {
+                rules_skipped += 1;
+            }
+            filters_added += added;
+        }
+
+        // 3. Blocklist rules — per-category mode decides the action.
+        for rule in &internal.blocklist_rules {
+            let action = match blocklist.action_for(&rule.name) {
+                BlocklistAction::Disable => {
+                    rules_skipped += 1;
+                    continue;
+                }
+                BlocklistAction::Allow => FilterAction::Permit,
+                BlocklistAction::Block => FilterAction::Block,
+            };
+            let added = install_one_rule(engine, persistent, rule, action)?;
+            if added == 0 {
+                rules_skipped += 1;
+            }
+            filters_added += added;
+        }
+    }
+
     Ok(InstallReport {
         filters_added,
         rules_skipped,
     })
+}
+
+fn filter_action_from_rule(rule: &Rule) -> FilterAction {
+    match rule.action {
+        Action::Permit => FilterAction::Permit,
+        Action::Block => FilterAction::Block,
+    }
 }
 
 /// Remove every filter, sublayer, and the provider itself
@@ -186,6 +300,7 @@ fn install_one_rule(
     engine: &WfpEngine,
     persistent: bool,
     rule: &Rule,
+    action: FilterAction,
 ) -> Result<u32, InstallError> {
     let remotes = parse_rule_string(&rule.name, rule.remote.as_deref())?;
     let locals = parse_rule_string(&rule.name, rule.local.as_deref())?;
@@ -199,11 +314,6 @@ fn install_one_rule(
             // operator sees it in `rules_skipped`.
             return Ok(0);
         }
-    };
-
-    let action = match rule.action {
-        Action::Permit => FilterAction::Permit,
-        Action::Block => FilterAction::Block,
     };
 
     let mut count = 0u32;
@@ -659,6 +769,22 @@ mod tests {
     fn expand_env_with_no_percent_passes_through() {
         let out = expand_env_with(r"C:\Windows\System32", |_| None);
         assert_eq!(out, r"C:\Windows\System32");
+    }
+
+    #[test]
+    fn blocklist_action_for_routes_by_name_prefix() {
+        let cfg = BlocklistConfig {
+            spy: BlocklistAction::Block,
+            update: BlocklistAction::Allow,
+            extra: BlocklistAction::Disable,
+        };
+        assert_eq!(cfg.action_for("spy_8.8.8.8"), BlocklistAction::Block);
+        assert_eq!(cfg.action_for("update_207.46.114.58"), BlocklistAction::Allow);
+        assert_eq!(cfg.action_for("extra_13.64.186.225"), BlocklistAction::Disable);
+        // Unknown prefix or no underscore: defaults to Disable so an
+        // unexpectedly-named entry doesn't get silently misclassified.
+        assert_eq!(cfg.action_for("unknown_1.2.3.4"), BlocklistAction::Disable);
+        assert_eq!(cfg.action_for("noprefix"), BlocklistAction::Disable);
     }
 
     #[test]
