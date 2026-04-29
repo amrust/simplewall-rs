@@ -69,3 +69,66 @@ pub enum PortSpec {
     /// Inclusive port range, `start-end`.
     Range(u16, u16),
 }
+
+impl AddrSpec {
+    /// `true` if this is an IPv6-family spec (single or CIDR).
+    /// Used by `Display` for `RuleClause` to decide whether the
+    /// address needs `[…]` brackets when a port is present.
+    pub fn is_ipv6(&self) -> bool {
+        matches!(self, Self::Ipv6(_) | Self::Ipv6Cidr(_, _))
+    }
+}
+
+impl std::fmt::Display for AddrSpec {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Ipv4(a) => write!(f, "{a}"),
+            Self::Ipv4Range(a, b) => write!(f, "{a}-{b}"),
+            Self::Ipv4Cidr(a, p) => write!(f, "{a}/{p}"),
+            Self::Ipv6(a) => write!(f, "{a}"),
+            Self::Ipv6Cidr(a, p) => write!(f, "{a}/{p}"),
+        }
+    }
+}
+
+impl std::fmt::Display for PortSpec {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Single(p) => write!(f, "{p}"),
+            Self::Range(a, b) => write!(f, "{a}-{b}"),
+        }
+    }
+}
+
+impl std::fmt::Display for RuleClause {
+    /// Render as a string the parser would round-trip back to an
+    /// equal `RuleClause`. Bracketed form is required for IPv6 with
+    /// a port (since IPv6 itself uses colons), and for IPv6 CIDR
+    /// with a port (`[fe80::/10]:443`). Bare IPv6 addresses without
+    /// a port format unbracketed (`fe80::1`).
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match (&self.addr, &self.port) {
+            (Some(a), Some(p)) if a.is_ipv6() => write!(f, "[{a}]:{p}"),
+            (Some(a), Some(p)) => write!(f, "{a}:{p}"),
+            (Some(a), None) => write!(f, "{a}"),
+            (None, Some(p)) => write!(f, "{p}"),
+            (None, None) => Ok(()),
+        }
+    }
+}
+
+/// Format a list of clauses back to an upstream-style `;`-separated
+/// rule string. `format_clauses(parse_str(s))` is a normalized
+/// version of `s` (canonical IPv6 forms, single-space separator,
+/// no trailing semicolon).
+pub fn format_clauses(clauses: &[RuleClause]) -> String {
+    let mut out = String::new();
+    for (i, c) in clauses.iter().enumerate() {
+        if i > 0 {
+            out.push_str("; ");
+        }
+        use std::fmt::Write;
+        let _ = write!(out, "{c}");
+    }
+    out
+}

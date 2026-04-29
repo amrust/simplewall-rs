@@ -42,3 +42,9 @@ windows = { version = "0.54", features = [
 
 [target.'cfg(windows)'.build-dependencies]
 embed-resource = "2.5"
+
+[dev-dependencies]
+# Property-based testing for the rule-string parser (M3.4).
+# `default-features = false` drops the timeout/fork machinery
+# we don't use, which keeps the dev-build dep tree small.
+proptest = { version = "1", default-features = false, features = ["std"] }

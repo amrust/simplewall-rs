@@ -427,3 +427,195 @@ mod tests {
         assert!(matches!(err, ParseError::Malformed(_)));
     }
 }
+
+// =================================================================
+// Property tests (M3.4).
+//
+// Two coarse properties:
+//
+//   PT1  — `parse_str` must never panic on arbitrary UTF-8 input.
+//          Adversarial input (random bytes, malformed clauses,
+//          edge-case structural chars) goes to `Err`, never to
+//          a panic / overflow / index-out-of-bounds.
+//
+//   PT2  — Round-trip via `Display`. For every valid `RuleClause`
+//          the AST can produce, `parse_clause(c.to_string())` must
+//          return an AST equal to `c`. This catches Display ↔ parse
+//          drift (e.g. forgetting to bracket IPv6+port).
+//
+// Multi-clause variant of PT2 is covered by PT3 — generate a small
+// `Vec<RuleClause>`, render via `format_clauses`, parse_str back,
+// expect the same Vec.
+// =================================================================
+
+#[cfg(test)]
+mod proptests {
+    use super::super::{format_clauses, AddrSpec, PortSpec, RuleClause};
+    use super::{parse_clause, parse_str};
+    use proptest::prelude::*;
+    use std::net::{Ipv4Addr, Ipv6Addr};
+
+    // ---- strategies ----
+
+    fn ipv4() -> impl Strategy<Value = Ipv4Addr> {
+        any::<u32>().prop_map(Ipv4Addr::from)
+    }
+
+    fn ipv6() -> impl Strategy<Value = Ipv6Addr> {
+        any::<u128>().prop_map(Ipv6Addr::from)
+    }
+
+    fn ipv4_range() -> impl Strategy<Value = (Ipv4Addr, Ipv4Addr)> {
+        // Keep `a <= b` so we don't trip BadRange.
+        (any::<u32>(), any::<u32>()).prop_map(|(x, y)| {
+            let (lo, hi) = if x <= y { (x, y) } else { (y, x) };
+            (Ipv4Addr::from(lo), Ipv4Addr::from(hi))
+        })
+    }
+
+    fn port_range() -> impl Strategy<Value = (u16, u16)> {
+        (any::<u16>(), any::<u16>()).prop_map(|(x, y)| {
+            if x <= y { (x, y) } else { (y, x) }
+        })
+    }
+
+    fn addr_spec() -> impl Strategy<Value = AddrSpec> {
+        prop_oneof![
+            ipv4().prop_map(AddrSpec::Ipv4),
+            ipv4_range().prop_map(|(a, b)| AddrSpec::Ipv4Range(a, b)),
+            (ipv4(), 0u8..=32).prop_map(|(a, p)| AddrSpec::Ipv4Cidr(a, p)),
+            ipv6().prop_map(AddrSpec::Ipv6),
+            (ipv6(), 0u8..=128).prop_map(|(a, p)| AddrSpec::Ipv6Cidr(a, p)),
+        ]
+    }
+
+    fn port_spec() -> impl Strategy<Value = PortSpec> {
+        prop_oneof![
+            any::<u16>().prop_map(PortSpec::Single),
+            port_range().prop_map(|(a, b)| PortSpec::Range(a, b)),
+        ]
+    }
+
+    fn rule_clause() -> impl Strategy<Value = RuleClause> {
+        // Three valid shapes: addr-only, port-only, addr+port.
+        // (Both-None is structurally impossible from the parser, so
+        // we don't generate it.)
+        prop_oneof![
+            addr_spec().prop_map(|a| RuleClause { addr: Some(a), port: None }),
+            port_spec().prop_map(|p| RuleClause { addr: None, port: Some(p) }),
+            (addr_spec(), port_spec())
+                .prop_map(|(a, p)| RuleClause { addr: Some(a), port: Some(p) }),
+        ]
+    }
+
+    // ---- PT1: panic-freedom on arbitrary input ----
+
+    proptest! {
+        #[test]
+        fn parse_str_doesnt_panic_on_arbitrary_utf8(s in ".*") {
+            let _ = parse_str(&s);
+        }
+
+        // Targeted: strings drawn from the rule-syntax alphabet. More
+        // likely to actually exercise parser branches than `.*`, which
+        // mostly produces obvious-garbage that bails at the first
+        // dispatch check.
+        #[test]
+        fn parse_str_doesnt_panic_on_rule_alphabet(
+            s in r"[0-9a-fA-F.:/;\-\[\] ]{0,200}"
+        ) {
+            let _ = parse_str(&s);
+        }
+
+        // Targeted: a full clause-shaped grammar. Exercises happy-path
+        // parsing far more often than the alphabet sampler.
+        #[test]
+        fn parse_clause_doesnt_panic_on_clauselike_strings(
+            s in r"\[?[0-9a-fA-F.:]{1,40}\]?(/[0-9]{1,3})?(:[0-9]{1,6}(-[0-9]{1,6})?)?"
+        ) {
+            let _ = parse_clause(&s);
+        }
+    }
+
+    // ---- PT2: AST → Display → parse_clause round-trip ----
+
+    proptest! {
+        #[test]
+        fn rule_clause_display_roundtrips(clause in rule_clause()) {
+            let s = clause.to_string();
+            let parsed = parse_clause(&s).unwrap_or_else(|e| {
+                panic!("formatted clause `{s}` failed to parse: {e}")
+            });
+            prop_assert_eq!(clause, parsed);
+        }
+
+        #[test]
+        fn addr_spec_display_roundtrips_when_used_alone(addr in addr_spec()) {
+            // An address-only clause is the simplest carrier — exercise
+            // AddrSpec::Display through the full clause pipeline.
+            let clause = RuleClause { addr: Some(addr.clone()), port: None };
+            let s = clause.to_string();
+            let parsed = parse_clause(&s).unwrap();
+            prop_assert_eq!(parsed.addr, Some(addr));
+            prop_assert_eq!(parsed.port, None);
+        }
+
+        #[test]
+        fn port_spec_display_roundtrips_when_used_alone(port in port_spec()) {
+            let clause = RuleClause { addr: None, port: Some(port) };
+            let s = clause.to_string();
+            let parsed = parse_clause(&s).unwrap();
+            prop_assert_eq!(parsed.addr, None);
+            prop_assert_eq!(parsed.port, Some(port));
+        }
+    }
+
+    // ---- PT3: Vec<RuleClause> → format_clauses → parse_str ----
+
+    proptest! {
+        #[test]
+        fn format_clauses_roundtrips(clauses in prop::collection::vec(rule_clause(), 1..16)) {
+            let s = format_clauses(&clauses);
+            let parsed = parse_str(&s).unwrap_or_else(|e| {
+                panic!("formatted rule string `{s}` failed to parse: {e}")
+            });
+            prop_assert_eq!(clauses, parsed);
+        }
+    }
+
+    // ---- PT4: whitespace + trailing-semicolon tolerance ----
+
+    proptest! {
+        #[test]
+        fn whitespace_and_trailing_semicolons_dont_change_result(
+            clauses in prop::collection::vec(rule_clause(), 1..8),
+            extra_trailing in 0u32..3,
+            extra_inner_spaces in 0u32..3,
+        ) {
+            // Canonical form.
+            let canonical = format_clauses(&clauses);
+            let canonical_parsed = parse_str(&canonical).unwrap();
+
+            // Build a noisy variant with extra spaces around `;` and
+            // up to a few trailing semicolons. Per parser docs both
+            // are tolerated and shouldn't change the result.
+            let mut noisy = String::new();
+            for (i, c) in clauses.iter().enumerate() {
+                if i > 0 {
+                    noisy.push(';');
+                    for _ in 0..extra_inner_spaces {
+                        noisy.push(' ');
+                    }
+                }
+                use std::fmt::Write;
+                let _ = write!(noisy, "{c}");
+            }
+            for _ in 0..extra_trailing {
+                noisy.push(';');
+            }
+            let noisy_parsed = parse_str(&noisy).unwrap();
+
+            prop_assert_eq!(canonical_parsed, noisy_parsed);
+        }
+    }
+}
