@@ -46,6 +46,7 @@ mod cli {
     use amwall::profile;
     use amwall::wfp::WfpEngine;
     use windows::Win32::UI::Shell::IsUserAnAdmin;
+    use windows::core::PCWSTR;
 
     /// Parsed command line. The CLI is small enough that a hand-
     /// rolled argparse + this enum is leaner than pulling in `clap`.
@@ -157,15 +158,15 @@ mod cli {
                 ExitCode::from(0)
             }
             Command::Install { path, temp, silent } => {
-                if !require_admin() {
-                    return ExitCode::from(1);
+                if let Err(exit) = ensure_admin(silent) {
+                    return exit;
                 }
                 let resolved = path.unwrap_or_else(default_profile_path);
                 handle_install(&resolved, temp, silent)
             }
             Command::Uninstall { silent } => {
-                if !require_admin() {
-                    return ExitCode::from(1);
+                if let Err(exit) = ensure_admin(silent) {
+                    return exit;
                 }
                 handle_uninstall(silent)
             }
@@ -207,17 +208,140 @@ mod cli {
         }
     }
 
-    /// Returns true if the current process is elevated. Otherwise
-    /// prints an error and returns false.
-    fn require_admin() -> bool {
-        let is_admin = unsafe { IsUserAnAdmin() }.as_bool();
-        if !is_admin {
-            eprintln!(
-                "amwall: Administrator privileges required for filter management."
-            );
-            eprintln!("       Re-run from an elevated PowerShell or Command Prompt.");
+    /// Ensure the current process is elevated. If it is, return
+    /// `Ok(())` and the caller proceeds. If not, request UAC
+    /// elevation by re-launching this same exe via ShellExecuteExW
+    /// with the `runas` verb, wait for the elevated child to
+    /// finish, then return `Err(ExitCode::from(child_exit_code))`
+    /// so the caller forwards it. On UAC denial or other failure,
+    /// print an error and return `Err(ExitCode::from(1))`.
+    ///
+    /// Output limitation: the elevated child runs in its own
+    /// session/console (Windows enforces this for security) — its
+    /// stdout/stderr won't appear in this shell. The parent's exit
+    /// code is the source of truth. With `windows_subsystem =
+    /// "windows"` and AttachConsole(ATTACH_PARENT_PROCESS), the
+    /// elevated child has no parent console to attach to, so any
+    /// `println!`/`eprintln!` it emits is silently discarded. This
+    /// matches upstream simplewall's behavior.
+    fn ensure_admin(silent: bool) -> Result<(), ExitCode> {
+        if unsafe { IsUserAnAdmin() }.as_bool() {
+            return Ok(());
         }
-        is_admin
+        if !silent {
+            eprintln!("amwall: requesting elevation via UAC...");
+        }
+        match relaunch_elevated() {
+            Ok(code) => Err(ExitCode::from(code)),
+            Err(e) => {
+                eprintln!("amwall: elevation failed: {e}");
+                eprintln!("       Re-run from an elevated PowerShell or Command Prompt.");
+                Err(ExitCode::from(1))
+            }
+        }
+    }
+
+    /// Re-launch the current exe with the same argv, elevated via
+    /// the `runas` verb. Blocks until the child finishes; returns
+    /// the child's exit code, clamped to `u8` for `ExitCode`. Errors
+    /// surface as `Err(msg)` — typically UAC denial (the user hit
+    /// Cancel on the prompt) or, more rarely, a missing exe path.
+    fn relaunch_elevated() -> Result<u8, String> {
+        use windows::Win32::Foundation::{CloseHandle, HANDLE, WAIT_OBJECT_0};
+        use windows::Win32::System::Threading::{
+            GetExitCodeProcess, INFINITE, WaitForSingleObject,
+        };
+        use windows::Win32::UI::Shell::{
+            SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW, ShellExecuteExW,
+        };
+        use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+
+        let exe = current_exe_path_wide()
+            .ok_or_else(|| "GetModuleFileNameW returned 0".to_string())?;
+        let params = build_relaunch_params();
+        // Null-terminated wide "runas".
+        let verb: Vec<u16> = "runas\0".encode_utf16().collect();
+
+        let mut sei = SHELLEXECUTEINFOW {
+            cbSize: std::mem::size_of::<SHELLEXECUTEINFOW>() as u32,
+            fMask: SEE_MASK_NOCLOSEPROCESS,
+            lpVerb: PCWSTR(verb.as_ptr()),
+            lpFile: PCWSTR(exe.as_ptr()),
+            lpParameters: PCWSTR(params.as_ptr()),
+            nShow: SW_SHOWNORMAL.0,
+            ..Default::default()
+        };
+
+        unsafe { ShellExecuteExW(&mut sei) }
+            .map_err(|e| format!("ShellExecuteExW(runas) failed: {e}"))?;
+
+        let proc: HANDLE = sei.hProcess;
+        if proc.0 == 0 {
+            return Err("UAC accepted but child handle is null".to_string());
+        }
+
+        let wait = unsafe { WaitForSingleObject(proc, INFINITE) };
+        let mut code: u32 = 1;
+        if wait == WAIT_OBJECT_0 {
+            let _ = unsafe { GetExitCodeProcess(proc, &mut code) };
+        }
+        let _ = unsafe { CloseHandle(proc) };
+
+        // ExitCode::from takes u8. Cap at 255; values > 255 are
+        // unusual but safe to truncate since we only forward the
+        // child's "did it work" signal.
+        Ok((code & 0xFF) as u8)
+    }
+
+    /// Path to the current process's exe, as a null-terminated wide
+    /// buffer suitable for `PCWSTR`. Returns `None` if Win32 fails.
+    fn current_exe_path_wide() -> Option<Vec<u16>> {
+        use windows::Win32::System::LibraryLoader::GetModuleFileNameW;
+        let mut buf = vec![0u16; 1024];
+        let n = unsafe { GetModuleFileNameW(None, &mut buf) };
+        if n == 0 || (n as usize) >= buf.len() {
+            return None;
+        }
+        buf.truncate(n as usize);
+        buf.push(0);
+        Some(buf)
+    }
+
+    /// Build a Windows command line from `args`, with each
+    /// space/tab/quote-containing arg wrapped in `"…"` and internal
+    /// `"` escaped to `\"`, matching `CommandLineToArgvW` parsing
+    /// rules. Args without special chars pass through verbatim.
+    /// Empty args render as `""` (preserved as a positional empty).
+    pub(super) fn build_command_line(args: &[String]) -> String {
+        let mut s = String::new();
+        for (i, a) in args.iter().enumerate() {
+            if i > 0 {
+                s.push(' ');
+            }
+            if a.is_empty() || a.contains(' ') || a.contains('\t') || a.contains('"') {
+                s.push('"');
+                for ch in a.chars() {
+                    if ch == '"' {
+                        s.push('\\');
+                    }
+                    s.push(ch);
+                }
+                s.push('"');
+            } else {
+                s.push_str(a);
+            }
+        }
+        s
+    }
+
+    /// Wide null-terminated form of this process's argv (minus
+    /// argv[0]), suitable for `SHELLEXECUTEINFOW.lpParameters`.
+    fn build_relaunch_params() -> Vec<u16> {
+        let args: Vec<String> = std::env::args().skip(1).collect();
+        let s = build_command_line(&args);
+        let mut wide: Vec<u16> = s.encode_utf16().collect();
+        wide.push(0);
+        wide
     }
 
     fn handle_install(path: &Path, temp: bool, silent: bool) -> ExitCode {
@@ -444,6 +568,49 @@ mod cli {
                 Command::Error(msg) => assert!(msg.contains("-frob")),
                 other => panic!("expected Error, got {other:?}"),
             }
+        }
+
+        // ---- build_command_line (M4.6 elevated-relaunch helper) ----
+
+        fn s(strs: &[&str]) -> Vec<String> {
+            strs.iter().map(|s| s.to_string()).collect()
+        }
+
+        #[test]
+        fn build_command_line_simple_args() {
+            assert_eq!(build_command_line(&s(&["-install"])), "-install");
+            assert_eq!(
+                build_command_line(&s(&["-install", "-temp"])),
+                "-install -temp",
+            );
+        }
+
+        #[test]
+        fn build_command_line_empty_args_yields_empty_string() {
+            assert_eq!(build_command_line(&[]), "");
+        }
+
+        #[test]
+        fn build_command_line_quotes_args_with_spaces() {
+            assert_eq!(
+                build_command_line(&s(&["-install", "C:\\Program Files\\p.xml"])),
+                r#"-install "C:\Program Files\p.xml""#,
+            );
+        }
+
+        #[test]
+        fn build_command_line_escapes_internal_quotes() {
+            assert_eq!(
+                build_command_line(&s(&[r#"a"b"#])),
+                r#""a\"b""#,
+            );
+        }
+
+        #[test]
+        fn build_command_line_preserves_empty_arg_as_empty_quotes() {
+            // An empty positional should round-trip through
+            // CommandLineToArgvW as one empty arg, not vanish.
+            assert_eq!(build_command_line(&s(&["-x", "", "-y"])), r#"-x "" -y"#);
         }
     }
 }
