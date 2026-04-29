@@ -195,11 +195,7 @@ fn resolve_path(configured: &str) -> PathBuf {
     if !trimmed.is_empty() {
         return PathBuf::from(trimmed);
     }
-    if let Some(appdata) = std::env::var_os("APPDATA") {
-        PathBuf::from(appdata).join("amwall").join("amwall.log")
-    } else {
-        PathBuf::from("amwall.log")
-    }
+    crate::paths::default_log_path()
 }
 
 fn bak_path(path: &Path) -> PathBuf {

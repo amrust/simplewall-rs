@@ -12,6 +12,7 @@
 // library. `profile` is pure-Rust XML I/O and compiles on every host.
 
 pub mod locale;
+pub mod paths;
 pub mod profile;
 pub mod rules;
 

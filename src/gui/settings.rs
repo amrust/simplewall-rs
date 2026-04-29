@@ -423,13 +423,7 @@ fn kv_i32(buf: &mut String, key: &str, value: i32) {
 /// CLI entry point. Falls back to a relative `settings.txt` when
 /// %APPDATA% is unset (e.g. running as SYSTEM).
 pub fn default_settings_path() -> PathBuf {
-    if let Some(appdata) = std::env::var_os("APPDATA") {
-        PathBuf::from(appdata)
-            .join("amwall")
-            .join("settings.txt")
-    } else {
-        PathBuf::from("settings.txt")
-    }
+    crate::paths::settings_path()
 }
 
 #[cfg(test)]

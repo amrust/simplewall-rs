@@ -437,17 +437,14 @@ mod cli {
         }
     }
 
-    /// Default profile-file location: `%APPDATA%\amwall\profile.xml`.
-    /// Falls back to `profile.xml` in the current directory if
-    /// `%APPDATA%` is unset (e.g. running as SYSTEM).
+    /// Default profile-file location. In installed mode this is
+    /// `%APPDATA%\amwall\profile.xml`; in portable mode (M9.1 —
+    /// `amwall.ini` next to the exe) it's `<exe_dir>\profile.xml`.
+    /// Routed through `crate::paths::profile_path` so the two
+    /// layouts stay in lock-step with the rest of the per-user
+    /// state (settings, log).
     fn default_profile_path() -> PathBuf {
-        if let Some(appdata) = std::env::var_os("APPDATA") {
-            PathBuf::from(appdata)
-                .join("amwall")
-                .join("profile.xml")
-        } else {
-            PathBuf::from("profile.xml")
-        }
+        amwall::paths::profile_path()
     }
 
     fn print_usage() {
