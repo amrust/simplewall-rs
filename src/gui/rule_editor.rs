@@ -436,6 +436,28 @@ fn on_size_parent(hwnd: HWND) {
                 }
             }
             let _ = EndDeferWindowPos(hdwp);
+
+            // Force a full descendant invalidation on each page —
+            // DeferWindowPos's atomic batch handles geometry but
+            // not always paint propagation through child dialog
+            // templates. Without this the page controls don't
+            // redraw after a resize.
+            use windows::Win32::Graphics::Gdi::{
+                InvalidateRect, RDW_ALLCHILDREN, RDW_INVALIDATE, RDW_UPDATENOW,
+                RedrawWindow,
+            };
+            for &page in &[state.page_general, state.page_rule, state.page_apps] {
+                if page.0 == 0 {
+                    continue;
+                }
+                let _ = InvalidateRect(page, None, true);
+                let _ = RedrawWindow(
+                    page,
+                    None,
+                    None,
+                    RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_UPDATENOW,
+                );
+            }
         }
     }
 

@@ -390,6 +390,30 @@ fn on_size_parent(hwnd: HWND) {
             }
 
             let _ = EndDeferWindowPos(hdwp);
+
+            // DeferWindowPos batches the moves atomically but
+            // doesn't always issue WM_PAINT to the moved windows'
+            // descendants — specifically, child dialogs don't
+            // re-paint their template controls without an explicit
+            // poke. Force a full descendant invalidation on every
+            // page so groupboxes / edits / combos render after
+            // every resize.
+            use windows::Win32::Graphics::Gdi::{
+                InvalidateRect, RDW_ALLCHILDREN, RDW_INVALIDATE, RDW_UPDATENOW,
+                RedrawWindow,
+            };
+            for &p in &state.pages {
+                if p.0 == 0 {
+                    continue;
+                }
+                let _ = InvalidateRect(p, None, true);
+                let _ = RedrawWindow(
+                    p,
+                    None,
+                    None,
+                    RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_UPDATENOW,
+                );
+            }
         }
     }
 }

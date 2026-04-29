@@ -720,6 +720,28 @@ fn on_size(hwnd: HWND) {
                 }
             }
             let _ = EndDeferWindowPos(hdwp);
+
+            // Force a full descendant invalidation on each
+            // listview — DeferWindowPos's atomic batch covers
+            // geometry but doesn't always propagate paint to
+            // listview row content + headers after a resize.
+            use windows::Win32::Graphics::Gdi::{
+                InvalidateRect, RDW_ALLCHILDREN, RDW_INVALIDATE, RDW_UPDATENOW,
+                RedrawWindow,
+            };
+            for slot in 0..TAB_LISTVIEW_IDS.len() {
+                let lv = state.listviews[slot].get();
+                if lv.0 == 0 {
+                    continue;
+                }
+                let _ = InvalidateRect(lv, None, true);
+                let _ = RedrawWindow(
+                    lv,
+                    None,
+                    None,
+                    RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_UPDATENOW,
+                );
+            }
         }
     }
 }
