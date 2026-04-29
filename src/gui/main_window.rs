@@ -686,6 +686,16 @@ fn on_size(hwnd: HWND) {
         }
         unsafe {
             let _ = MoveWindow(lv, content.left, content.top, cw, ch, true);
+            // MoveWindow with bRepaint=true only invalidates the
+            // listview's own rect; descendants (the column header,
+            // sub-items, etc.) keep their stale paints. Force a
+            // full descendant invalidation so listview content
+            // doesn't go blank after a resize.
+            use windows::Win32::Graphics::Gdi::{
+                InvalidateRect, RDW_ALLCHILDREN, RDW_INVALIDATE, RedrawWindow,
+            };
+            let _ = RedrawWindow(lv, None, None, RDW_INVALIDATE | RDW_ALLCHILDREN);
+            let _ = InvalidateRect(lv, None, true);
         }
     }
 }

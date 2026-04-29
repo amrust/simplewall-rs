@@ -347,6 +347,14 @@ fn on_size_parent(hwnd: HWND) {
         }
         unsafe {
             let _ = MoveWindow(page, content.left, content.top, cw, ch, true);
+            // MoveWindow only invalidates the page's own rect;
+            // its dialog children keep stale paint state and
+            // disappear visually until the next implicit redraw.
+            use windows::Win32::Graphics::Gdi::{
+                InvalidateRect, RDW_ALLCHILDREN, RDW_INVALIDATE, RedrawWindow,
+            };
+            let _ = RedrawWindow(page, None, None, RDW_INVALIDATE | RDW_ALLCHILDREN);
+            let _ = InvalidateRect(page, None, true);
         }
     }
     // Apps listview column width tracks pane width.

@@ -303,6 +303,17 @@ fn on_size_parent(hwnd: HWND) {
         if p.0 != 0 {
             unsafe {
                 let _ = MoveWindow(p, content.left, content.top, cw, ch, true);
+                // Force a full descendant invalidation — without
+                // this the page's controls keep their pre-resize
+                // paint regions and effectively disappear when
+                // the page is grown (the new area is the parent's
+                // background; the controls themselves never get
+                // a paint message).
+                use windows::Win32::Graphics::Gdi::{
+                    InvalidateRect, RDW_ALLCHILDREN, RDW_INVALIDATE, RedrawWindow,
+                };
+                let _ = RedrawWindow(p, None, None, RDW_INVALIDATE | RDW_ALLCHILDREN);
+                let _ = InvalidateRect(p, None, true);
             }
         }
     }
