@@ -131,6 +131,12 @@ pub struct Settings {
     pub exclude_custom: bool,
     pub exclude_stealth: bool,
     pub exclude_classify_allow: bool,
+
+    // ---- First-run wizard (M9.4) ----
+    /// Set to `true` after the first-run wizard has run (whether
+    /// the user picked Import or Start fresh). Prevents the
+    /// wizard from re-showing on every launch.
+    pub first_run_done: bool,
 }
 
 impl Default for Settings {
@@ -184,6 +190,7 @@ impl Default for Settings {
             exclude_custom: false,
             exclude_stealth: false,
             exclude_classify_allow: false,
+            first_run_done: false,
         }
     }
 }
@@ -280,6 +287,7 @@ impl Settings {
         kv(&mut buf, "exclude_custom", self.exclude_custom);
         kv(&mut buf, "exclude_stealth", self.exclude_stealth);
         kv(&mut buf, "exclude_classify_allow", self.exclude_classify_allow);
+        kv(&mut buf, "first_run_done", self.first_run_done);
         std::fs::write(path, buf)
     }
 }
@@ -385,6 +393,7 @@ fn apply_kv(s: &mut Settings, key: &str, value: &str) {
         "exclude_custom" => s.exclude_custom = b,
         "exclude_stealth" => s.exclude_stealth = b,
         "exclude_classify_allow" => s.exclude_classify_allow = b,
+        "first_run_done" => s.first_run_done = b,
         // Forward-compat: silently ignore unknown keys.
         _ => {}
     }

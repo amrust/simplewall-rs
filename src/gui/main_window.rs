@@ -847,7 +847,68 @@ fn on_create(hwnd: HWND) -> Result<(), String> {
         SetTimer(hwnd, TIMER_EVENT_DRAIN, EVENT_DRAIN_INTERVAL_MS, None);
     }
 
+    // First-run wizard (M9.4): if the user has never seen it
+    // and simplewall has a config to import, ask. Runs once per
+    // install (gated on `Settings.first_run_done`) so we don't
+    // pester returning users.
+    maybe_run_first_run_wizard(hwnd, state);
+
     Ok(())
+}
+
+/// Helper for `on_wm_create` end — gates on `first_run_done` and
+/// dispatches to the wizard. On Imported, replaces the in-memory
+/// profile + repaints the apps tab. Always sets `first_run_done`
+/// when a real choice was made (Import / StartFresh / NotApplicable),
+/// leaves it false for `Skipped` so a TaskDialog failure retries.
+fn maybe_run_first_run_wizard(hwnd: HWND, state: &WndState) {
+    if state.app.settings.borrow().first_run_done {
+        return;
+    }
+    let profile_path = state.app.profile_path.borrow().clone();
+    let choice = super::first_run_wizard::maybe_run(hwnd, &profile_path);
+    use super::first_run_wizard::Choice;
+    match choice {
+        Choice::Imported => {
+            // Re-read the file we just wrote so the in-memory
+            // profile reflects it. parse failure is unlikely (we
+            // just wrote a valid file by copying simplewall's) but
+            // log + fall through to the existing empty profile if
+            // it happens.
+            match std::fs::read_to_string(&profile_path)
+                .map_err(|e| e.to_string())
+                .and_then(|xml| crate::profile::parse_str(&xml).map_err(|e| e.to_string()))
+            {
+                Ok(p) => {
+                    state.app.profile.replace(p);
+                    populate_apps_tab(state);
+                    populate_user_rules(state);
+                    on_tab_change(hwnd);
+                    set_status_text(
+                        state.status.get(),
+                        0,
+                        "Imported simplewall profile.",
+                    );
+                }
+                Err(e) => eprintln!(
+                    "amwall: imported profile parse failed: {e}"
+                ),
+            }
+        }
+        Choice::StartFresh | Choice::NotApplicable => {}
+        Choice::Skipped => return, // don't mark done — retry next launch
+    }
+
+    // Persist the user's decision so we don't show the wizard
+    // again. Pattern matches `on_toggle`'s save flow.
+    state.app.settings.borrow_mut().first_run_done = true;
+    let path = state.app.settings_path.borrow().clone();
+    if let Err(e) = state.app.settings.borrow().save(&path) {
+        eprintln!(
+            "amwall: settings: save first_run_done failed for {}: {e}",
+            path.display()
+        );
+    }
 }
 
 /// Open a separate WFP engine handle and subscribe to net events.
