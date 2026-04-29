@@ -1,5 +1,5 @@
-// simplewall-rs — Win32 resource script.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — Win32 resource script.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Compiled by build.rs via the `embed-resource` crate. Holds:
 //   - Application icon (shown by Explorer / taskbar / Alt-Tab).

@@ -1,8 +1,8 @@
-// simplewall-rs — persistent UI settings.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — persistent UI settings.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // User-toggleable preferences that survive app restarts. Lives in
-// `%APPDATA%\simplewall-rs\settings.txt` as a tiny line-oriented
+// `%APPDATA%\amwall\settings.txt` as a tiny line-oriented
 // key=value format — chosen over TOML/JSON specifically to avoid
 // adding a serde-flavoured dependency for ~10 booleans.
 //
@@ -184,7 +184,7 @@ impl Settings {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => return s,
             Err(e) => {
                 eprintln!(
-                    "simplewall-rs: settings: read failed for {}: {e}",
+                    "amwall: settings: read failed for {}: {e}",
                     path.display()
                 );
                 return s;
@@ -197,7 +197,7 @@ impl Settings {
             }
             let Some((key, value)) = line.split_once('=') else {
                 eprintln!(
-                    "simplewall-rs: settings: line {} ignored — no '=' separator",
+                    "amwall: settings: line {} ignored — no '=' separator",
                     lineno + 1
                 );
                 continue;
@@ -216,7 +216,7 @@ impl Settings {
             std::fs::create_dir_all(parent)?;
         }
         let mut buf = String::new();
-        buf.push_str("# simplewall-rs settings — edited by hand at your own risk\n");
+        buf.push_str("# amwall settings — edited by hand at your own risk\n");
         kv(&mut buf, "always_on_top", self.always_on_top);
         kv(&mut buf, "autosize_columns", self.autosize_columns);
         kv(&mut buf, "show_search_bar", self.show_search_bar);
@@ -317,7 +317,7 @@ fn apply_kv(s: &mut Settings, key: &str, value: &str) {
     let b = match parse_bool(value) {
         Some(b) => b,
         None => {
-            eprintln!("simplewall-rs: settings: unrecognised value `{value}` for `{key}`");
+            eprintln!("amwall: settings: unrecognised value `{value}` for `{key}`");
             return;
         }
     };
@@ -383,14 +383,14 @@ fn kv_u32(buf: &mut String, key: &str, value: u32) {
     let _ = writeln!(buf, "{key}={value}");
 }
 
-/// Standard location: `%APPDATA%\simplewall-rs\settings.txt`,
+/// Standard location: `%APPDATA%\amwall\settings.txt`,
 /// matching the same pattern used by `default_profile_path` in the
 /// CLI entry point. Falls back to a relative `settings.txt` when
 /// %APPDATA% is unset (e.g. running as SYSTEM).
 pub fn default_settings_path() -> PathBuf {
     if let Some(appdata) = std::env::var_os("APPDATA") {
         PathBuf::from(appdata)
-            .join("simplewall-rs")
+            .join("amwall")
             .join("settings.txt")
     } else {
         PathBuf::from("settings.txt")
@@ -425,7 +425,7 @@ mod tests {
 
     #[test]
     fn round_trip_via_temp_file() {
-        let dir = std::env::temp_dir().join("simplewall-rs-tests");
+        let dir = std::env::temp_dir().join("amwall-tests");
         let _ = std::fs::create_dir_all(&dir);
         let path = dir.join("settings_round_trip.txt");
         let _ = std::fs::remove_file(&path);
@@ -446,7 +446,7 @@ mod tests {
 
     #[test]
     fn missing_file_yields_defaults() {
-        let path = std::env::temp_dir().join("simplewall-rs-does-not-exist.txt");
+        let path = std::env::temp_dir().join("amwall-does-not-exist.txt");
         let _ = std::fs::remove_file(&path);
         let s = Settings::load(&path);
         assert_eq!(s, Settings::default());
@@ -454,7 +454,7 @@ mod tests {
 
     #[test]
     fn unknown_keys_are_ignored() {
-        let dir = std::env::temp_dir().join("simplewall-rs-tests");
+        let dir = std::env::temp_dir().join("amwall-tests");
         let _ = std::fs::create_dir_all(&dir);
         let path = dir.join("settings_unknown.txt");
         std::fs::write(

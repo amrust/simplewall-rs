@@ -1,5 +1,5 @@
-// simplewall-rs — control & menu IDs.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — control & menu IDs.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Mirrors upstream simplewall's `src/resource.h` — same numeric values
 // so anyone reading the upstream source side-by-side recognises the
@@ -121,7 +121,7 @@ pub const IDM_BLOCKLIST_EXTRA_BLOCK: u16 = 299;
 // Help
 pub const IDM_WEBSITE: u16 = 300;
 pub const IDM_CHECKUPDATES: u16 = 301;
-/// Replaces upstream's `IDM_DONATE` (PayPal). simplewall-rs's
+/// Replaces upstream's `IDM_DONATE` (PayPal). amwall's
 /// toolbar opens our GitHub releases page instead — same numeric
 /// slot, different action. See `main_window::on_command`.
 pub const IDM_RELEASES: u16 = 302;

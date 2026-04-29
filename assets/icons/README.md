@@ -13,7 +13,7 @@ Two distinct license boundaries — keep them straight when redistributing:
 | `101.ico`  | henrypp/simplewall `src/res/`   | GPL-3.0-or-later  |
 
 These are upstream simplewall's own application icons. As a GPL-3.0
-fork-as-port, simplewall-rs inherits the right to redistribute them
+fork-as-port, amwall inherits the right to redistribute them
 under the same license that already covers the rest of the codebase.
 
 ## Toolbar / UI glyphs (`silk/`)
@@ -42,8 +42,8 @@ Attribution is required and is provided in the repo-root `NOTICE` file.
 ## Deliberately not vendored
 
 - `paypal_fulllogo.png` — PayPal's registered trademark, not GPL-clearable.
-  simplewall-rs replaces upstream's "Donate" toolbar button with a
-  "Releases" button that opens `github.com/amrust/simplewall-rs/releases`.
+  amwall replaces upstream's "Donate" toolbar button with a
+  "Releases" button that opens `github.com/amrust/amwall/releases`.
 - `search_dark.png`, `search_light.png`, `search.png` — unclear origin
   in upstream (no attribution, sizes inconsistent with Silk). We'll
   generate replacements if/when M5.9 wires search-box decoration.

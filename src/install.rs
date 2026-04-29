@@ -1,5 +1,5 @@
-// simplewall-rs — high-level install / uninstall.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — high-level install / uninstall.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Bridges the parsed `Profile` (M2) and the rules engine (M3) to
 // the kernel-side filter installation (M1). Used by the CLI binary
@@ -35,7 +35,7 @@ use crate::wfp::{CleanupReport, WfpEngine, WfpError, provider, sublayer};
 /// finds it via enumeration) reach the same kernel object across
 /// process invocations.
 ///
-/// This GUID is unique to simplewall-rs and does NOT match upstream
+/// This GUID is unique to amwall and does NOT match upstream
 /// simplewall's `GUID_WfpProvider` (`{ 0x4dbcf69d, ... }`); the two
 /// projects can coexist on the same machine without colliding on
 /// state.
@@ -46,10 +46,10 @@ pub const PROVIDER_KEY: GUID =
 pub const SUBLAYER_KEY: GUID =
     GUID::from_u128(0xaf71_5b16_1777_40d4_a7ca_3ed3_88fa_5201);
 
-const PROVIDER_NAME: &str = "simplewall-rs";
+const PROVIDER_NAME: &str = "amwall";
 const PROVIDER_DESCRIPTION: &str =
     "Rust port of simplewall — Windows Filtering Platform firewall";
-const SUBLAYER_NAME: &str = "simplewall-rs sublayer";
+const SUBLAYER_NAME: &str = "amwall sublayer";
 /// Sublayer weight — mid-range so we don't override system filters
 /// at higher weights but rank above default ones. Matches the
 /// upstream `FW_SUBLAYER_WEIGHT` default.

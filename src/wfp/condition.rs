@@ -1,5 +1,5 @@
-// simplewall-rs — WFP filter conditions.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — WFP filter conditions.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // `FilterCondition` is the high-level user-facing description of a
 // match clause on a WFP filter. The mapping to native
@@ -595,7 +595,7 @@ mod tests {
     #[test]
     fn compile_app_path_missing_file_returns_error() {
         let conds = [FilterCondition::AppPath(PathBuf::from(
-            r"Z:\simplewall_rs_does_not_exist_53b8b2d8.exe",
+            r"Z:\amwall_does_not_exist_53b8b2d8.exe",
         ))];
         match compile(&conds) {
             Err(WfpError::AppIdFromFileName(_)) => {} // expected

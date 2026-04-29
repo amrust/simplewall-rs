@@ -1,5 +1,5 @@
-// simplewall-rs — Win32 GUI entry point.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — Win32 GUI entry point.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Direct Win32 via `windows-rs`. Programmatic UI (no .rc files).
 // Layout matches upstream simplewall 3.8.7 — same menu structure,
@@ -48,7 +48,7 @@ use app::App;
 /// Owns the lifetime of the `App` and drives the standard Win32
 /// message loop until `WM_QUIT`.
 ///
-/// `default_profile_path` is the same `%APPDATA%\simplewall-rs\profile.xml`
+/// `default_profile_path` is the same `%APPDATA%\amwall\profile.xml`
 /// path the CLI uses; if the file isn't present yet, the GUI starts
 /// with an empty `Profile`.
 pub fn run(default_profile_path: PathBuf) -> ExitCode {
@@ -77,7 +77,7 @@ pub fn run(default_profile_path: PathBuf) -> ExitCode {
         Ok(p) => p,
         Err(e) => {
             eprintln!(
-                "simplewall-rs: warning — could not load {}: {e}; starting with empty profile.",
+                "amwall: warning — could not load {}: {e}; starting with empty profile.",
                 default_profile_path.display(),
             );
             empty_profile()
@@ -97,7 +97,7 @@ pub fn run(default_profile_path: PathBuf) -> ExitCode {
         Ok(p) => p,
         Err(e) => {
             eprintln!(
-                "simplewall-rs: BUG: bundled profile_internal.xml \
+                "amwall: BUG: bundled profile_internal.xml \
                  failed to parse: {e}; system rules + blocklist tabs will be empty.",
             );
             empty_profile()
@@ -115,7 +115,7 @@ pub fn run(default_profile_path: PathBuf) -> ExitCode {
     let hwnd = match main_window::create(app) {
         Ok(h) => h,
         Err(e) => {
-            eprintln!("simplewall-rs: failed to create main window: {e}");
+            eprintln!("amwall: failed to create main window: {e}");
             return ExitCode::from(1);
         }
     };
@@ -127,7 +127,7 @@ pub fn run(default_profile_path: PathBuf) -> ExitCode {
     // shortcuts.
     let haccel = unsafe {
         let hi = GetModuleHandleW(PCWSTR::null()).unwrap_or_default();
-        // IDR_MAIN_ACCEL = 300 in assets/simplewall-rs.rc.
+        // IDR_MAIN_ACCEL = 300 in assets/amwall.rc.
         LoadAcceleratorsW(hi, PCWSTR(300usize as *const u16)).unwrap_or_default()
     };
 

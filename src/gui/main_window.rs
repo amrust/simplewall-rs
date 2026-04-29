@@ -1,5 +1,5 @@
-// simplewall-rs — main window class + WndProc.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — main window class + WndProc.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Programmatic Win32 (no .rc resources). Layout mirrors upstream
 // simplewall 3.8.7 exactly — same menu structure (File / Edit / View /
@@ -83,7 +83,7 @@ use super::{post_quit, wide};
 
 /// Window class name. Win32 uses this string to look up our class
 /// registration.
-const CLASS_NAME: PCWSTR = w!("SimplewallRsMainWindow");
+const CLASS_NAME: PCWSTR = w!("AmwallMainWindow");
 
 /// Win32 timer id used to drive Connections-tab live refresh.
 /// Distinct from any IDC_* control id since Win32 routes timers
@@ -417,7 +417,7 @@ unsafe extern "system" fn wnd_proc(
         WM_CREATE => match on_create(hwnd) {
             Ok(()) => LRESULT(0),
             Err(e) => {
-                eprintln!("simplewall-rs: WM_CREATE failed: {e}");
+                eprintln!("amwall: WM_CREATE failed: {e}");
                 LRESULT(-1)
             }
         },
@@ -917,7 +917,7 @@ fn on_command(hwnd: HWND, id: u32, notif: u32) {
         IDM_SETTINGS => on_open_settings(hwnd),
         IDM_ADD_FILE => on_add_app(hwnd),
 
-        other => eprintln!("simplewall-rs: menu id {other} not yet wired up"),
+        other => eprintln!("amwall: menu id {other} not yet wired up"),
     }
 }
 
@@ -954,7 +954,7 @@ fn on_toggle(hwnd: HWND, id: u16) {
     let path = state.app.settings_path.borrow().clone();
     if let Err(e) = state.app.settings.borrow().save(&path) {
         eprintln!(
-            "simplewall-rs: settings: save failed for {}: {e}",
+            "amwall: settings: save failed for {}: {e}",
             path.display()
         );
     }
@@ -994,7 +994,7 @@ fn on_enable_filters(hwnd: HWND) {
         let title = wide("Administrator required");
         let body = wide(
             "Filter management requires Administrator privileges.\n\n\
-             Close simplewall-rs and re-launch from an elevated shell\n\
+             Close amwall and re-launch from an elevated shell\n\
              (right-click \u{2192} \"Run as administrator\").",
         );
         unsafe {
@@ -1011,7 +1011,7 @@ fn on_enable_filters(hwnd: HWND) {
     let engine = match crate::wfp::WfpEngine::open() {
         Ok(e) => e,
         Err(e) => {
-            eprintln!("simplewall-rs: WfpEngine::open failed: {e}");
+            eprintln!("amwall: WfpEngine::open failed: {e}");
             set_status_text(state.status.get(), 0, "Failed to open WFP engine.");
             return;
         }
@@ -1023,7 +1023,7 @@ fn on_enable_filters(hwnd: HWND) {
     ) {
         Ok(r) => r,
         Err(e) => {
-            eprintln!("simplewall-rs: install_profile failed: {e}");
+            eprintln!("amwall: install_profile failed: {e}");
             set_status_text(state.status.get(), 0, "Filter install failed.");
             return;
         }
@@ -1176,7 +1176,7 @@ fn on_open_settings(hwnd: HWND) {
     let path = state.app.settings_path.borrow().clone();
     if let Err(e) = updated.save(&path) {
         eprintln!(
-            "simplewall-rs: settings: save failed for {}: {e}",
+            "amwall: settings: save failed for {}: {e}",
             path.display()
         );
     }
@@ -1326,7 +1326,7 @@ fn save_profile_to_disk(state: &WndState) {
     }
     if let Err(e) = std::fs::write(&path, xml) {
         eprintln!(
-            "simplewall-rs: profile auto-save failed for {}: {e}",
+            "amwall: profile auto-save failed for {}: {e}",
             path.display()
         );
         set_status_text(state.status.get(), 0, "Auto-save failed.");
@@ -1348,7 +1348,7 @@ fn on_import(hwnd: HWND) {
         Ok(s) => s,
         Err(e) => {
             eprintln!(
-                "simplewall-rs: import: read failed for {}: {e}",
+                "amwall: import: read failed for {}: {e}",
                 path.display()
             );
             set_status_text(state.status.get(), 0, "Import failed: read error.");
@@ -1358,7 +1358,7 @@ fn on_import(hwnd: HWND) {
     let new_profile = match crate::profile::parse_str(&xml) {
         Ok(p) => p,
         Err(e) => {
-            eprintln!("simplewall-rs: import: parse failed: {e}");
+            eprintln!("amwall: import: parse failed: {e}");
             set_status_text(state.status.get(), 0, "Import failed: parse error.");
             return;
         }
@@ -1396,7 +1396,7 @@ fn on_export(hwnd: HWND) {
     let xml = crate::profile::to_string(&state.app.profile.borrow());
     if let Err(e) = std::fs::write(&target, xml) {
         eprintln!(
-            "simplewall-rs: export: write failed for {}: {e}",
+            "amwall: export: write failed for {}: {e}",
             target.display()
         );
         set_status_text(state.status.get(), 0, "Export failed: write error.");
@@ -1422,7 +1422,7 @@ fn on_refresh(hwnd: HWND) {
         Ok(s) => s,
         Err(e) => {
             eprintln!(
-                "simplewall-rs: refresh: read failed for {}: {e}",
+                "amwall: refresh: read failed for {}: {e}",
                 path.display(),
             );
             set_status_text(state.status.get(), 0, "Refresh failed: read error.");
@@ -1432,7 +1432,7 @@ fn on_refresh(hwnd: HWND) {
     let new_profile = match crate::profile::parse_str(&xml) {
         Ok(p) => p,
         Err(e) => {
-            eprintln!("simplewall-rs: refresh: parse failed: {e}");
+            eprintln!("amwall: refresh: parse failed: {e}");
             set_status_text(state.status.get(), 0, "Refresh failed: parse error.");
             return;
         }
@@ -1480,7 +1480,7 @@ fn fill_toolbar_tooltip(info: &mut NMTBGETINFOTIPW) {
 
 /// Open the project's main GitHub page (Help → Website).
 fn open_website(hwnd: HWND) {
-    shell_open_url(hwnd, w!("https://github.com/amrust/simplewall-rs"));
+    shell_open_url(hwnd, w!("https://github.com/amrust/amwall"));
 }
 
 /// Help → About: modern TaskDialog with version, copyright, GPL
@@ -1492,8 +1492,8 @@ fn on_about(hwnd: HWND) {
         TDCBF_OK_BUTTON, TDF_ENABLE_HYPERLINKS, TaskDialogIndirect,
     };
 
-    let title = wide("About simplewall-rs");
-    let main_instr = wide("simplewall-rs");
+    let title = wide("About amwall");
+    let main_instr = wide("amwall");
     let version = env!("CARGO_PKG_VERSION");
     let content_str = format!(
         concat!(
@@ -1501,13 +1501,13 @@ fn on_about(hwnd: HWND) {
             "\n",
             "A Rust port of simplewall, a Windows Filtering Platform (WFP) firewall.\n",
             "\n",
-            "Copyright \u{00A9} 2026 simplewall-rs contributors.\n",
+            "Copyright \u{00A9} 2026 amwall contributors.\n",
             "Licensed under the GNU General Public License v3.0 or later.\n",
             "\n",
             "Original simplewall \u{00A9} 2016\u{2013}2026 Henry++.\n",
             "\n",
-            "<a href=\"https://github.com/amrust/simplewall-rs\">",
-            "github.com/amrust/simplewall-rs</a>",
+            "<a href=\"https://github.com/amrust/amwall\">",
+            "github.com/amrust/amwall</a>",
         ),
         version = version,
     );
@@ -1562,13 +1562,13 @@ unsafe extern "system" fn about_dialog_callback(
     windows::core::HRESULT(0) // S_OK
 }
 
-/// Open https://github.com/amrust/simplewall-rs/releases in
+/// Open https://github.com/amrust/amwall/releases in
 /// the system's default browser. Replaces upstream's PayPal donate
 /// flow — same toolbar slot, friendlier action.
 fn open_releases_page(hwnd: HWND) {
     shell_open_url(
         hwnd,
-        w!("https://github.com/amrust/simplewall-rs/releases"),
+        w!("https://github.com/amrust/amwall/releases"),
     );
 }
 
@@ -1582,7 +1582,7 @@ fn shell_open_url(hwnd: HWND, url: PCWSTR) {
         ShellExecuteW(hwnd, w!("open"), url, PCWSTR::null(), PCWSTR::null(), SW_SHOWNORMAL)
     };
     if result.0 as usize <= 32 {
-        eprintln!("simplewall-rs: ShellExecuteW failed: code {}", result.0);
+        eprintln!("amwall: ShellExecuteW failed: code {}", result.0);
     }
 }
 
@@ -2225,12 +2225,12 @@ fn create_status_bar(parent: HWND) -> Result<HWND, String> {
 }
 
 /// Build the main-window title string from the loaded profile's
-/// path: `simplewall-rs — <path>`. Em-dash (U+2014) for the
+/// path: `amwall — <path>`. Em-dash (U+2014) for the
 /// separator, matching upstream's title-bar style. The path goes
 /// through `Path::display()` so non-UTF-8 path components (rare on
 /// Windows but possible) round-trip lossily without panicking.
 fn format_window_title(path: &std::path::Path) -> String {
-    format!("simplewall-rs \u{2014} {}", path.display())
+    format!("amwall \u{2014} {}", path.display())
 }
 
 /// Replace the main window's title, e.g. after Open Profile…

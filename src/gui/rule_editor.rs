@@ -1,5 +1,5 @@
-// simplewall-rs — modal rule editor.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — modal rule editor.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // 1:1 port of upstream simplewall's IDD_EDITOR dialog stack
 // (resource.rc:250-366 + editor.c). Implementation uses native
@@ -15,7 +15,7 @@
 //   pub fn open(parent, initial: Option<&Rule>, available_apps) -> Option<Rule>
 //
 // Internally:
-//   - Templates: assets/simplewall-rs.rc defines IDD_EDITOR,
+//   - Templates: assets/amwall.rc defines IDD_EDITOR,
 //     IDD_EDITOR_GENERAL, IDD_EDITOR_RULE, IDD_EDITOR_APPS,
 //     IDD_EDITOR_ADDRULE.
 //   - Each tab is a child dialog (IDD_EDITOR_GENERAL etc.)
@@ -52,7 +52,7 @@ use crate::profile::{Action, AddressFamily, App as ProfileApp, Direction, Rule};
 
 use super::wide;
 
-// ---- Resource IDs hand-synced with assets/simplewall-rs.rc ----
+// ---- Resource IDs hand-synced with assets/amwall.rc ----
 
 const IDD_EDITOR: u16 = 102;
 const IDD_EDITOR_GENERAL: u16 = 103;

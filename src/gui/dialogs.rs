@@ -1,5 +1,5 @@
-// simplewall-rs — file Open / Save dialogs.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — file Open / Save dialogs.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Wraps Win32's modern IFileDialog COM interfaces (Vista+) for the
 // File menu's Import / Export entries. Two reasons to prefer

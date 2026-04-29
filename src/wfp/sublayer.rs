@@ -1,5 +1,5 @@
-// simplewall-rs — WFP sublayer primitive.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — WFP sublayer primitive.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Wraps `FwpmSubLayerAdd0`. A sublayer groups filters at a single WFP
 // layer and resolves their priority via a 16-bit weight. Upstream
@@ -158,11 +158,11 @@ mod tests {
     #[ignore = "requires elevated shell to call FwpmSubLayerAdd0"]
     fn add_sublayer_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
+        let prov = provider::add(&engine, "amwall test", "test provider", false)
             .expect("provider add failed");
         let sub = add(
             &engine,
-            "simplewall-rs test sublayer",
+            "amwall test sublayer",
             "test sublayer",
             0x4000, // mid-range weight
             Some(&prov.key()),

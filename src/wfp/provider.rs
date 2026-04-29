@@ -1,5 +1,5 @@
-// simplewall-rs — WFP provider primitive.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — WFP provider primitive.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Wraps `FwpmProviderAdd0`. A provider is the identity of the entity
 // that owns filters / sublayers in WFP — typically one per running
@@ -106,7 +106,7 @@ pub fn add(
 /// Like `add` but uses a caller-provided `providerKey` instead of
 /// generating one with `UuidCreate`. Tolerates
 /// `FWP_E_ALREADY_EXISTS` (returns Ok with the given key) so a
-/// re-run of `simplewall-rs -install` doesn't fail when the
+/// re-run of `amwall -install` doesn't fail when the
 /// previous install's persistent provider is still in the kernel.
 ///
 /// Use this for the upstream-style "well-known provider GUID"
@@ -165,7 +165,7 @@ mod tests {
     #[ignore = "requires elevated shell to call FwpmProviderAdd0"]
     fn add_provider_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let provider = add(&engine, "simplewall-rs test", "test provider", false)
+        let provider = add(&engine, "amwall test", "test provider", false)
             .expect("FwpmProviderAdd0 failed");
         let key = provider.key();
         assert_ne!(

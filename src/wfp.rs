@@ -1,5 +1,5 @@
-// simplewall-rs — WFP engine bindings.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — WFP engine bindings.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Thin wrapper around the user-mode Windows Filtering Platform engine
 // handle (`fwpuclnt.dll`). The engine is opened with a populated
@@ -31,7 +31,7 @@ pub(super) const ERROR_SUCCESS: u32 = 0;
 
 /// Display name shown in `netsh wfp show state` and similar tools when
 /// the WFP session is enumerated. Matches upstream's `_r_app_getname()`.
-const APP_NAME: &str = "simplewall-rs";
+const APP_NAME: &str = "amwall";
 
 /// Per-transaction timeout for the WFP session, in milliseconds.
 /// Matches upstream's `TRANSACTION_TIMEOUT` (`main.h:138`).
@@ -142,7 +142,7 @@ impl WfpEngine {
     /// Open a WFP engine handle bound to the local machine.
     ///
     /// Builds a `FWPM_SESSION0` with:
-    /// - `displayData.name` / `displayData.description` = `"simplewall-rs"`
+    /// - `displayData.name` / `displayData.description` = `"amwall"`
     /// - `sessionKey` = a freshly generated GUID (via `UuidCreate`)
     /// - `txnWaitTimeoutInMSec` = 9000 ms
     ///
@@ -438,7 +438,7 @@ impl Drop for WfpEngine {
     fn drop(&mut self) {
         let status = unsafe { FwpmEngineClose0(self.handle) };
         if status != ERROR_SUCCESS {
-            eprintln!("simplewall-rs: FwpmEngineClose0 returned {status:#010x}");
+            eprintln!("amwall: FwpmEngineClose0 returned {status:#010x}");
         }
     }
 }
@@ -498,11 +498,11 @@ mod tests {
         use windows::Win32::NetworkManagement::WindowsFilteringPlatform::FWPM_LAYER_ALE_AUTH_CONNECT_V4;
 
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs cleanup-test", "", false)
+        let prov = provider::add(&engine, "amwall cleanup-test", "", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
-            "simplewall-rs cleanup-test sublayer",
+            "amwall cleanup-test sublayer",
             "",
             0x4000,
             Some(&prov.key()),
@@ -513,7 +513,7 @@ mod tests {
         // can prove batched deletion (filters_deleted == 2).
         let _f1 = filter::add(
             &engine,
-            "simplewall-rs cleanup-test f1",
+            "amwall cleanup-test f1",
             "",
             &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
             &sub.key(),
@@ -525,7 +525,7 @@ mod tests {
         .expect("filter f1 add failed");
         let _f2 = filter::add(
             &engine,
-            "simplewall-rs cleanup-test f2",
+            "amwall cleanup-test f2",
             "",
             &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
             &sub.key(),

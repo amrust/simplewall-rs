@@ -1,5 +1,5 @@
-// simplewall-rs — toolbar / rebar / search.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — toolbar / rebar / search.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Upstream simplewall puts a Win32 *rebar* control between the menu
 // bar and the tab control. The rebar hosts two bands: the toolbar
@@ -17,7 +17,7 @@
 //      gets us readable buttons sized to their label.
 //
 //   2. Upstream's last button is "Donate" (IDM_DONATE) and opens a
-//      PayPal URL. simplewall-rs replaces it with "Releases"
+//      PayPal URL. amwall replaces it with "Releases"
 //      (IDM_RELEASES, same numeric slot 302) which opens our
 //      GitHub releases page via ShellExecuteW.
 

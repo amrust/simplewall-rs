@@ -1,8 +1,8 @@
-# simplewall-rs
+# amwall
 
 A Rust port of [simplewall](https://github.com/henrypp/simplewall), a lightweight tool for configuring [Windows Filtering Platform (WFP)](https://learn.microsoft.com/en-us/windows/win32/fwp/windows-filtering-platform-start-page) — the kernel-level network filtering API that sits underneath Windows Firewall.
 
-> **Status:** Pre-alpha. Live progress is tracked in [issue #1](https://github.com/amrust/simplewall-rs/issues/1).
+> **Status:** Pre-alpha. Live progress is tracked in [issue #1](https://github.com/amrust/amwall/issues/1).
 
 ## Goal
 
@@ -58,4 +58,4 @@ Issues and PRs welcome once the foundation lands. For now this is scaffolding.
 
 ## Not affiliated
 
-simplewall-rs is an independent re-implementation. It is not affiliated with, endorsed by, or sponsored by Henry++ or the original simplewall project. For the original C version, go to [henrypp/simplewall](https://github.com/henrypp/simplewall).
+amwall is an independent re-implementation. It is not affiliated with, endorsed by, or sponsored by Henry++ or the original simplewall project. For the original C version, go to [henrypp/simplewall](https://github.com/henrypp/simplewall).

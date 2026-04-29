@@ -1,5 +1,5 @@
-// simplewall-rs — GUI app state.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — GUI app state.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 
 use std::cell::RefCell;
 use std::path::PathBuf;
@@ -25,10 +25,10 @@ pub struct App {
     pub profile: RefCell<Profile>,
     /// Path the user profile was loaded from (and where Save
     /// Profile… would write). Defaults to
-    /// `%APPDATA%\simplewall-rs\profile.xml`, matching the CLI.
+    /// `%APPDATA%\amwall\profile.xml`, matching the CLI.
     pub profile_path: RefCell<PathBuf>,
     /// Bundled internal profile — system rules + blocklist rules
-    /// shipped with simplewall-rs. Loaded once at startup from the
+    /// shipped with amwall. Loaded once at startup from the
     /// embedded `assets/profile_internal.xml`. Read-only at
     /// runtime; the user can't mutate this (matches upstream
     /// behaviour).
@@ -38,6 +38,6 @@ pub struct App {
     /// `settings_path` after each change.
     pub settings: RefCell<Settings>,
     /// Path settings persist to —
-    /// `%APPDATA%\simplewall-rs\settings.txt` by default.
+    /// `%APPDATA%\amwall\settings.txt` by default.
     pub settings_path: RefCell<PathBuf>,
 }

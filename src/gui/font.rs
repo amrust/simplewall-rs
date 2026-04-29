@@ -1,5 +1,5 @@
-// simplewall-rs — system font helpers.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — system font helpers.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Win32 dialog templates auto-bind the dialog font (Segoe UI 9pt
 // with ClearType on Windows 10+) via DS_SHELLFONT. Plain

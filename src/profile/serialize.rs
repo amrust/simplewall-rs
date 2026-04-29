@@ -1,5 +1,5 @@
-// simplewall-rs — profile.xml serialization.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — profile.xml serialization.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Inverse of `parse::parse_str`. Emits XML matching upstream
 // simplewall's writer output (see `simplewall-master/src/db.c`

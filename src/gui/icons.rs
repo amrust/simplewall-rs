@@ -1,5 +1,5 @@
-// simplewall-rs — toolbar icon image list.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — toolbar icon image list.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // At toolbar-create time we build a 32-bit ARGB ImageList from
 // PNGs embedded via `include_bytes!`. The PNGs are the FamFamFam
@@ -122,7 +122,7 @@ pub fn build(dpi: u32) -> IconSet {
 
     let mut mapping = Vec::with_capacity(SILK_PNGS.len());
     if himagelist.is_invalid() {
-        eprintln!("simplewall-rs: ImageList_Create failed");
+        eprintln!("amwall: ImageList_Create failed");
         return IconSet { himagelist, mapping };
     }
 
@@ -131,7 +131,7 @@ pub fn build(dpi: u32) -> IconSet {
             Ok(hbm) => {
                 let idx = unsafe { ImageList_Add(himagelist, hbm, HBITMAP::default()) };
                 if idx < 0 {
-                    eprintln!("simplewall-rs: ImageList_Add failed for IDM {id}");
+                    eprintln!("amwall: ImageList_Add failed for IDM {id}");
                 } else {
                     mapping.push((*id, idx));
                 }
@@ -141,7 +141,7 @@ pub fn build(dpi: u32) -> IconSet {
                 }
             }
             Err(e) => {
-                eprintln!("simplewall-rs: PNG decode failed for IDM {id}: {e}");
+                eprintln!("amwall: PNG decode failed for IDM {id}: {e}");
             }
         }
     }

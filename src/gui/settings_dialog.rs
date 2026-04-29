@@ -1,5 +1,5 @@
-// simplewall-rs — modal Settings dialog.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — modal Settings dialog.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // 1:1 port of upstream's Settings property sheet
 // (resource.rc:368-523). Eight tabs total — General / Interface /
@@ -39,7 +39,7 @@ use windows::core::PCWSTR;
 use super::settings::{BlocklistMode, Settings};
 use super::wide;
 
-// ---- Resource IDs hand-synced with assets/simplewall-rs.rc ----
+// ---- Resource IDs hand-synced with assets/amwall.rc ----
 
 const IDD_SETTINGS: u16 = 200;
 const IDD_SETTINGS_GENERAL: u16 = 201;

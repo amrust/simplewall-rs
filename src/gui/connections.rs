@@ -1,5 +1,5 @@
-// simplewall-rs — live network connection enumeration.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — live network connection enumeration.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Walks the Win32 IP Helper tables (TCP4 / TCP6 / UDP4 / UDP6) for
 // the user-mode "what's connected right now" view that drives the
@@ -120,7 +120,7 @@ fn read_tcp4() -> Option<Vec<Connection>> {
         )
     };
     if res != ERROR_SUCCESS.0 && res != ERROR_INSUFFICIENT_BUFFER.0 {
-        eprintln!("simplewall-rs: GetExtendedTcpTable(v4) failed: {res}");
+        eprintln!("amwall: GetExtendedTcpTable(v4) failed: {res}");
         return None;
     }
     let table = unsafe { &*(buf.as_ptr() as *const MIB_TCPTABLE_OWNER_PID) };
@@ -178,7 +178,7 @@ fn read_tcp6() -> Option<Vec<Connection>> {
         )
     };
     if res != ERROR_SUCCESS.0 && res != ERROR_INSUFFICIENT_BUFFER.0 {
-        eprintln!("simplewall-rs: GetExtendedTcpTable(v6) failed: {res}");
+        eprintln!("amwall: GetExtendedTcpTable(v6) failed: {res}");
         return None;
     }
     let table = unsafe { &*(buf.as_ptr() as *const MIB_TCP6TABLE_OWNER_PID) };
@@ -234,7 +234,7 @@ fn read_udp4() -> Option<Vec<Connection>> {
         )
     };
     if res != ERROR_SUCCESS.0 && res != ERROR_INSUFFICIENT_BUFFER.0 {
-        eprintln!("simplewall-rs: GetExtendedUdpTable(v4) failed: {res}");
+        eprintln!("amwall: GetExtendedUdpTable(v4) failed: {res}");
         return None;
     }
     let table = unsafe { &*(buf.as_ptr() as *const MIB_UDPTABLE_OWNER_PID) };
@@ -290,7 +290,7 @@ fn read_udp6() -> Option<Vec<Connection>> {
         )
     };
     if res != ERROR_SUCCESS.0 && res != ERROR_INSUFFICIENT_BUFFER.0 {
-        eprintln!("simplewall-rs: GetExtendedUdpTable(v6) failed: {res}");
+        eprintln!("amwall: GetExtendedUdpTable(v6) failed: {res}");
         return None;
     }
     let table = unsafe { &*(buf.as_ptr() as *const MIB_UDP6TABLE_OWNER_PID) };

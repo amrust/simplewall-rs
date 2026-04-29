@@ -1,5 +1,5 @@
-// simplewall-rs — WFP filter primitive.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — WFP filter primitive.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Wraps `FwpmFilterAdd0`. A filter is the actual block/permit rule
 // that runs when traffic passes through `layer_key`. M1.4 binds the
@@ -188,11 +188,11 @@ mod tests {
     #[ignore = "requires elevated shell to call FwpmFilterAdd0"]
     fn add_filter_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
+        let prov = provider::add(&engine, "amwall test", "test provider", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
-            "simplewall-rs test sublayer",
+            "amwall test sublayer",
             "test sublayer",
             0x4000,
             Some(&prov.key()),
@@ -201,7 +201,7 @@ mod tests {
         .expect("sublayer add failed");
         let f = add(
             &engine,
-            "simplewall-rs test filter",
+            "amwall test filter",
             "permit-all at ALE_AUTH_CONNECT_V4",
             &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
             &sub.key(),
@@ -233,11 +233,11 @@ mod tests {
     fn add_filter_with_app_path_admin_smoke() {
         use std::path::PathBuf;
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
+        let prov = provider::add(&engine, "amwall test", "test provider", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
-            "simplewall-rs apppath test sublayer",
+            "amwall apppath test sublayer",
             "test sublayer",
             0x4000,
             Some(&prov.key()),
@@ -250,7 +250,7 @@ mod tests {
         ];
         let f = add(
             &engine,
-            "simplewall-rs apppath test filter",
+            "amwall apppath test filter",
             "permit cmd.exe outbound to remote port 65530",
             &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
             &sub.key(),
@@ -274,11 +274,11 @@ mod tests {
     #[ignore = "requires elevated shell"]
     fn install_then_delete_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
+        let prov = provider::add(&engine, "amwall test", "test provider", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
-            "simplewall-rs delete test sublayer",
+            "amwall delete test sublayer",
             "test sublayer",
             0x4000,
             Some(&prov.key()),
@@ -287,7 +287,7 @@ mod tests {
         .expect("sublayer add failed");
         let f = add(
             &engine,
-            "simplewall-rs delete test filter",
+            "amwall delete test filter",
             "permit-all at ALE_AUTH_CONNECT_V4",
             &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
             &sub.key(),
@@ -324,11 +324,11 @@ mod tests {
     #[ignore = "requires elevated shell to call FwpmFilterAdd0"]
     fn add_filter_with_conditions_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
+        let prov = provider::add(&engine, "amwall test", "test provider", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
-            "simplewall-rs cond test sublayer",
+            "amwall cond test sublayer",
             "test sublayer",
             0x4000,
             Some(&prov.key()),
@@ -345,7 +345,7 @@ mod tests {
         ];
         let f = add(
             &engine,
-            "simplewall-rs cond test filter",
+            "amwall cond test filter",
             "permit tcp:198.51.100.0/24:65530",
             &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
             &sub.key(),
@@ -370,11 +370,11 @@ mod tests {
     #[ignore = "requires elevated shell to call FwpmFilterAdd0"]
     fn add_filter_with_range_conditions_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs test", "test provider", false)
+        let prov = provider::add(&engine, "amwall test", "test provider", false)
             .expect("provider add failed");
         let sub = sublayer::add(
             &engine,
-            "simplewall-rs range test sublayer",
+            "amwall range test sublayer",
             "test sublayer",
             0x4000,
             Some(&prov.key()),
@@ -391,7 +391,7 @@ mod tests {
         ];
         let f = add(
             &engine,
-            "simplewall-rs range test filter",
+            "amwall range test filter",
             "permit tcp:198.51.100.0/24:65530-65535",
             &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
             &sub.key(),
@@ -422,11 +422,11 @@ mod tests {
     #[ignore = "requires elevated shell — installs persistent kernel state"]
     fn add_persistent_filter_admin_smoke() {
         let engine = WfpEngine::open().expect("engine open failed");
-        let prov = provider::add(&engine, "simplewall-rs persist-test", "", true)
+        let prov = provider::add(&engine, "amwall persist-test", "", true)
             .expect("persistent provider add failed");
         let sub = sublayer::add(
             &engine,
-            "simplewall-rs persist-test sublayer",
+            "amwall persist-test sublayer",
             "",
             0x4000,
             Some(&prov.key()),
@@ -435,7 +435,7 @@ mod tests {
         .expect("persistent sublayer add failed");
         let f = add(
             &engine,
-            "simplewall-rs persist-test filter",
+            "amwall persist-test filter",
             "permit at ALE_AUTH_CONNECT_V4 (persistent)",
             &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
             &sub.key(),

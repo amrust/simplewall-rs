@@ -15,11 +15,11 @@
 
 #![cfg(windows)]
 
-use simplewall_rs::profile::{self, Action};
-use simplewall_rs::rules;
-use simplewall_rs::wfp::condition::{FilterCondition, IpProto};
-use simplewall_rs::wfp::filter::{self as wfp_filter, FilterAction};
-use simplewall_rs::wfp::{provider, sublayer, WfpEngine};
+use amwall::profile::{self, Action};
+use amwall::rules;
+use amwall::wfp::condition::{FilterCondition, IpProto};
+use amwall::wfp::filter::{self as wfp_filter, FilterAction};
+use amwall::wfp::{provider, sublayer, WfpEngine};
 use windows::Win32::NetworkManagement::WindowsFilteringPlatform::FWPM_LAYER_ALE_AUTH_CONNECT_V4;
 
 /// Hand-crafted user profile that exercises:
@@ -58,11 +58,11 @@ fn full_pipeline_profile_to_kernel_to_cleanup() {
 
     // 2. Open engine, register provider + sublayer (M1.1–M1.4).
     let engine = WfpEngine::open().expect("engine open failed");
-    let prov = provider::add(&engine, "simplewall-rs e2e", "end-to-end test", false)
+    let prov = provider::add(&engine, "amwall e2e", "end-to-end test", false)
         .expect("provider add failed");
     let sub = sublayer::add(
         &engine,
-        "simplewall-rs e2e sublayer",
+        "amwall e2e sublayer",
         "",
         0x4000,
         Some(&prov.key()),

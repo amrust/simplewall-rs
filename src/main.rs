@@ -1,5 +1,5 @@
-// simplewall-rs — CLI entry point.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — CLI entry point.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -7,9 +7,9 @@
 // (at your option) any later version. See LICENSE.
 //
 // Subcommands (matching upstream's flag style):
-//   simplewall-rs.exe -install [profile.xml] [-temp] [-silent]
-//   simplewall-rs.exe -uninstall [-silent]
-//   simplewall-rs.exe -h | --help
+//   amwall.exe -install [profile.xml] [-temp] [-silent]
+//   amwall.exe -uninstall [-silent]
+//   amwall.exe -h | --help
 //
 // Both -install and -uninstall require Administrator privileges
 // (filter management is admin-gated by WFP). When run unelevated
@@ -33,7 +33,7 @@ fn main() -> std::process::ExitCode {
 
 #[cfg(not(windows))]
 fn main() -> std::process::ExitCode {
-    eprintln!("simplewall-rs is Windows-only (Windows Filtering Platform).");
+    eprintln!("amwall is Windows-only (Windows Filtering Platform).");
     std::process::ExitCode::from(1)
 }
 
@@ -42,9 +42,9 @@ mod cli {
     use std::path::{Path, PathBuf};
     use std::process::ExitCode;
 
-    use simplewall_rs::install;
-    use simplewall_rs::profile;
-    use simplewall_rs::wfp::WfpEngine;
+    use amwall::install;
+    use amwall::profile;
+    use amwall::wfp::WfpEngine;
     use windows::Win32::UI::Shell::IsUserAnAdmin;
 
     /// Parsed command line. The CLI is small enough that a hand-
@@ -151,7 +151,7 @@ mod cli {
             // require admin to start (admin is only needed for the
             // install/uninstall actions, which the GUI routes
             // through the same code paths the CLI uses).
-            Command::Gui => simplewall_rs::gui::run(default_profile_path()),
+            Command::Gui => amwall::gui::run(default_profile_path()),
             Command::Help => {
                 print_usage();
                 ExitCode::from(0)
@@ -170,7 +170,7 @@ mod cli {
                 handle_uninstall(silent)
             }
             Command::Error(msg) => {
-                eprintln!("simplewall-rs: {msg}");
+                eprintln!("amwall: {msg}");
                 print_usage();
                 ExitCode::from(2)
             }
@@ -213,7 +213,7 @@ mod cli {
         let is_admin = unsafe { IsUserAnAdmin() }.as_bool();
         if !is_admin {
             eprintln!(
-                "simplewall-rs: Administrator privileges required for filter management."
+                "amwall: Administrator privileges required for filter management."
             );
             eprintln!("       Re-run from an elevated PowerShell or Command Prompt.");
         }
@@ -225,7 +225,7 @@ mod cli {
             Ok(s) => s,
             Err(e) => {
                 eprintln!(
-                    "simplewall-rs: failed to read profile at {}: {e}",
+                    "amwall: failed to read profile at {}: {e}",
                     path.display()
                 );
                 return ExitCode::from(1);
@@ -234,14 +234,14 @@ mod cli {
         let profile = match profile::parse_str(&xml) {
             Ok(p) => p,
             Err(e) => {
-                eprintln!("simplewall-rs: profile parse failed: {e}");
+                eprintln!("amwall: profile parse failed: {e}");
                 return ExitCode::from(1);
             }
         };
         let engine = match WfpEngine::open() {
             Ok(e) => e,
             Err(e) => {
-                eprintln!("simplewall-rs: WFP engine open failed: {e}");
+                eprintln!("amwall: WFP engine open failed: {e}");
                 return ExitCode::from(1);
             }
         };
@@ -253,14 +253,14 @@ mod cli {
                 if !silent {
                     let mode = if temp { "temporary" } else { "persistent" };
                     println!(
-                        "simplewall-rs: installed {} filter(s); skipped {} rule(s) ({mode}).",
+                        "amwall: installed {} filter(s); skipped {} rule(s) ({mode}).",
                         report.filters_added, report.rules_skipped,
                     );
                 }
                 ExitCode::from(0)
             }
             Err(e) => {
-                eprintln!("simplewall-rs: install failed: {e}");
+                eprintln!("amwall: install failed: {e}");
                 ExitCode::from(1)
             }
         }
@@ -270,7 +270,7 @@ mod cli {
         let engine = match WfpEngine::open() {
             Ok(e) => e,
             Err(e) => {
-                eprintln!("simplewall-rs: WFP engine open failed: {e}");
+                eprintln!("amwall: WFP engine open failed: {e}");
                 return ExitCode::from(1);
             }
         };
@@ -278,7 +278,7 @@ mod cli {
             Ok(report) => {
                 if !silent {
                     println!(
-                        "simplewall-rs: removed {} filter(s), {} sublayer(s); provider {}.",
+                        "amwall: removed {} filter(s), {} sublayer(s); provider {}.",
                         report.filters_deleted,
                         report.sublayers_deleted,
                         if report.provider_deleted {
@@ -291,19 +291,19 @@ mod cli {
                 ExitCode::from(0)
             }
             Err(e) => {
-                eprintln!("simplewall-rs: uninstall failed: {e}");
+                eprintln!("amwall: uninstall failed: {e}");
                 ExitCode::from(1)
             }
         }
     }
 
-    /// Default profile-file location: `%APPDATA%\simplewall-rs\profile.xml`.
+    /// Default profile-file location: `%APPDATA%\amwall\profile.xml`.
     /// Falls back to `profile.xml` in the current directory if
     /// `%APPDATA%` is unset (e.g. running as SYSTEM).
     fn default_profile_path() -> PathBuf {
         if let Some(appdata) = std::env::var_os("APPDATA") {
             PathBuf::from(appdata)
-                .join("simplewall-rs")
+                .join("amwall")
                 .join("profile.xml")
         } else {
             PathBuf::from("profile.xml")
@@ -311,21 +311,21 @@ mod cli {
     }
 
     fn print_usage() {
-        println!("simplewall-rs — Rust port of simplewall (Windows Filtering Platform)");
+        println!("amwall — Rust port of simplewall (Windows Filtering Platform)");
         println!();
         println!("usage:");
-        println!("    simplewall-rs.exe -install [profile.xml] [-temp] [-silent]");
-        println!("        Load profile.xml (or %APPDATA%\\simplewall-rs\\profile.xml)");
+        println!("    amwall.exe -install [profile.xml] [-temp] [-silent]");
+        println!("        Load profile.xml (or %APPDATA%\\amwall\\profile.xml)");
         println!("        and install its rules into the kernel.");
         println!("        -temp    install volatile filters that go away on reboot");
         println!("        -silent  suppress success output (errors still printed)");
         println!("        Requires Administrator.");
         println!();
-        println!("    simplewall-rs.exe -uninstall [-silent]");
+        println!("    amwall.exe -uninstall [-silent]");
         println!("        Remove every filter / sublayer / provider that");
-        println!("        simplewall-rs has installed. Requires Administrator.");
+        println!("        amwall has installed. Requires Administrator.");
         println!();
-        println!("    simplewall-rs.exe -h | --help");
+        println!("    amwall.exe -h | --help");
         println!("        Print this help.");
     }
 
@@ -334,7 +334,7 @@ mod cli {
         use super::*;
 
         fn args(extra: &[&str]) -> Vec<String> {
-            std::iter::once("simplewall-rs.exe")
+            std::iter::once("amwall.exe")
                 .chain(extra.iter().copied())
                 .map(String::from)
                 .collect()

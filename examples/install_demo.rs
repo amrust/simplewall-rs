@@ -1,5 +1,5 @@
-// simplewall-rs — interactive install / verify / remove demo.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — interactive install / verify / remove demo.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Walks the full upstream-style WFP flow end-to-end:
 //   1. Open the user-mode engine.
@@ -23,20 +23,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     use std::io::{self, BufRead, Write};
     use std::path::PathBuf;
 
-    use simplewall_rs::wfp::condition::FilterCondition;
-    use simplewall_rs::wfp::filter::{self, FilterAction};
-    use simplewall_rs::wfp::{provider, sublayer, WfpEngine};
+    use amwall::wfp::condition::FilterCondition;
+    use amwall::wfp::filter::{self, FilterAction};
+    use amwall::wfp::{provider, sublayer, WfpEngine};
     use windows::Win32::NetworkManagement::WindowsFilteringPlatform::FWPM_LAYER_ALE_AUTH_CONNECT_V4;
 
     let engine = WfpEngine::open()?;
     println!("✓ engine opened");
 
-    let prov = provider::add(&engine, "simplewall-rs demo", "install_demo example", false)?;
+    let prov = provider::add(&engine, "amwall demo", "install_demo example", false)?;
     println!("✓ provider registered: {:?}", prov.key());
 
     let sub = sublayer::add(
         &engine,
-        "simplewall-rs demo sublayer",
+        "amwall demo sublayer",
         "install_demo example",
         0x4000,
         Some(&prov.key()),
@@ -50,7 +50,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ];
     let f = filter::add(
         &engine,
-        "simplewall-rs demo filter",
+        "amwall demo filter",
         "permit cmd.exe → :65530",
         &FWPM_LAYER_ALE_AUTH_CONNECT_V4,
         &sub.key(),
@@ -72,7 +72,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("    runtime id: {}", f.runtime_id());
 
     println!("\nVerify in another elevated terminal:");
-    println!("    cd $env:TEMP; netsh wfp show filters; findstr /i \"simplewall-rs\" filters.xml");
+    println!("    cd $env:TEMP; netsh wfp show filters; findstr /i \"amwall\" filters.xml");
     println!("(`netsh wfp show filters` writes filters.xml to cwd; it does NOT print to stdout.)");
     println!("\nPress Enter to delete the filter and exit.");
     io::stdout().flush()?;

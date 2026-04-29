@@ -12,7 +12,7 @@
 // upstream's writer doesn't emit. Byte-equivalence is asserted on
 // USER-shape profiles (see profile::serialize::tests).
 
-use simplewall_rs::profile::{self, Action, Direction, ProfileKind};
+use amwall::profile::{self, Action, Direction, ProfileKind};
 
 const PROFILE_INTERNAL: &str =
     include_str!("../assets/profile_internal.xml");

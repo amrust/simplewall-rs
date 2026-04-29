@@ -1,5 +1,5 @@
-// simplewall-rs — library crate.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — library crate.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Module surface for the Rust port of simplewall. The companion binary
 // (`src/main.rs`) is a thin entry point that opens the WFP engine and

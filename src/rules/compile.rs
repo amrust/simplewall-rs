@@ -1,5 +1,5 @@
-// simplewall-rs — rule-clause compiler.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — rule-clause compiler.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // `Vec<RuleClause>` (the M3.1 AST) → `Vec<FilterCondition>` (the
 // M1.5 type that `wfp::filter::add` consumes). Closes the bridge

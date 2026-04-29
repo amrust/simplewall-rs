@@ -1,4 +1,4 @@
-simplewall-rs
+amwall
 =============
 
 This project is a Rust port of simplewall, originally written in C by
@@ -12,15 +12,15 @@ Original project:
   Copyright (C) 2016-2026 Henry++
 
 This port:
-  Name:    simplewall-rs
-  Source:  https://github.com/amrust/simplewall-rs
+  Name:    amwall
+  Source:  https://github.com/amrust/amwall
   License: GNU General Public License v3.0 (or later)
 
-As a derivative work of simplewall, simplewall-rs is distributed under
+As a derivative work of simplewall, amwall is distributed under
 the same license (GPL-3.0-or-later) as required by section 5 of the GPL.
 The full license text is in the LICENSE file.
 
-simplewall-rs is an independent reimplementation. It is not affiliated
+amwall is an independent reimplementation. It is not affiliated
 with, endorsed by, or sponsored by Henry++ or the original simplewall
 project.
 

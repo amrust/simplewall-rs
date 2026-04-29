@@ -1,5 +1,5 @@
-// simplewall-rs — profile.xml deserialization.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — profile.xml deserialization.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Event-based parser using `quick_xml::Reader`. Tracks the section
 // nesting (`<root>` → `<apps>` / `<rules_*>` / etc.) and dispatches

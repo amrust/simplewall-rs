@@ -1,5 +1,5 @@
-// simplewall-rs — rule-string AST + parser.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — rule-string AST + parser.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // Upstream simplewall encodes user rule conditions as a single
 // semicolon-separated string (see the `rule` and `rule_local`

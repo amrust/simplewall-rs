@@ -1,5 +1,5 @@
-// simplewall-rs — rule-string parser.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — rule-string parser.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // String → `Vec<RuleClause>`. Form detection is character-class
 // based:

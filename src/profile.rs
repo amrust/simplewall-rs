@@ -1,5 +1,5 @@
-// simplewall-rs — profile.xml types + I/O.
-// Copyright (C) 2026  simplewall-rs contributors. Licensed GPL-3.0-or-later.
+// amwall — profile.xml types + I/O.
+// Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
 //
 // On-disk profile format used by upstream simplewall, both for the
 // user's own `profile.xml` (apps + rule overrides + custom rules)
