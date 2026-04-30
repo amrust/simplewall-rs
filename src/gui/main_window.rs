@@ -42,7 +42,9 @@ use windows::Win32::UI::Controls::{
     LVM_SETITEMTEXTW, LVN_COLUMNCLICK, LVN_KEYDOWN,
     LVIS_SELECTED, LVNI_SELECTED, LVS_EX_CHECKBOXES, LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT,
     LVS_REPORT,
-    LVS_SHOWSELALWAYS, NM_DBLCLK, NM_RCLICK, NMHDR, NMITEMACTIVATE, NMLVKEYDOWN,
+    CDDS_ITEMPREPAINT, CDDS_PREPAINT, CDRF_DODEFAULT, CDRF_NEWFONT, CDRF_NOTIFYITEMDRAW,
+    LVS_SHOWSELALWAYS, NM_CUSTOMDRAW, NM_DBLCLK, NM_RCLICK, NMHDR, NMITEMACTIVATE,
+    NMLVCUSTOMDRAW, NMLVKEYDOWN,
     NMTBGETINFOTIPW, SBARS_TOOLTIPS, SB_SETPARTS, SB_SETTEXTW, STATUSCLASSNAMEW,
     TBN_GETINFOTIPW, TCIF_TEXT, TCITEMW, TCM_ADJUSTRECT, TCM_GETCURSEL, TCM_INSERTITEMW,
     TCN_SELCHANGE, WC_LISTVIEWW, WC_TABCONTROLW,
@@ -68,7 +70,7 @@ use super::app::App;
 use super::ids::{
     IDC_APPS_PROFILE, IDC_APPS_SERVICE, IDC_APPS_UWP, IDC_LOG, IDC_NETWORK,
     IDC_RULES_BLOCKLIST, IDC_RULES_CUSTOM, IDC_RULES_SYSTEM, IDC_SEARCH, IDC_STATUSBAR, IDC_TAB,
-    IDM_ABOUT, IDM_ADD_FILE, IDM_ALWAYSONTOP_CHK, IDM_AUTOSIZECOLUMNS_CHK,
+    IDM_ABOUT, IDM_ADD_FILE, IDM_ALWAYSONTOP_CHK, IDM_AUTOSIZECOLUMNS_CHK, IDM_EMERGENCY_RESET,
     IDM_BLOCKLIST_EXTRA_ALLOW, IDM_BLOCKLIST_EXTRA_BLOCK, IDM_BLOCKLIST_EXTRA_DISABLE,
     IDM_BLOCKLIST_SPY_ALLOW, IDM_BLOCKLIST_SPY_BLOCK, IDM_BLOCKLIST_SPY_DISABLE,
     IDM_ALLOW, IDM_BLOCK, IDM_BLOCKLIST_UPDATE_ALLOW, IDM_BLOCKLIST_UPDATE_BLOCK,
@@ -263,6 +265,27 @@ struct WndState {
     /// of each group (especially "Blocked" once auto-cataloging
     /// of new drops lands in the next commit).
     apps_sort: Cell<AppsSortState>,
+    /// Set of full image paths currently owning at least one
+    /// active TCP / UDP connection. Refreshed periodically by
+    /// the connections-tab timer; consumed by the apps-tab row
+    /// colorizer to highlight "this app is talking right now"
+    /// in pink.
+    connected_paths: std::cell::RefCell<std::collections::HashSet<std::path::PathBuf>>,
+    /// Cache of `WinVerifyTrust` results per binary path. Filled
+    /// asynchronously by a background worker thread (see
+    /// `signed_tx`). The colorizer takes a brief lock per row to
+    /// read; missing entries paint as "not signed" until the
+    /// worker fills them in. `Arc<Mutex<...>>` instead of
+    /// `RefCell` because the worker writes from another thread.
+    signed_cache: std::sync::Arc<
+        std::sync::Mutex<std::collections::HashMap<std::path::PathBuf, bool>>,
+    >,
+    /// Sends file paths to the background WinVerifyTrust worker.
+    /// `None` until the worker spawns at WM_CREATE; populator
+    /// code enqueues every File-kind app path once.
+    signed_tx: std::cell::RefCell<
+        Option<std::sync::mpsc::Sender<std::path::PathBuf>>,
+    >,
     /// Most recently right-clicked listview row, set on NM_RCLICK
     /// before the popup menu shows and consumed by the IDM_*
     /// handlers. None after the menu dismisses (or never opened).
@@ -304,6 +327,11 @@ impl WndState {
             uwp_packages: std::cell::RefCell::new(Vec::new()),
             context_target: std::cell::RefCell::new(None),
             apps_sort: Cell::new(AppsSortState::default()),
+            connected_paths: std::cell::RefCell::new(std::collections::HashSet::new()),
+            signed_cache: std::sync::Arc::new(std::sync::Mutex::new(
+                std::collections::HashMap::new(),
+            )),
+            signed_tx: std::cell::RefCell::new(None),
         }
     }
 }
@@ -519,6 +547,8 @@ fn build_main_menu() -> Option<HMENU> {
         append_string(help, IDM_WEBSITE, "&Website");
         append_string(help, IDM_CHECKUPDATES, "&Check for updates");
         append_string(help, IDM_ABOUT, "&About");
+        append_separator(help);
+        append_string(help, IDM_EMERGENCY_RESET, "&Emergency WFP reset...");
         append_popup(menu, help, "&Help");
 
         Some(menu)
@@ -665,6 +695,20 @@ unsafe extern "system" fn wnd_proc(
                 let activate = unsafe { &*(lparam.0 as *const NMITEMACTIVATE) };
                 on_apps_context_menu(hwnd, nmhdr.idFrom as i32, activate);
             }
+            // NM_CUSTOMDRAW on the Apps tabs — pick a row
+            // background color per upstream simplewall's
+            // highlighting scheme (Invalid / System / Signed
+            // / etc.). Only Invalid + System wired here; the
+            // others need extra checks (signed = WinVerifyTrust,
+            // pico = process-type detection) that aren't in
+            // scope yet.
+            if nmhdr.code == NM_CUSTOMDRAW
+                && (nmhdr.idFrom == IDC_APPS_PROFILE as usize
+                    || nmhdr.idFrom == IDC_APPS_SERVICE as usize
+                    || nmhdr.idFrom == IDC_APPS_UWP as usize)
+            {
+                return on_apps_custom_draw(hwnd, lparam, nmhdr.idFrom as i32);
+            }
             // LVN_COLUMNCLICK on the Apps Profile listview
             // toggles sort. iSubItem on NMLISTVIEW carries the
             // column index. Repeating click on the same column
@@ -739,6 +783,37 @@ unsafe extern "system" fn wnd_proc(
         }
         m if m == super::notification::WM_USER_TOAST_MOVED => {
             on_toast_moved(hwnd, wparam, lparam);
+            LRESULT(0)
+        }
+        m if m == super::connect_dialog::WM_USER_CONNECT_ALLOW => {
+            on_connect_allow(hwnd, wparam);
+            LRESULT(0)
+        }
+        m if m == WM_USER_SIGNED_REFRESH => {
+            // Worker filled new cache entries — repaint the
+            // active apps listview so freshly-verified rows
+            // show their green/no-green colour.
+            if let Some(state) = unsafe { state_ref(hwnd) } {
+                let tab = state.tab.get();
+                if tab.0 != 0 {
+                    let sel = unsafe {
+                        SendMessageW(tab, TCM_GETCURSEL, WPARAM(0), LPARAM(0))
+                    }
+                    .0 as isize;
+                    if (0..=2).contains(&sel) {
+                        let lv = state.listviews[sel as usize].get();
+                        if lv.0 != 0 {
+                            unsafe {
+                                let _ = windows::Win32::Graphics::Gdi::InvalidateRect(
+                                    lv,
+                                    None,
+                                    false,
+                                );
+                            }
+                        }
+                    }
+                }
+            }
             LRESULT(0)
         }
         WM_TIMER => {
@@ -907,6 +982,22 @@ fn on_create(hwnd: HWND) -> Result<(), String> {
         SetTimer(hwnd, TIMER_EVENT_DRAIN, EVENT_DRAIN_INTERVAL_MS, None);
     }
 
+    // Filters installed on a previous run survive process exit
+    // (we ask BFE to persist them across reboots, which also
+    // means they outlive amwall itself). On startup we check
+    // whether our provider has any filters in the engine and
+    // flip `filters_active` to match — otherwise the toolbar /
+    // title-bar would say "off" while the kernel is still
+    // dropping packets.
+    detect_initial_filter_state(hwnd, state);
+
+    // Spawn the WinVerifyTrust background worker so the apps-
+    // tab signed-row colorizer can fill its cache without
+    // blocking the GUI thread. Stores the sender on `state` so
+    // populator code can enqueue paths.
+    let tx = spawn_signed_worker(hwnd, state.signed_cache.clone());
+    *state.signed_tx.borrow_mut() = Some(tx);
+
     // First-run wizard (M9.4): if the user has never seen it
     // and simplewall has a config to import, ask. Runs once per
     // install (gated on `Settings.first_run_done`) so we don't
@@ -1023,12 +1114,123 @@ fn refresh_amwall_filter_ids_with(engine: &crate::wfp::WfpEngine, state: &WndSta
     }
 }
 
+/// Reconcile `state.filters_active` with the kernel's actual
+/// filter state at startup. `try_subscribe_events` has already
+/// populated `amwall_filter_ids` from a fresh enumeration; if
+/// that set is non-empty, our provider has live filters and we
+/// were "active" when the user last closed the program — flip
+/// the toolbar, title-bar icon, and status line to match.
+fn detect_initial_filter_state(hwnd: HWND, state: &WndState) {
+    let active = !state.amwall_filter_ids.borrow().is_empty();
+    if !active {
+        return;
+    }
+    state.filters_active.set(true);
+    update_enable_filters_button(state, true);
+    update_titlebar_icon(hwnd, true);
+    set_status_text(state.status.get(), 0, "Filters are enabled.");
+}
+
 /// Swap the toolbar's "Enable filters" button between its enabled
 /// and disabled appearance: green tick-shield + "Enable filters"
 /// when no amwall filters are installed, red cross-shield +
 /// "Disable filters" when they are. Same `IDM_TRAY_START` command
 /// id either way — the click handler branches on
 /// `state.filters_active`.
+/// Swap the window's title-bar icon between the active (color)
+/// and inactive (monochrome) forms whenever filter state
+/// changes. Mirrors upstream simplewall's "fire icon goes gray
+/// when filters are off" cue. Both icons are embedded in the
+/// .rc as resources `1` and `2`; we LoadIcon at swap time
+/// rather than caching since this fires at most once per user
+/// click.
+fn update_titlebar_icon(hwnd: HWND, active: bool) {
+    use windows::Win32::UI::WindowsAndMessaging::{ICON_BIG, ICON_SMALL, LoadIconW, WM_SETICON};
+    let hi = match unsafe {
+        windows::Win32::System::LibraryLoader::GetModuleHandleW(PCWSTR::null())
+    } {
+        Ok(h) => h,
+        Err(_) => return,
+    };
+    let res_id = if active { 1usize } else { 2usize };
+    let icon = match unsafe { LoadIconW(hi, PCWSTR(res_id as *const u16)) } {
+        Ok(i) => i,
+        Err(_) => return,
+    };
+    unsafe {
+        SendMessageW(
+            hwnd,
+            WM_SETICON,
+            WPARAM(ICON_SMALL as usize),
+            LPARAM(icon.0),
+        );
+        SendMessageW(
+            hwnd,
+            WM_SETICON,
+            WPARAM(ICON_BIG as usize),
+            LPARAM(icon.0),
+        );
+    }
+}
+
+/// Push `TBSTATE_CHECKED` on/off on a toolbar button identified by
+/// its command id. Used for the Notifications toggle so the button
+/// visibly reflects whether the connect-prompt mode is on.
+fn set_toolbar_button_checked(state: &WndState, id: u16, checked: bool) {
+    use windows::Win32::UI::Controls::{
+        TBSTATE_CHECKED, TBSTATE_ENABLED, TB_SETSTATE,
+    };
+    let toolbar = state.toolbar.get();
+    if toolbar.0 == 0 {
+        return;
+    }
+    let st = if checked {
+        TBSTATE_ENABLED | TBSTATE_CHECKED
+    } else {
+        TBSTATE_ENABLED
+    };
+    unsafe {
+        SendMessageW(
+            toolbar,
+            TB_SETSTATE,
+            WPARAM(id as usize),
+            LPARAM(st as isize),
+        );
+    }
+}
+
+/// Toolbar / menu Notifications click handler: flip
+/// `Settings.enable_notifications`, persist, and reflect the new
+/// state on the toolbar button via TBSTATE_CHECKED.
+fn on_toggle_notifications(hwnd: HWND) {
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+    let new_value = {
+        let mut s = state.app.settings.borrow_mut();
+        s.enable_notifications = !s.enable_notifications;
+        s.enable_notifications
+    };
+    let path = state.app.settings_path.borrow().clone();
+    if let Err(e) = state.app.settings.borrow().save(&path) {
+        eprintln!(
+            "amwall: settings: save failed for {}: {e}",
+            path.display()
+        );
+    }
+    set_toolbar_button_checked(state, IDM_TRAY_ENABLENOTIFICATIONS_CHK, new_value);
+    set_status_text(
+        state.status.get(),
+        0,
+        if new_value {
+            "Notifications: on (Allow/Block prompt on first connect)."
+        } else {
+            "Notifications: off."
+        },
+    );
+}
+
 fn update_enable_filters_button(state: &WndState, active: bool) {
     use windows::Win32::UI::Controls::{TBBUTTONINFOW, TBIF_IMAGE, TBIF_TEXT, TB_SETBUTTONINFOW};
     let toolbar = state.toolbar.get();
@@ -1094,6 +1296,298 @@ fn on_toast_moved(hwnd: HWND, wparam: WPARAM, lparam: LPARAM) {
     }
 }
 
+/// Convert a kernel-reported NT path (e.g.
+/// `\device\harddiskvolume3\windows\system32\svchost.exe`) into
+/// the Win32 drive-letter form (`C:\Windows\System32\svchost.exe`)
+/// that `profile.apps[].path` and `FwpmGetAppIdFromFileName0`
+/// both work with. Walks every assigned DOS drive letter, asks
+/// the kernel for its NT root via `QueryDosDeviceW`, picks the
+/// matching prefix.
+///
+/// Returns `None` for paths that don't resolve to any current
+/// drive — could happen when a now-unmounted volume produced the
+/// drop, or for non-disk app ids. Caller skips the catalog in
+/// that case.
+fn nt_path_to_win32(nt_path: &str) -> Option<String> {
+    use windows::Win32::Storage::FileSystem::QueryDosDeviceW;
+    let nt_lc = nt_path.to_lowercase();
+    for letter in b'A'..=b'Z' {
+        let drive = format!("{}:", letter as char);
+        let drive_w: Vec<u16> = drive.encode_utf16().chain(std::iter::once(0)).collect();
+        let mut buf = vec![0u16; 1024];
+        let n = unsafe { QueryDosDeviceW(PCWSTR(drive_w.as_ptr()), Some(&mut buf)) };
+        if n == 0 {
+            continue;
+        }
+        // QueryDosDeviceW returns a double-NUL-terminated list of
+        // NT names; the first entry is the canonical mapping. Find
+        // the first NUL to slice it.
+        let first_end = buf[..n as usize].iter().position(|&c| c == 0).unwrap_or(n as usize);
+        let nt_root = String::from_utf16_lossy(&buf[..first_end]);
+        let nt_root_lc = nt_root.to_lowercase();
+        if nt_root_lc.is_empty() {
+            continue;
+        }
+        if nt_lc.starts_with(&nt_root_lc) {
+            let suffix = &nt_path[nt_root.len()..];
+            return Some(format!("{drive}{suffix}"));
+        }
+    }
+    None
+}
+
+/// Custom WM message posted by the WinVerifyTrust worker after
+/// it determines a batch of paths' signed status. Triggers an
+/// apps-tab repaint so freshly-verified rows pick up the green
+/// "signed" highlight.
+const WM_USER_SIGNED_REFRESH: u32 =
+    windows::Win32::UI::WindowsAndMessaging::WM_USER + 0x103;
+
+/// Worker-thread entry. Drains `rx` for paths to verify,
+/// updates `cache` with each result, and posts
+/// `WM_USER_SIGNED_REFRESH` to the main HWND so the apps tab
+/// repaints. Coalesces refresh notifications: only posts one
+/// every ~10 paths or after `rx` returns Empty for >50 ms,
+/// which keeps the GUI responsive without spamming repaints.
+fn spawn_signed_worker(
+    main_hwnd: HWND,
+    cache: std::sync::Arc<
+        std::sync::Mutex<std::collections::HashMap<std::path::PathBuf, bool>>,
+    >,
+) -> std::sync::mpsc::Sender<std::path::PathBuf> {
+    use std::sync::mpsc::{Receiver, Sender, channel};
+    let (tx, rx): (Sender<std::path::PathBuf>, Receiver<std::path::PathBuf>) = channel();
+    // Snapshot the HWND as a usize since HWND isn't Send. We
+    // re-wrap it on the worker side; PostMessage is thread-safe
+    // by Win32 contract.
+    let hwnd_raw = main_hwnd.0 as usize;
+    std::thread::spawn(move || {
+        const BATCH_FOR_REFRESH: u32 = 10;
+        let mut since_last_post = 0u32;
+        // Channel-closed (app shutting down) breaks the loop.
+        while let Ok(path) = rx.recv() {
+            // Skip if already cached.
+            if let Ok(g) = cache.lock() {
+                if g.contains_key(&path) {
+                    continue;
+                }
+            }
+            let signed = win_verify_trust(&path);
+            if let Ok(mut g) = cache.lock() {
+                g.insert(path, signed);
+            }
+            since_last_post += 1;
+            if since_last_post >= BATCH_FOR_REFRESH {
+                since_last_post = 0;
+                post_signed_refresh(hwnd_raw);
+            }
+        }
+        // Final flush so the last partial batch repaints too.
+        if since_last_post > 0 {
+            post_signed_refresh(hwnd_raw);
+        }
+    });
+    tx
+}
+
+fn post_signed_refresh(hwnd_raw: usize) {
+    use windows::Win32::UI::WindowsAndMessaging::PostMessageW;
+    let h = HWND(hwnd_raw as isize);
+    unsafe {
+        let _ = PostMessageW(h, WM_USER_SIGNED_REFRESH, WPARAM(0), LPARAM(0));
+    }
+}
+
+/// Re-walk the IP Helper tables and replace `connected_paths`
+/// with the current set. Cheap (one syscall per protocol +
+/// process-handle opens for each unique PID), but synchronous —
+/// only invoked from populator entry points so it runs at most
+/// once per tab repaint, not once per row.
+fn refresh_connected_paths(state: &WndState) {
+    *state.connected_paths.borrow_mut() = super::connections::enumerate_active_paths();
+}
+
+/// Run the M5.9.5 paint-jiggle on the currently-active apps
+/// listview. Used after `auto_catalog_drops` adds rows so they
+/// show up in the same paint cycle without waiting for a
+/// resize / scroll / click. The 1-pixel MoveWindow forces
+/// listview internal layout to recompute, which is the only
+/// reliable way to wake comctl up for fresh rows.
+fn force_active_apps_listview_jiggle(hwnd: HWND, state: &WndState) {
+    let tab = state.tab.get();
+    if tab.0 == 0 {
+        return;
+    }
+    let sel = unsafe { SendMessageW(tab, TCM_GETCURSEL, WPARAM(0), LPARAM(0)) }.0 as isize;
+    let slot: usize = if (0..=2).contains(&sel) { sel as usize } else { 0 };
+    let lv = state.listviews[slot].get();
+    if lv.0 == 0 {
+        return;
+    }
+    if let Some((x, y, w, h)) = current_lv_rect_in_parent(lv, hwnd) {
+        force_listview_repaint(lv, x, y, w, h);
+    }
+}
+
+/// Walk this drain tick's batch and return one `(path, remote)`
+/// pair per *newly seen* app — i.e., an app whose drop fires
+/// from amwall's filters AND whose path isn't yet in
+/// `profile.apps`. Auto-catalog adds each as a disabled (blocked)
+/// entry as a side-effect so the Apps Profile tab fills with
+/// "everything that's tried to connect since filters went on";
+/// the returned `(path, remote)` list is what the caller hands
+/// to the connect-prompt dialog (one prompt per app, ever — apps
+/// already in the profile suppress further prompts naturally).
+///
+/// Dedup runs against `profile.apps` AND within the batch
+/// itself (a single app dropping 100 packets in one 500 ms
+/// tick only produces one entry).
+///
+/// Returning `(path, remote)` lets the caller show "brave.exe
+/// → 142.250.65.74:443" in the dialog without re-walking the
+/// drop event.
+fn auto_catalog_drops(
+    state: &WndState,
+    events: &[crate::wfp::events::NetEvent],
+) -> Vec<(std::path::PathBuf, String)> {
+    use crate::wfp::events::NetEvent;
+    let mut new_apps: Vec<(std::path::PathBuf, String)> = Vec::new();
+    let mut seen: std::collections::HashSet<std::path::PathBuf> =
+        std::collections::HashSet::new();
+
+    {
+        let profile = state.app.profile.borrow();
+        for event in events {
+            let details = match event {
+                NetEvent::Drop(d) => d,
+                _ => continue,
+            };
+            // Only auto-catalog drops from amwall's own filters.
+            // Without this gate, every Windows Defender / third-
+            // party WFP-provider drop would dump exes into our
+            // profile.
+            let filter_id = match details.filter_id {
+                Some(f) => f,
+                None => continue,
+            };
+            if !state.amwall_filter_ids.borrow().contains(&filter_id) {
+                continue;
+            }
+            let nt = match details.app_path.as_deref() {
+                Some(s) if !s.is_empty() => s,
+                _ => continue,
+            };
+            let win32 = match nt_path_to_win32(nt) {
+                Some(p) => p,
+                None => continue,
+            };
+            let path = std::path::PathBuf::from(&win32);
+            if !seen.insert(path.clone()) {
+                continue;
+            }
+            if profile.apps.iter().any(|a| a.path == path) {
+                continue;
+            }
+            // ASCII arrow — Segoe UI in dialog mode renders the
+            // Unicode "→" (U+2192) as a placeholder box on some
+            // systems; "->" round-trips cleanly.
+            let remote = match (details.remote_addr, details.remote_port) {
+                (Some(addr), Some(port)) => format!("-> {addr}:{port}"),
+                (Some(addr), None) => format!("-> {addr}"),
+                _ => String::new(),
+            };
+            new_apps.push((path, remote));
+        }
+    }
+
+    if new_apps.is_empty() {
+        return new_apps;
+    }
+
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    let mut profile = state.app.profile.borrow_mut();
+    for (path, _) in &new_apps {
+        profile.apps.push(crate::profile::App {
+            path: path.clone(),
+            is_enabled: false,
+            is_silent: false,
+            is_undeletable: false,
+            timestamp: now,
+            timer: 0,
+            hash: None,
+            comment: None,
+        });
+    }
+    new_apps
+}
+
+/// Show the centered Allow/Block dialog once per app in
+/// `new_apps`. The list comes from `auto_catalog_drops` and
+/// only contains paths that were *just added* to the profile in
+/// this drain tick — so this is necessarily the app's first
+/// drop since filters went on. One dialog per entry, ever:
+/// already-in-profile apps never reach this list.
+///
+/// Modeless / non-focus-stealing — `show_async` returns
+/// immediately. The user's Allow click flows back via
+/// `WM_USER_CONNECT_ALLOW` to the main window's wndproc, which
+/// flips `is_enabled` and reinstalls filters. Block / X is a
+/// no-op (the App's already at `is_enabled=false`).
+fn process_connect_prompts(
+    hwnd: HWND,
+    new_apps: &[(std::path::PathBuf, String)],
+) {
+    for (path, remote) in new_apps {
+        super::connect_dialog::show_async(hwnd, path, remote);
+    }
+}
+
+/// Handler for `WM_USER_CONNECT_ALLOW` posted by the connect-
+/// prompt dialog when the user clicks Allow. Reclaims the
+/// `Box<PathBuf>` the dialog stuffed into wparam, finds the
+/// matching App, flips `is_enabled = true`, persists, and
+/// re-pushes filters to the kernel so the per-app permit lands.
+fn on_connect_allow(hwnd: HWND, wparam: WPARAM) {
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+    let path_raw = wparam.0 as *mut std::path::PathBuf;
+    if path_raw.is_null() {
+        return;
+    }
+    let path_box = unsafe { Box::from_raw(path_raw) };
+    let path: std::path::PathBuf = *path_box;
+
+    {
+        let mut profile = state.app.profile.borrow_mut();
+        if let Some(app) = profile.apps.iter_mut().find(|a| a.path == path) {
+            app.is_enabled = true;
+        } else {
+            // Edge case: user removed the app from profile while
+            // the dialog was up. Nothing to do.
+            return;
+        }
+    }
+    save_profile_to_disk(state);
+    populate_apps_tab(state);
+    on_tab_change(hwnd);
+    reinstall_filters_if_active(state);
+    set_status_text(
+        state.status.get(),
+        0,
+        &format!(
+            "Allowed: {}",
+            path.file_name()
+                .map(|s| s.to_string_lossy().into_owned())
+                .unwrap_or_else(|| path.display().to_string())
+        ),
+    );
+}
+
 /// Drain any pending events from the channel into the log buffer,
 /// trimming the front to keep the buffer at most `EVENT_LOG_CAP`
 /// entries. If the Log tab is currently visible, repopulate the
@@ -1101,10 +1595,13 @@ fn on_toast_moved(hwnd: HWND, wparam: WPARAM, lparam: LPARAM) {
 fn drain_events(hwnd: HWND, state: &WndState) {
     let settings = state.app.settings.borrow();
     let notify = settings.enable_notifications;
+    let filters_active = state.filters_active.get();
     let mut log = state.event_log.borrow_mut();
     let mut writer = state.event_log_writer.borrow_mut();
     let mut new_arrivals = false;
-    let mut last_drop: Option<crate::wfp::events::NetEvent> = None;
+    // Collect this tick's events for downstream batch processing
+    // (auto-catalog deduplicates within the batch).
+    let mut batch: Vec<crate::wfp::events::NetEvent> = Vec::new();
     if let Some(rx) = state.event_rx.borrow().as_ref() {
         while let Ok(event) = rx.try_recv() {
             // Persist to the on-disk log first. Settings gate
@@ -1112,34 +1609,71 @@ fn drain_events(hwnd: HWND, state: &WndState) {
             // are applied inside the writer.
             writer.append(&event, &settings);
 
-            // Toast the most recent drop in this batch and only
-            // when the drop came from one of OUR filters — bare
-            // FwpmNetEventSubscribe0 sees every drop in the
-            // kernel (Windows Firewall, other WFP providers, …),
-            // so notifying on all of them spams the user with
-            // events that have nothing to do with amwall. Multi-
-            // drop batches collapse to a single toast.
-            if notify
-                && let crate::wfp::events::NetEvent::Drop(d) = &event
-                && let Some(filter_id) = d.filter_id
-                && state.amwall_filter_ids.borrow().contains(&filter_id)
-            {
-                last_drop = Some(event.clone());
+            // The in-memory ring (and therefore the Packets log
+            // tab) only fills when the user has explicitly turned
+            // Log UI on — matches upstream's "Log UI is off by
+            // default; flipping it on starts capturing events".
+            // Auto-catalog still gets the event because it works
+            // off `batch`, not `event_log`.
+            if settings.enable_ui_log {
+                if log.len() >= EVENT_LOG_CAP {
+                    log.pop_front();
+                }
+                log.push_back(event.clone());
+                new_arrivals = true;
             }
-            if log.len() >= EVENT_LOG_CAP {
-                log.pop_front();
-            }
-            log.push_back(event);
-            new_arrivals = true;
+            batch.push(event);
         }
     }
     drop(writer);
     drop(log);
-    let settings_snapshot = settings.clone();
     drop(settings);
-    if let Some(ev) = last_drop {
-        super::notification::show_drop_notification(&ev, &settings_snapshot, hwnd);
+
+    // Auto-catalog drops as Blocked entries when filters are on.
+    // Returns the list of newly-added apps (with their first
+    // drop's remote endpoint) so the connect-prompt dialog can
+    // show context. An app already in `profile.apps` never
+    // appears here regardless of how many packets it drops —
+    // that's how we guarantee "one Allow/Block window per exe,
+    // ever".
+    let mut profile_changed = false;
+    let new_apps = if filters_active && !batch.is_empty() {
+        auto_catalog_drops(state, &batch)
+    } else {
+        Vec::new()
+    };
+    if !new_apps.is_empty() {
+        profile_changed = true;
     }
+
+    // Connect-prompt dialogs (centered Allow/Block, modeless) —
+    // only when notifications are enabled. One dialog per
+    // newly-cataloged app. show_async returns immediately; the
+    // user's Allow choice flows back via WM_USER_CONNECT_ALLOW
+    // and is handled by `on_connect_allow` in the wndproc.
+    if filters_active && notify && !new_apps.is_empty() {
+        process_connect_prompts(hwnd, &new_apps);
+    }
+
+    if profile_changed {
+        save_profile_to_disk(state);
+        populate_apps_tab(state);
+        on_tab_change(hwnd);
+        // Force the listview's internal layout to pick up the
+        // freshly-inserted rows in the same paint cycle. Without
+        // this, the new entries don't appear until the user
+        // resizes / scrolls / clicks — the same paint-pipeline
+        // class of bug as M5.9.5 / M5.4d, so reuse the same
+        // 1-pixel jiggle the resize cleanup uses.
+        force_active_apps_listview_jiggle(hwnd, state);
+    }
+
+    // Drop-toast removed: the connect-prompt dialog (when
+    // `enable_notifications` is on) is the user-facing
+    // first-connect signal now. The toast was redundant and the
+    // user explicitly asked it off — packet-level visibility
+    // belongs to the Packets log tab / the on-disk log, not to
+    // the notifications path.
 
     if !new_arrivals {
         return;
@@ -1191,6 +1725,14 @@ fn apply_initial_settings(hwnd: HWND, state: &WndState) {
 
     refresh_blocklist_menu_checks(hwnd, state);
     localize_top_menu(hwnd, state);
+    // Reflect Notifications mode on the toolbar button so the
+    // user can tell at a glance whether the Allow/Block prompt
+    // will fire on first-connect drops. Default is on.
+    let notify = state.app.settings.borrow().enable_notifications;
+    set_toolbar_button_checked(state, IDM_TRAY_ENABLENOTIFICATIONS_CHK, notify);
+    // Title-bar icon reflects current filter state (color when
+    // active, monochrome when off).
+    update_titlebar_icon(hwnd, state.filters_active.get());
 
     // Apps tab basename-vs-fullpath rendering depends on
     // `show_filenames_only`, so refresh it on every settings
@@ -1568,6 +2110,7 @@ fn on_command(hwnd: HWND, id: u32, notif: u32) {
         IDM_IMPORT => on_import(hwnd),
         IDM_EXPORT => on_export(hwnd),
         IDM_ABOUT => on_about(hwnd),
+        IDM_EMERGENCY_RESET => on_emergency_reset(hwnd),
         IDM_WEBSITE => open_website(hwnd),
         IDM_CHECKUPDATES => open_releases_page(hwnd),
 
@@ -1589,6 +2132,7 @@ fn on_command(hwnd: HWND, id: u32, notif: u32) {
         IDM_OPENRULESEDITOR => on_create_rule(hwnd),
         IDM_SETTINGS => on_open_settings(hwnd),
         IDM_ADD_FILE => on_add_app(hwnd),
+        IDM_TRAY_ENABLENOTIFICATIONS_CHK => on_toggle_notifications(hwnd),
 
         // Apps tab right-click menu (M5.4c). All of these consume
         // `state.context_target` populated at NM_RCLICK time.
@@ -1712,6 +2256,311 @@ fn on_apps_context_menu(hwnd: HWND, listview_id: i32, activate: &NMITEMACTIVATE)
     // Always clear after the menu — even if no item was picked, the
     // captured target shouldn't persist into the next interaction.
     *state.context_target.borrow_mut() = None;
+}
+
+/// NM_CUSTOMDRAW handler for the Apps Profile / Services / UWP
+/// listviews. Picks a row background color following upstream
+/// simplewall's highlighting scheme (subset for now: Invalid +
+/// System). The two-phase dance — return CDRF_NOTIFYITEMDRAW on
+/// the prepaint stage so the listview asks us again per-item,
+/// then set clrTextBk + return CDRF_NEWFONT — is the standard
+/// Win32 idiom for per-row colors.
+fn on_apps_custom_draw(_hwnd: HWND, lparam: LPARAM, listview_id: i32) -> LRESULT {
+    let nmlv = unsafe { &mut *(lparam.0 as *mut NMLVCUSTOMDRAW) };
+    match nmlv.nmcd.dwDrawStage {
+        x if x == CDDS_PREPAINT => LRESULT(CDRF_NOTIFYITEMDRAW as isize),
+        x if x == CDDS_ITEMPREPAINT => {
+            // Recover the source-vec index via the lParam stamp
+            // the populator wrote at insert time. `nmcd.dwItemSpec`
+            // is the listview row.
+            let row = nmlv.nmcd.dwItemSpec as i32;
+            if let Some((state, path)) = path_for_row_with_state(listview_id, row) {
+                if let Some(c) = pick_app_row_color(&path, state) {
+                    nmlv.clrTextBk = c;
+                    return LRESULT(CDRF_NEWFONT as isize);
+                }
+            }
+            LRESULT(CDRF_DODEFAULT as isize)
+        }
+        _ => LRESULT(CDRF_DODEFAULT as isize),
+    }
+}
+
+/// Like `path_for_row` but also returns the resolved `&WndState`
+/// so the colorizer can read `connected_paths` / `signed_cache`
+/// without re-walking the EnumWindows lookup. Same lookup,
+/// different return shape.
+fn path_for_row_with_state(
+    listview_id: i32,
+    row: i32,
+) -> Option<(&'static WndState, std::path::PathBuf)> {
+    use windows::Win32::UI::WindowsAndMessaging::GetParent;
+    let lv = match listview_id {
+        x if x == IDC_APPS_PROFILE => find_listview(0)?,
+        x if x == IDC_APPS_SERVICE => find_listview(1)?,
+        x if x == IDC_APPS_UWP => find_listview(2)?,
+        _ => return None,
+    };
+    if lv.0 == 0 {
+        return None;
+    }
+    let parent = unsafe { GetParent(lv) };
+    if parent.0 == 0 {
+        return None;
+    }
+    let state = unsafe { state_ref(parent) }?;
+    let source_idx = listview_item_param(lv, row)? as usize;
+    let path = match listview_id {
+        x if x == IDC_APPS_PROFILE => {
+            state.app.profile.borrow().apps.get(source_idx).map(|a| a.path.clone())?
+        }
+        x if x == IDC_APPS_SERVICE => {
+            state.services.borrow().get(source_idx).and_then(|s| {
+                if s.image_path.as_os_str().is_empty() {
+                    None
+                } else {
+                    Some(s.image_path.clone())
+                }
+            })?
+        }
+        _ => return None,
+    };
+    Some((state, path))
+}
+
+/// Resolve `(listview_id, row)` to the underlying File-shaped
+/// path via the same source-vec lookup the right-click handler
+/// uses. Returns `None` for rows that don't have a matching
+/// path (UWP, services without an image_path, etc.).
+#[allow(dead_code)]
+fn path_for_row(listview_id: i32, row: i32) -> Option<std::path::PathBuf> {
+    // Re-grab `state` here — we don't have hwnd in this helper's
+    // closure scope; the wndproc-thread guarantee plus
+    // `state_ref(hwnd)` reassures the borrow checker via the
+    // unsafe cast convention used throughout.
+    //
+    // Actually we DO have hwnd via `current focus`. Cleaner is
+    // to grab state via the listview's GetParent — but the
+    // active-tab listview's parent is always the main hwnd, so
+    // we walk that.
+    use windows::Win32::UI::WindowsAndMessaging::GetParent;
+    let lv = match listview_id {
+        x if x == IDC_APPS_PROFILE => find_listview(0)?,
+        x if x == IDC_APPS_SERVICE => find_listview(1)?,
+        x if x == IDC_APPS_UWP => find_listview(2)?,
+        _ => return None,
+    };
+    if lv.0 == 0 {
+        return None;
+    }
+    let parent = unsafe { GetParent(lv) };
+    if parent.0 == 0 {
+        return None;
+    }
+    let state = unsafe { state_ref(parent) }?;
+    let source_idx = listview_item_param(lv, row)? as usize;
+    match listview_id {
+        x if x == IDC_APPS_PROFILE => {
+            state.app.profile.borrow().apps.get(source_idx).map(|a| a.path.clone())
+        }
+        x if x == IDC_APPS_SERVICE => {
+            state.services.borrow().get(source_idx).and_then(|s| {
+                if s.image_path.as_os_str().is_empty() {
+                    None
+                } else {
+                    Some(s.image_path.clone())
+                }
+            })
+        }
+        _ => None,
+    }
+}
+
+/// Find the Nth listview by walking enumerated child windows
+/// for the class name `SysListView32`. We can't get to
+/// `WndState` here without hwnd, but each tab's listview is the
+/// Nth-of-its-class child of the main window. Used only by
+/// `path_for_row` which doesn't carry an hwnd through.
+///
+/// Implementation cheat: walk every visible top-level window
+/// looking for the amwall main class — there's only ever one.
+fn find_listview(slot: usize) -> Option<HWND> {
+    use windows::Win32::UI::WindowsAndMessaging::{EnumWindows, GetClassNameW};
+    use std::cell::Cell;
+
+    thread_local! {
+        static FOUND: Cell<HWND> = const { Cell::new(HWND(0)) };
+    }
+    FOUND.with(|f| f.set(HWND(0)));
+    unsafe extern "system" fn cb(hwnd: HWND, _lp: LPARAM) -> windows::Win32::Foundation::BOOL {
+        let mut buf = [0u16; 64];
+        let n = unsafe { GetClassNameW(hwnd, &mut buf) } as usize;
+        let s = String::from_utf16_lossy(&buf[..n]);
+        if s == "AmwallMainWindow" {
+            FOUND.with(|f| f.set(hwnd));
+            return windows::Win32::Foundation::FALSE;
+        }
+        windows::Win32::Foundation::TRUE
+    }
+    unsafe {
+        let _ = EnumWindows(Some(cb), LPARAM(0));
+    }
+    let main = FOUND.with(|f| f.get());
+    if main.0 == 0 {
+        return None;
+    }
+    let state = unsafe { state_ref(main) }?;
+    Some(state.listviews[slot].get())
+}
+
+/// Pick a row color following upstream's `_app_getappcolor` priority:
+///   - Invalid: file doesn't exist on disk → pinkish red.
+///     Imported simplewall profiles often carry references to
+///     apps the user has uninstalled.
+///   - Connection: an active TCP / UDP endpoint right now → pink.
+///     Surfaces "what's chatting at this moment".
+///   - Signed: passes `WinVerifyTrust` → pale green. Marks
+///     properly-signed binaries — hint that they're more
+///     trustworthy than unsigned third-party ones.
+///   - Pico: WSL / Linux subsystem process → blue. Detection
+///     would need per-process inspection (path-only
+///     classification doesn't work — every Pico process is
+///     spawned from `wsl.exe` / `wslhost.exe`), so the
+///     code path's there but always returns `false`. Reserved
+///     so the priority order matches upstream.
+///   - System: path under `C:\Windows\` → pastel blue. OS-bundled
+///     binaries vs user-installed apps.
+///
+/// First match wins; default returns `None` for the listview's
+/// default background.
+fn pick_app_row_color(
+    path: &std::path::Path,
+    state: &WndState,
+) -> Option<windows::Win32::Foundation::COLORREF> {
+    use windows::Win32::Foundation::COLORREF;
+    // 1. Invalid (path doesn't exist on disk).
+    if !path.as_os_str().is_empty() && !path.is_file() {
+        return Some(COLORREF(rgb_packed(255, 125, 148)));
+    }
+    // 2. Active connection — refreshed by populate_apps_tab.
+    if state.connected_paths.borrow().contains(path) {
+        return Some(COLORREF(rgb_packed(255, 168, 242)));
+    }
+    // 3. Signed (cached — first paint slow, subsequent fast).
+    if path_is_signed_cached(state, path) {
+        return Some(COLORREF(rgb_packed(175, 228, 163)));
+    }
+    // 4. Pico — reserved; detection isn't path-driven so it
+    //    always returns false today.
+    if is_pico(path) {
+        return Some(COLORREF(rgb_packed(51, 153, 255)));
+    }
+    // 5. System (Windows-bundled binaries).
+    if let Some(s) = path.to_str() {
+        let lower = s.to_lowercase();
+        if lower.starts_with(r"c:\windows\") {
+            return Some(COLORREF(rgb_packed(220, 232, 250)));
+        }
+    }
+    None
+}
+
+/// Returns the cached `WinVerifyTrust` result for `path`, or
+/// `false` if the worker hasn't gotten to it yet. The colorizer
+/// uses this — paint stays fast, and the apps tab repaints
+/// once the worker fills the cache. Verification itself happens
+/// on a background thread fed by `signed_tx` (queued from
+/// `populate_apps_tab`).
+fn path_is_signed_cached(state: &WndState, path: &std::path::Path) -> bool {
+    if path.as_os_str().is_empty() {
+        return false;
+    }
+    match state.signed_cache.lock() {
+        Ok(g) => g.get(path).copied().unwrap_or(false),
+        Err(_) => false,
+    }
+}
+
+/// `WinVerifyTrust(WINTRUST_ACTION_GENERIC_VERIFY_V2)` returning
+/// `0` means the binary's signature chain is valid. Anything else
+/// (TRUST_E_NOSIGNATURE, TRUST_E_PROVIDER_UNKNOWN, etc.) means we
+/// treat it as unsigned. We pass `WTD_REVOKE_NONE` to skip the
+/// revocation network check — keeps each call latency-bounded
+/// and avoids hangs on offline machines.
+fn win_verify_trust(path: &std::path::Path) -> bool {
+    use std::os::windows::ffi::OsStrExt;
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::Security::WinTrust::{
+        WINTRUST_DATA, WINTRUST_DATA_0, WINTRUST_FILE_INFO, WTD_CHOICE_FILE,
+        WTD_REVOKE_NONE, WTD_STATEACTION_CLOSE, WTD_STATEACTION_VERIFY, WTD_UI_NONE,
+        WinVerifyTrust,
+    };
+    use windows::core::{GUID, PCWSTR};
+
+    let wpath: Vec<u16> = path
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+    let mut file_info = WINTRUST_FILE_INFO {
+        cbStruct: std::mem::size_of::<WINTRUST_FILE_INFO>() as u32,
+        pcwszFilePath: PCWSTR(wpath.as_ptr()),
+        ..unsafe { std::mem::zeroed() }
+    };
+    let mut data: WINTRUST_DATA = unsafe { std::mem::zeroed() };
+    data.cbStruct = std::mem::size_of::<WINTRUST_DATA>() as u32;
+    data.dwUIChoice = WTD_UI_NONE;
+    data.fdwRevocationChecks = WTD_REVOKE_NONE;
+    data.dwUnionChoice = WTD_CHOICE_FILE;
+    data.dwStateAction = WTD_STATEACTION_VERIFY;
+    data.Anonymous = WINTRUST_DATA_0 {
+        pFile: &mut file_info,
+    };
+
+    // GUID for WINTRUST_ACTION_GENERIC_VERIFY_V2 — the standard
+    // file-signature action.
+    let action = GUID::from_u128(0x00aac56b_cd44_11d0_8cc2_00c04fc295ee);
+
+    let result = unsafe {
+        WinVerifyTrust(
+            HWND::default(),
+            &action as *const _ as *mut _,
+            &mut data as *mut _ as *mut std::ffi::c_void,
+        )
+    };
+
+    // Always close the trust state to release the cached
+    // signature data WinVerifyTrust holds onto.
+    data.dwStateAction = WTD_STATEACTION_CLOSE;
+    unsafe {
+        WinVerifyTrust(
+            HWND::default(),
+            &action as *const _ as *mut _,
+            &mut data as *mut _ as *mut std::ffi::c_void,
+        );
+    }
+
+    result == 0
+}
+
+/// WSL "Pico" process detection. Path-only classification can't
+/// distinguish Pico from regular processes (every Pico instance
+/// hangs off `wsl.exe` / `wslhost.exe` and the actual Linux
+/// binary lives in the per-distro filesystem). Detecting at row-
+/// paint time would need a process snapshot + per-PID query of
+/// `ProcessSubsystemInformation` via `NtQueryInformationProcess`,
+/// which is heavier than the row-color decision warrants.
+/// Returning `false` here reserves the color slot in the
+/// priority chain so the structure stays parallel to upstream
+/// without surfacing the (always-empty) blue.
+fn is_pico(_path: &std::path::Path) -> bool {
+    false
+}
+
+/// Pack RGB to a Win32 COLORREF (0x00BBGGRR). Standard helper —
+/// inlined here to avoid pulling another module.
+fn rgb_packed(r: u8, g: u8, b: u8) -> u32 {
+    (r as u32) | ((g as u32) << 8) | ((b as u32) << 16)
 }
 
 /// User clicked a column header on the Apps Profile listview.
@@ -1935,53 +2784,139 @@ fn on_context_set_enabled(hwnd: HWND, enable: bool) {
         return;
     }
 
+    // Collect every selected row's binary path. Falls back to the
+    // single right-clicked target if nothing is highlighted —
+    // matches the user's expectation that Ctrl+A → right-click →
+    // Allow processes the whole selection in one shot, while a
+    // bare right-click on a row still works on just that row.
+    let paths = collect_selection_paths(state, target.listview_id, &target);
+    if paths.is_empty() {
+        return;
+    }
+
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
         .unwrap_or(0);
 
+    let mut affected = 0usize;
     {
         let mut profile = state.app.profile.borrow_mut();
-        if let Some(existing) =
-            profile.apps.iter_mut().find(|a| a.path == target.binary_path)
-        {
-            existing.is_enabled = enable;
-        } else {
-            profile.apps.push(ProfileApp {
-                path: target.binary_path.clone(),
-                is_enabled: enable,
-                is_silent: false,
-                is_undeletable: false,
-                timestamp: now,
-                timer: 0,
-                hash: None,
-                comment: None,
-            });
+        for path in &paths {
+            if let Some(existing) =
+                profile.apps.iter_mut().find(|a| &a.path == path)
+            {
+                existing.is_enabled = enable;
+            } else {
+                profile.apps.push(ProfileApp {
+                    path: path.clone(),
+                    is_enabled: enable,
+                    is_silent: false,
+                    is_undeletable: false,
+                    timestamp: now,
+                    timer: 0,
+                    hash: None,
+                    comment: None,
+                });
+            }
+            affected += 1;
         }
     }
 
     save_profile_to_disk(state);
-    // Refresh all three apps tabs — the change can be visible on
-    // any of them: the new App entry appears in Profile, the
-    // matched-by-image_path service moves to Allowed/Blocked group
-    // in Services, UWP isn't path-matched yet so it doesn't move
-    // but the call is harmless.
     populate_apps_tab(state);
     populate_services_tab(state);
     populate_uwp_tab(state);
     on_tab_change(hwnd);
-    // Push the new state into the kernel so the toggle actually
-    // takes effect. Without this, the profile updates and the UI
-    // moves the row to the right group, but the per-app filters
-    // installed from the previous Enable run are stale.
+    // One reinstall covers every path's permit / removal in a
+    // single cleanup_provider + install pass — much cheaper than
+    // re-pushing per app.
     reinstall_filters_if_active(state);
 
     let verb = if enable { "Allowed" } else { "Blocked" };
-    set_status_text(
-        state.status.get(),
-        0,
-        &format!("{verb}: {}", target.display_name),
-    );
+    let msg = if affected == 1 {
+        format!("{verb}: {}", target.display_name)
+    } else {
+        format!("{verb} {affected} app(s).")
+    };
+    set_status_text(state.status.get(), 0, &msg);
+}
+
+/// Walk the listview's selected rows and return the corresponding
+/// binary paths via the source-vec lookup the populator stamped
+/// into LVITEMW.lParam. Empty selection falls back to the single
+/// right-clicked target so a bare right-click still works on
+/// just that row.
+fn collect_selection_paths(
+    state: &WndState,
+    listview_id: i32,
+    fallback_target: &super::apps_context_menu::ContextTarget,
+) -> Vec<std::path::PathBuf> {
+    let lv = match listview_id {
+        x if x == IDC_APPS_PROFILE => state.listviews[0].get(),
+        x if x == IDC_APPS_SERVICE => state.listviews[1].get(),
+        x if x == IDC_APPS_UWP => state.listviews[2].get(),
+        _ => return Vec::new(),
+    };
+    if lv.0 == 0 {
+        return vec![fallback_target.binary_path.clone()];
+    }
+
+    let mut source_indices: Vec<usize> = Vec::new();
+    let mut next: i32 = -1;
+    loop {
+        next = unsafe {
+            SendMessageW(
+                lv,
+                LVM_GETNEXTITEM,
+                WPARAM(next as isize as usize),
+                LPARAM(LVNI_SELECTED as isize),
+            )
+        }
+        .0 as i32;
+        if next < 0 {
+            break;
+        }
+        if let Some(p) = listview_item_param(lv, next) {
+            source_indices.push(p as usize);
+        }
+    }
+
+    if source_indices.is_empty() {
+        return vec![fallback_target.binary_path.clone()];
+    }
+
+    let mut out: Vec<std::path::PathBuf> = Vec::new();
+    match listview_id {
+        x if x == IDC_APPS_PROFILE => {
+            let profile = state.app.profile.borrow();
+            for idx in source_indices {
+                if let Some(app) = profile.apps.get(idx) {
+                    if !app.path.as_os_str().is_empty() {
+                        out.push(app.path.clone());
+                    }
+                }
+            }
+        }
+        x if x == IDC_APPS_SERVICE => {
+            let services = state.services.borrow();
+            for idx in source_indices {
+                if let Some(svc) = services.get(idx) {
+                    if !svc.image_path.as_os_str().is_empty() {
+                        out.push(svc.image_path.clone());
+                    }
+                }
+            }
+        }
+        x if x == IDC_APPS_UWP => {
+            // No path-based mapping yet — fall back to single
+            // target which will be rejected upstream by the
+            // empty-path check.
+            out.push(fallback_target.binary_path.clone());
+        }
+        _ => {}
+    }
+    out
 }
 
 /// Remove the right-clicked app's entry from the profile. Only the
@@ -2339,6 +3274,7 @@ fn on_enable_filters(hwnd: HWND) {
     // concern.
     state.filters_active.set(new_active);
     update_enable_filters_button(state, new_active);
+    update_titlebar_icon(hwnd, new_active);
     refresh_amwall_filter_ids_with(&engine, state);
 }
 
@@ -2398,6 +3334,12 @@ fn reinstall_filters_if_active(state: &WndState) {
             // actual state and the user can investigate.
             state.filters_active.set(false);
             update_enable_filters_button(state, false);
+            // No hwnd here — the toolbar update reaches the
+            // window via `state.toolbar`, but the title-bar
+            // icon swap needs the main hwnd. Caller-paths
+            // (right-click handlers) all run on the GUI thread
+            // and will refresh on the next apply_initial pass
+            // if needed.
             return;
         }
     };
@@ -2963,6 +3905,84 @@ fn open_website(hwnd: HWND) {
 /// Help → About: modern TaskDialog with version, copyright, GPL
 /// notice, and a clickable repo link. ENABLE_HYPERLINKS routes
 /// link clicks to our callback which fires ShellExecuteW.
+/// Help → Emergency WFP reset. Confirms via MessageBox, then
+/// (a) tears down amwall's WFP provider + every filter under it,
+/// (b) clears `profile.apps` and `profile.custom_rules` to their
+/// empty form, (c) saves the empty profile to disk so the wipe
+/// survives restart, (d) flips `filters_active` and updates the
+/// toolbar so the user sees the change. Use this when amwall has
+/// installed filters that are blocking something the user can't
+/// figure out how to unblock — restores the system to its
+/// pre-amwall networking behaviour without uninstalling the app.
+fn on_emergency_reset(hwnd: HWND) {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        IDYES, MB_DEFBUTTON2, MB_ICONWARNING, MB_YESNO,
+    };
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+
+    let body = wide(
+        "Emergency reset will:\n\
+         \n\
+         \u{2022} Remove every WFP filter amwall has installed\n\
+         \u{2022} Empty the Apps Profile and User rules lists\n\
+         \u{2022} Turn off Enable filters\n\
+         \n\
+         Use this if amwall is blocking something you can't \
+         identify and you need to restore the OS-default \
+         networking behaviour. The change is immediate. Continue?",
+    );
+    let title = wide("Emergency WFP reset");
+    let answer = unsafe {
+        MessageBoxW(
+            hwnd,
+            PCWSTR(body.as_ptr()),
+            PCWSTR(title.as_ptr()),
+            MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2,
+        )
+    };
+    if answer != IDYES {
+        return;
+    }
+
+    // 1. Tear down every filter, sublayer, and the provider
+    //    itself. cleanup_provider is best-effort: it succeeds
+    //    even if the provider was already gone (e.g. the user
+    //    already disabled filters).
+    if let Ok(engine) = crate::wfp::WfpEngine::open() {
+        if let Err(e) = engine.cleanup_provider(&crate::install::PROVIDER_KEY) {
+            eprintln!("amwall: emergency reset: cleanup_provider failed: {e:?}");
+        }
+    } else {
+        eprintln!("amwall: emergency reset: WFP engine open failed (skipping cleanup)");
+    }
+
+    // 2. Empty the in-memory profile + persist.
+    {
+        let mut profile = state.app.profile.borrow_mut();
+        profile.apps.clear();
+        profile.custom_rules.clear();
+        profile.rule_configs.clear();
+    }
+    save_profile_to_disk(state);
+
+    // 3. Reflect the disabled state on the toolbar + caches.
+    state.filters_active.set(false);
+    update_enable_filters_button(state, false);
+    update_titlebar_icon(hwnd, false);
+    state.amwall_filter_ids.borrow_mut().clear();
+
+    // 4. Repaint the affected tabs.
+    populate_apps_tab(state);
+    populate_user_rules(state);
+    on_tab_change(hwnd);
+
+    set_status_text(state.status.get(), 0, "Emergency reset complete.");
+    set_status_text(state.status.get(), 1, "");
+}
+
 fn on_about(hwnd: HWND) {
     use windows::Win32::UI::Controls::{
         TASKDIALOG_FLAGS, TASKDIALOGCONFIG, TASKDIALOGCONFIG_0, TASKDIALOGCONFIG_1,
@@ -3511,6 +4531,25 @@ fn populate_apps_tab(state: &WndState) {
         return;
     }
 
+    // Refresh the active-connections cache so the row colorizer
+    // can paint pink for "talking right now" without an
+    // O(rows) IP Helper walk per paint.
+    refresh_connected_paths(state);
+
+    // Enqueue every File-kind app path for background
+    // WinVerifyTrust verification. The worker dedups against
+    // the shared cache, so re-enqueueing is cheap. Paths land
+    // green-if-signed on the next repaint after the worker
+    // posts WM_USER_SIGNED_REFRESH.
+    if let Some(tx) = state.signed_tx.borrow().as_ref() {
+        let profile = state.app.profile.borrow();
+        for app in profile.apps.iter() {
+            if app.kind() == crate::profile::AppKind::File {
+                let _ = tx.send(app.path.clone());
+            }
+        }
+    }
+
     unsafe {
         let _ = SendMessageW(lv, LVM_DELETEALLITEMS, WPARAM(0), LPARAM(0));
     }
@@ -3623,6 +4662,7 @@ fn populate_services_tab(state: &WndState) {
     if lv.0 == 0 {
         return;
     }
+    refresh_connected_paths(state);
     unsafe {
         let _ = SendMessageW(lv, LVM_DELETEALLITEMS, WPARAM(0), LPARAM(0));
     }

@@ -127,6 +127,12 @@ pub const IDM_CHECKUPDATES: u16 = 301;
 pub const IDM_RELEASES: u16 = 302;
 pub const IDM_ABOUT: u16 = 303;
 
+/// Help → Emergency WFP reset. Tears down amwall's filter set,
+/// wipes profile.apps + custom_rules, turns off Enable filters
+/// — for users who got into a bad state and need to bail back
+/// to the OS-default networking posture.
+pub const IDM_EMERGENCY_RESET: u16 = 304;
+
 // Tray menu IDs upstream uses for filter / log / notification
 // toggles in main.c. Reused by our toolbar buttons since the
 // toolbar mirrors the tray menu's "enable filters / packets log /

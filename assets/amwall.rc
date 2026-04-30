@@ -35,6 +35,15 @@
 #define IDC_APPPROP_ENABLED_CHK 1102
 #define IDC_APPPROP_SILENT_CHK  1103
 
+// Connect prompt dialog — pops on a drop from amwall's filters
+// when notifications are enabled. User picks Allow / Block.
+#define IDD_CONNECT_PROMPT      120
+#define IDC_PROMPT_PATH         1200
+#define IDC_PROMPT_REMOTE       1201
+#define IDC_PROMPT_COUNTDOWN    1202
+#define IDC_PROMPT_ALLOW        1
+#define IDC_PROMPT_BLOCK        2
+
 #define IDC_TAB                 105
 #define IDC_ENABLE_CHK          250
 #define IDC_SAVE                1
@@ -80,8 +89,15 @@
 // Top-level resources.
 // ---------------------------------------------------------------
 
-// Main application icon.
+// Main application icon (filters-active form, color).
 1 ICON "icons/100.ico"
+
+// Inactive variant (filters-disabled form, monochrome). The
+// title-bar icon swaps between these two via WM_SETICON
+// whenever Enable filters / Disable filters / Emergency reset
+// changes filter state — same visual cue upstream simplewall
+// uses to surface "is the firewall actually doing anything".
+2 ICON "icons/101.ico"
 
 // Application manifest.
 1 24 "manifest.xml"
@@ -485,4 +501,29 @@ BEGIN
 
     DEFPUSHBUTTON   "Save",  IDC_SAVE,  158, 110, 50, 14, WS_TABSTOP
     PUSHBUTTON      "Close", IDC_CLOSE, 212, 110, 50, 14, WS_TABSTOP
+END
+
+// ---------------------------------------------------------------
+// Connect prompt — centered Allow/Block dialog popped when an
+// app's first connection hits amwall's default-deny while
+// notifications are on. DS_CENTER auto-centers on screen.
+// ---------------------------------------------------------------
+IDD_CONNECT_PROMPT DIALOGEX 0, 0, 340, 160
+STYLE WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP | WS_BORDER | WS_SYSMENU | WS_CAPTION | DS_SHELLFONT | DS_MODALFRAME | DS_CENTER
+EXSTYLE WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | WS_EX_NOACTIVATE
+CAPTION "amwall - application connection request"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT           "An application is trying to connect:", -1, 12, 10, 316, 12
+    LTEXT           "(path)",   IDC_PROMPT_PATH,   12, 26, 316, 46
+    LTEXT           "(remote)", IDC_PROMPT_REMOTE, 12, 76, 316, 14
+
+    LTEXT           "Allow this app's traffic, or keep it blocked?", -1, 12, 96, 316, 12
+
+    LTEXT           "", IDC_PROMPT_COUNTDOWN, 12, 130, 150, 12
+
+    PUSHBUTTON      "Allow", IDC_PROMPT_ALLOW, 174, 124, 70, 22,
+                    WS_TABSTOP | BS_OWNERDRAW
+    PUSHBUTTON      "Block", IDC_PROMPT_BLOCK, 252, 124, 70, 22,
+                    WS_TABSTOP | BS_OWNERDRAW
 END

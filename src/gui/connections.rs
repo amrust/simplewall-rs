@@ -69,6 +69,154 @@ impl Protocol {
     }
 }
 
+/// Walk the same TCP / UDP tables `enumerate` does and return
+/// the **set of full image paths** owning at least one
+/// connection. Used by the apps-tab row colorizer to highlight
+/// "this app is currently talking to the network". One pass per
+/// timer tick; the basename-based `Connection.process` field
+/// from `enumerate` isn't enough since
+/// `profile.apps[].path` is the full Win32 path.
+pub fn enumerate_active_paths() -> std::collections::HashSet<std::path::PathBuf> {
+    let mut pids: std::collections::HashSet<u32> = std::collections::HashSet::new();
+    if let Some(rows) = read_pids_tcp4() {
+        pids.extend(rows);
+    }
+    if let Some(rows) = read_pids_tcp6() {
+        pids.extend(rows);
+    }
+    if let Some(rows) = read_pids_udp4() {
+        pids.extend(rows);
+    }
+    if let Some(rows) = read_pids_udp6() {
+        pids.extend(rows);
+    }
+
+    let mut out = std::collections::HashSet::with_capacity(pids.len());
+    for pid in pids {
+        if let Some(p) = process_full_path(pid) {
+            out.insert(p);
+        }
+    }
+    out
+}
+
+fn read_pids_tcp4() -> Option<Vec<u32>> {
+    let mut size = 0u32;
+    unsafe {
+        let _ = GetExtendedTcpTable(None, &mut size, true, AF_INET.0 as u32, TCP_TABLE_OWNER_PID_ALL, 0);
+    }
+    if size == 0 {
+        return Some(Vec::new());
+    }
+    let mut buf = vec![0u8; size as usize];
+    let res = unsafe {
+        GetExtendedTcpTable(Some(buf.as_mut_ptr() as *mut _), &mut size, true, AF_INET.0 as u32, TCP_TABLE_OWNER_PID_ALL, 0)
+    };
+    if res != ERROR_SUCCESS.0 && res != ERROR_INSUFFICIENT_BUFFER.0 {
+        return None;
+    }
+    let table = unsafe { &*(buf.as_ptr() as *const MIB_TCPTABLE_OWNER_PID) };
+    let n = table.dwNumEntries as usize;
+    let rows_ptr = std::ptr::addr_of!(table.table) as *const MIB_TCPROW_OWNER_PID;
+    let rows = unsafe { std::slice::from_raw_parts(rows_ptr, n) };
+    Some(rows.iter().map(|r| r.dwOwningPid).collect())
+}
+
+fn read_pids_tcp6() -> Option<Vec<u32>> {
+    let mut size = 0u32;
+    unsafe {
+        let _ = GetExtendedTcpTable(None, &mut size, true, AF_INET6.0 as u32, TCP_TABLE_OWNER_PID_ALL, 0);
+    }
+    if size == 0 {
+        return Some(Vec::new());
+    }
+    let mut buf = vec![0u8; size as usize];
+    let res = unsafe {
+        GetExtendedTcpTable(Some(buf.as_mut_ptr() as *mut _), &mut size, true, AF_INET6.0 as u32, TCP_TABLE_OWNER_PID_ALL, 0)
+    };
+    if res != ERROR_SUCCESS.0 && res != ERROR_INSUFFICIENT_BUFFER.0 {
+        return None;
+    }
+    let table = unsafe { &*(buf.as_ptr() as *const MIB_TCP6TABLE_OWNER_PID) };
+    let n = table.dwNumEntries as usize;
+    let rows_ptr = std::ptr::addr_of!(table.table) as *const MIB_TCP6ROW_OWNER_PID;
+    let rows = unsafe { std::slice::from_raw_parts(rows_ptr, n) };
+    Some(rows.iter().map(|r| r.dwOwningPid).collect())
+}
+
+fn read_pids_udp4() -> Option<Vec<u32>> {
+    let mut size = 0u32;
+    unsafe {
+        let _ = GetExtendedUdpTable(None, &mut size, true, AF_INET.0 as u32, UDP_TABLE_OWNER_PID, 0);
+    }
+    if size == 0 {
+        return Some(Vec::new());
+    }
+    let mut buf = vec![0u8; size as usize];
+    let res = unsafe {
+        GetExtendedUdpTable(Some(buf.as_mut_ptr() as *mut _), &mut size, true, AF_INET.0 as u32, UDP_TABLE_OWNER_PID, 0)
+    };
+    if res != ERROR_SUCCESS.0 && res != ERROR_INSUFFICIENT_BUFFER.0 {
+        return None;
+    }
+    let table = unsafe { &*(buf.as_ptr() as *const MIB_UDPTABLE_OWNER_PID) };
+    let n = table.dwNumEntries as usize;
+    let rows_ptr = std::ptr::addr_of!(table.table) as *const MIB_UDPROW_OWNER_PID;
+    let rows = unsafe { std::slice::from_raw_parts(rows_ptr, n) };
+    Some(rows.iter().map(|r| r.dwOwningPid).collect())
+}
+
+fn read_pids_udp6() -> Option<Vec<u32>> {
+    let mut size = 0u32;
+    unsafe {
+        let _ = GetExtendedUdpTable(None, &mut size, true, AF_INET6.0 as u32, UDP_TABLE_OWNER_PID, 0);
+    }
+    if size == 0 {
+        return Some(Vec::new());
+    }
+    let mut buf = vec![0u8; size as usize];
+    let res = unsafe {
+        GetExtendedUdpTable(Some(buf.as_mut_ptr() as *mut _), &mut size, true, AF_INET6.0 as u32, UDP_TABLE_OWNER_PID, 0)
+    };
+    if res != ERROR_SUCCESS.0 && res != ERROR_INSUFFICIENT_BUFFER.0 {
+        return None;
+    }
+    let table = unsafe { &*(buf.as_ptr() as *const MIB_UDP6TABLE_OWNER_PID) };
+    let n = table.dwNumEntries as usize;
+    let rows_ptr = std::ptr::addr_of!(table.table) as *const MIB_UDP6ROW_OWNER_PID;
+    let rows = unsafe { std::slice::from_raw_parts(rows_ptr, n) };
+    Some(rows.iter().map(|r| r.dwOwningPid).collect())
+}
+
+fn process_full_path(pid: u32) -> Option<std::path::PathBuf> {
+    if pid == 0 {
+        return None;
+    }
+    let handle: HANDLE = unsafe {
+        OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?
+    };
+    let mut buf = vec![0u16; 1024];
+    let mut len = buf.len() as u32;
+    let result = unsafe {
+        QueryFullProcessImageNameW(
+            handle,
+            PROCESS_NAME_FORMAT(0),
+            PWSTR(buf.as_mut_ptr()),
+            &mut len,
+        )
+    };
+    let path = if result.is_ok() {
+        let slice = &buf[..len as usize];
+        Some(std::path::PathBuf::from(String::from_utf16_lossy(slice)))
+    } else {
+        None
+    };
+    unsafe {
+        let _ = CloseHandle(handle);
+    }
+    path
+}
+
 /// Enumerate every TCP + UDP endpoint visible to user-mode IP
 /// Helper. Returns a flat Vec; UI code sorts / filters as needed.
 /// Best-effort — failures inside any of the four enumerations log

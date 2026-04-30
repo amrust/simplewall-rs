@@ -6,6 +6,7 @@ Cargo.lock.bak
 # Editor / IDE
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~
