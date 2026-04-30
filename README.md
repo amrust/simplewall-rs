@@ -2,6 +2,10 @@
   <img src="assets/amwallgithub.png" alt="amwall" width="270" />
 </p>
 
+<p align="center">
+  <img src="assets/screenshot.png" alt="amwall main window" />
+</p>
+
 # amwall
 
 A Rust port of [simplewall](https://github.com/henrypp/simplewall), a lightweight tool for configuring [Windows Filtering Platform (WFP)](https://learn.microsoft.com/en-us/windows/win32/fwp/windows-filtering-platform-start-page) — the kernel-level network filtering API that sits underneath Windows Firewall.
