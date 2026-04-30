@@ -38,9 +38,10 @@ use windows::Win32::UI::Controls::{
     LVCFMT_RIGHT, LVCOLUMNW, LVIF_GROUPID, LVIF_PARAM, LVIF_STATE, LVIF_TEXT, LVIS_STATEIMAGEMASK,
     LVITEMW,
     LVM_DELETEALLITEMS, LVM_GETITEM, LVM_GETITEMCOUNT, LVM_GETNEXTITEM, LVM_INSERTCOLUMNW,
-    LVM_INSERTITEMW, LVM_SETCOLUMNWIDTH, LVM_SETEXTENDEDLISTVIEWSTYLE, LVM_SETITEMTEXTW,
-    LVN_KEYDOWN,
-    LVNI_SELECTED, LVS_EX_CHECKBOXES, LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT, LVS_REPORT,
+    LVM_INSERTITEMW, LVM_SETCOLUMNWIDTH, LVM_SETEXTENDEDLISTVIEWSTYLE, LVM_SETITEMSTATE,
+    LVM_SETITEMTEXTW, LVN_KEYDOWN,
+    LVIS_SELECTED, LVNI_SELECTED, LVS_EX_CHECKBOXES, LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT,
+    LVS_REPORT,
     LVS_SHOWSELALWAYS, NM_DBLCLK, NM_RCLICK, NMHDR, NMITEMACTIVATE, NMLVKEYDOWN,
     NMTBGETINFOTIPW, SBARS_TOOLTIPS, SB_SETPARTS, SB_SETTEXTW, STATUSCLASSNAMEW,
     TBN_GETINFOTIPW, TCIF_TEXT, TCITEMW, TCM_ADJUSTRECT, TCM_GETCURSEL, TCM_INSERTITEMW,
@@ -634,6 +635,21 @@ unsafe extern "system" fn wnd_proc(
             {
                 let activate = unsafe { &*(lparam.0 as *const NMITEMACTIVATE) };
                 on_apps_context_menu(hwnd, nmhdr.idFrom as i32, activate);
+            }
+            // Apps tab keyboard shortcuts (Ctrl+A select all,
+            // Del bulk delete from profile).
+            if nmhdr.code == LVN_KEYDOWN
+                && (nmhdr.idFrom == IDC_APPS_PROFILE as usize
+                    || nmhdr.idFrom == IDC_APPS_SERVICE as usize
+                    || nmhdr.idFrom == IDC_APPS_UWP as usize)
+            {
+                let kd = unsafe { &*(lparam.0 as *const NMLVKEYDOWN) };
+                let id = nmhdr.idFrom as i32;
+                if kd.wVKey == VK_DELETE.0 {
+                    on_apps_delete_selected(hwnd, id);
+                } else if kd.wVKey == ('A' as u16) && ctrl_is_down() {
+                    on_apps_select_all(hwnd, id);
+                }
             }
             // LVN_GROUPINFO fires whenever a group's state changes —
             // most importantly when the user clicks a collapse
@@ -1655,6 +1671,184 @@ fn on_apps_context_menu(hwnd: HWND, listview_id: i32, activate: &NMITEMACTIVATE)
     *state.context_target.borrow_mut() = None;
 }
 
+/// `true` if either Ctrl key is currently pressed. Used to
+/// disambiguate plain-A from Ctrl-A in LVN_KEYDOWN handlers
+/// (NMLVKEYDOWN doesn't carry modifier state).
+fn ctrl_is_down() -> bool {
+    use windows::Win32::UI::Input::KeyboardAndMouse::{GetKeyState, VK_CONTROL};
+    let s = unsafe { GetKeyState(VK_CONTROL.0 as i32) };
+    (s as u16 & 0x8000) != 0
+}
+
+/// Select every row in the active apps-tab listview. Wired to
+/// Ctrl+A on the apps tabs so users can quickly clear an
+/// imported profile via Ctrl+A → Del.
+fn on_apps_select_all(hwnd: HWND, listview_id: i32) {
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+    let lv = match listview_id {
+        x if x == IDC_APPS_PROFILE => state.listviews[0].get(),
+        x if x == IDC_APPS_SERVICE => state.listviews[1].get(),
+        x if x == IDC_APPS_UWP => state.listviews[2].get(),
+        _ => return,
+    };
+    if lv.0 == 0 {
+        return;
+    }
+    let item = LVITEMW {
+        state: LIST_VIEW_ITEM_STATE_FLAGS(LVIS_SELECTED.0),
+        stateMask: LIST_VIEW_ITEM_STATE_FLAGS(LVIS_SELECTED.0),
+        ..Default::default()
+    };
+    // iItem = -1 (cast to usize::MAX in WPARAM) tells comctl
+    // "apply this state to every row".
+    unsafe {
+        SendMessageW(
+            lv,
+            LVM_SETITEMSTATE,
+            WPARAM(usize::MAX),
+            LPARAM(&item as *const _ as isize),
+        );
+    }
+}
+
+/// Walk the active apps-tab listview's selected rows, recover
+/// each row's source-vec index via the lParam stamp, and remove
+/// the corresponding profile entries. Reinstalls filters
+/// afterwards if filters are active.
+///
+/// Per-tab semantics:
+///   - Apps Profile: drops the matching `profile.apps[]` slots.
+///   - Services: removes any `profile.apps[]` whose `path`
+///     matches the selected services' `image_path` — does NOT
+///     touch the SCM service itself.
+///   - UWP: nothing to remove from profile yet (UWP entries
+///     can't be path-matched until the data-model expands).
+fn on_apps_delete_selected(hwnd: HWND, listview_id: i32) {
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+    let lv = match listview_id {
+        x if x == IDC_APPS_PROFILE => state.listviews[0].get(),
+        x if x == IDC_APPS_SERVICE => state.listviews[1].get(),
+        x if x == IDC_APPS_UWP => state.listviews[2].get(),
+        _ => return,
+    };
+    if lv.0 == 0 {
+        return;
+    }
+
+    // Walk LVM_GETNEXTITEM(LVNI_SELECTED) until we run out of
+    // selected rows, collecting source indices via lParam.
+    let mut source_indices: Vec<usize> = Vec::new();
+    let mut next: i32 = -1;
+    loop {
+        next = unsafe {
+            SendMessageW(
+                lv,
+                LVM_GETNEXTITEM,
+                WPARAM(next as isize as usize),
+                LPARAM(LVNI_SELECTED as isize),
+            )
+        }
+        .0 as i32;
+        if next < 0 {
+            break;
+        }
+        if let Some(p) = listview_item_param(lv, next) {
+            source_indices.push(p as usize);
+        }
+    }
+    if source_indices.is_empty() {
+        return;
+    }
+
+    // Confirm only on bulk deletes (>1 row) to keep single-row
+    // delete responsive — same key (Del) the user already uses
+    // for individual removal via the right-click menu.
+    if source_indices.len() > 1 && !confirm_bulk_delete(hwnd, source_indices.len()) {
+        return;
+    }
+
+    let mut removed = 0usize;
+    match listview_id {
+        x if x == IDC_APPS_PROFILE => {
+            // Sort indices descending so removals don't shift
+            // later indices we still need to read.
+            source_indices.sort_unstable_by(|a, b| b.cmp(a));
+            let mut profile = state.app.profile.borrow_mut();
+            for idx in source_indices {
+                if idx < profile.apps.len() {
+                    profile.apps.remove(idx);
+                    removed += 1;
+                }
+            }
+        }
+        x if x == IDC_APPS_SERVICE => {
+            // Collect the matched service paths first, then
+            // retain-by-not-in-set on profile.apps. Avoids the
+            // index-shift issue and cleanly handles services
+            // whose image_path doesn't have a profile entry
+            // (no-op for those rows).
+            let services = state.services.borrow();
+            let paths: Vec<std::path::PathBuf> = source_indices
+                .into_iter()
+                .filter_map(|i| services.get(i).map(|s| s.image_path.clone()))
+                .collect();
+            let mut profile = state.app.profile.borrow_mut();
+            let before = profile.apps.len();
+            profile.apps.retain(|a| !paths.contains(&a.path));
+            removed = before - profile.apps.len();
+        }
+        x if x == IDC_APPS_UWP => {
+            // No profile entry tied to UWP rows yet — nothing
+            // to delete. Status bar reflects 0 removed.
+        }
+        _ => return,
+    }
+
+    if removed == 0 {
+        set_status_text(state.status.get(), 0, "Nothing to remove from profile.");
+        return;
+    }
+
+    save_profile_to_disk(state);
+    populate_apps_tab(state);
+    populate_services_tab(state);
+    populate_uwp_tab(state);
+    on_tab_change(hwnd);
+    reinstall_filters_if_active(state);
+    set_status_text(
+        state.status.get(),
+        0,
+        &format!("Removed {removed} entrie(s) from profile."),
+    );
+}
+
+/// MessageBox confirm for bulk-delete. Yes/No, default No so a
+/// stray Enter doesn't wipe the list.
+fn confirm_bulk_delete(hwnd: HWND, count: usize) -> bool {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        IDYES, MB_DEFBUTTON2, MB_ICONWARNING, MB_YESNO,
+    };
+    let msg = wide(&format!(
+        "Remove {count} entries from the profile?\n\nThis can't be undone.",
+    ));
+    let title = wide("Confirm bulk delete");
+    let r = unsafe {
+        MessageBoxW(
+            hwnd,
+            PCWSTR(msg.as_ptr()),
+            PCWSTR(title.as_ptr()),
+            MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2,
+        )
+    };
+    r == IDYES
+}
+
 /// Allow / Block toggle. Upserts an App entry at `target.binary_path`:
 /// updates `is_enabled` if one exists, creates a new one otherwise.
 /// No-op for UWP rows (binary_path is empty until M5.4d adds the
@@ -1713,6 +1907,11 @@ fn on_context_set_enabled(hwnd: HWND, enable: bool) {
     populate_services_tab(state);
     populate_uwp_tab(state);
     on_tab_change(hwnd);
+    // Push the new state into the kernel so the toggle actually
+    // takes effect. Without this, the profile updates and the UI
+    // moves the row to the right group, but the per-app filters
+    // installed from the previous Enable run are stale.
+    reinstall_filters_if_active(state);
 
     let verb = if enable { "Allowed" } else { "Blocked" };
     set_status_text(
@@ -1743,6 +1942,7 @@ fn on_context_remove(hwnd: HWND) {
     populate_services_tab(state);
     populate_uwp_tab(state);
     on_tab_change(hwnd);
+    reinstall_filters_if_active(state);
     set_status_text(
         state.status.get(),
         0,
@@ -1839,6 +2039,7 @@ fn on_context_properties(hwnd: HWND) {
     populate_services_tab(state);
     populate_uwp_tab(state);
     on_tab_change(hwnd);
+    reinstall_filters_if_active(state);
     set_status_text(
         state.status.get(),
         0,
@@ -2076,6 +2277,76 @@ fn on_enable_filters(hwnd: HWND) {
     state.filters_active.set(new_active);
     update_enable_filters_button(state, new_active);
     refresh_amwall_filter_ids_with(&engine, state);
+}
+
+/// Re-push the user's current profile + settings into the kernel
+/// when filters are already active. No-op when filters are off
+/// (toggling Allow/Block on a row in that case is purely a
+/// profile edit; the next Enable filters click will install the
+/// fresh state). Closes the gap where the right-click context
+/// menu's Allow / Block / Remove updated `profile.apps[].is_enabled`
+/// and redrew the row but didn't push the new permit or remove
+/// the old one — the user reported a Block toggle on brave.exe
+/// having no effect on its actual traffic from exactly this gap.
+///
+/// Implementation: full `cleanup_provider` then re-install. A
+/// surgical "delete just this app's filters" path would be
+/// faster but needs reading FWPM_FILTER0.filterCondition to
+/// match by AppPath, which is several hundred lines of matching
+/// machinery. cleanup_provider runs in O(filter count) syscalls
+/// and even on a 200-app profile (~1000 filters) finishes in
+/// well under a second.
+fn reinstall_filters_if_active(state: &WndState) {
+    if !state.filters_active.get() {
+        return;
+    }
+    let engine = match crate::wfp::WfpEngine::open() {
+        Ok(e) => e,
+        Err(e) => {
+            eprintln!("amwall: reinstall: WFP engine open failed: {e:?}");
+            return;
+        }
+    };
+    if let Err(e) = engine.cleanup_provider(&crate::install::PROVIDER_KEY) {
+        eprintln!("amwall: reinstall: cleanup_provider failed: {e:?}");
+        return;
+    }
+
+    let blocklist = {
+        let s = state.app.settings.borrow();
+        crate::install::BlocklistConfig {
+            spy: blocklist_mode_to_action(s.blocklist_spy),
+            update: blocklist_mode_to_action(s.blocklist_update),
+            extra: blocklist_mode_to_action(s.blocklist_extra),
+        }
+    };
+    let report = match crate::install::install_with_internal(
+        &engine,
+        &state.app.profile.borrow(),
+        Some(&state.app.internal_profile),
+        &blocklist,
+        true,
+    ) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("amwall: reinstall: install failed: {e}");
+            // We tore down successfully but the reinstall failed
+            // — flip filters_active so the toolbar reflects the
+            // actual state and the user can investigate.
+            state.filters_active.set(false);
+            update_enable_filters_button(state, false);
+            return;
+        }
+    };
+    refresh_amwall_filter_ids_with(&engine, state);
+    set_status_text(
+        state.status.get(),
+        1,
+        &format!(
+            "{} filter(s) installed, {} skipped.",
+            report.filters_added, report.rules_skipped
+        ),
+    );
 }
 
 /// Mark a menu item as checked or unchecked. We get the top-level
