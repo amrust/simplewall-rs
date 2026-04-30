@@ -1929,6 +1929,11 @@ fn apply_initial_settings(hwnd: HWND, state: &WndState) {
         (IDM_STARTMINIMIZED_CHK, s.start_minimized),
         (IDM_SKIPUACWARNING_CHK, s.skip_uac_warning),
         (IDM_CHECKUPDATES_CHK, s.check_updates),
+        (IDM_RULE_BLOCKOUTBOUND, s.rule_block_outbound),
+        (IDM_RULE_BLOCKINBOUND, s.rule_block_inbound),
+        (IDM_RULE_ALLOWLOOPBACK, s.rule_allow_loopback),
+        (IDM_RULE_ALLOW6TO4, s.rule_allow_6to4),
+        (IDM_RULE_ALLOWWINDOWSUPDATE, s.rule_allow_windows_update),
     ];
     for (id, v) in pairs {
         set_menu_check(hwnd, id, v);
@@ -2344,7 +2349,12 @@ fn on_command(hwnd: HWND, id: u32, notif: u32) {
         | IDM_LOADONSTARTUP_CHK
         | IDM_STARTMINIMIZED_CHK
         | IDM_SKIPUACWARNING_CHK
-        | IDM_CHECKUPDATES_CHK => on_toggle(hwnd, id),
+        | IDM_CHECKUPDATES_CHK
+        | IDM_RULE_BLOCKOUTBOUND
+        | IDM_RULE_BLOCKINBOUND
+        | IDM_RULE_ALLOWLOOPBACK
+        | IDM_RULE_ALLOW6TO4
+        | IDM_RULE_ALLOWWINDOWSUPDATE => on_toggle(hwnd, id),
 
         IDM_TRAY_START => on_enable_filters(hwnd),
         IDM_TRAY_SHOW => super::tray::toggle_main_window(hwnd),
@@ -3359,6 +3369,16 @@ fn on_toggle(hwnd: HWND, id: u16) {
             IDM_STARTMINIMIZED_CHK => &mut s.start_minimized,
             IDM_SKIPUACWARNING_CHK => &mut s.skip_uac_warning,
             IDM_CHECKUPDATES_CHK => &mut s.check_updates,
+            // Settings → Rules — global behavior switches that
+            // shape the install-time filter set. on_toggle just
+            // flips + persists; the install path reads each one
+            // when "Enable filters" runs (or right-click reinstall
+            // re-pushes the new posture).
+            IDM_RULE_BLOCKOUTBOUND => &mut s.rule_block_outbound,
+            IDM_RULE_BLOCKINBOUND => &mut s.rule_block_inbound,
+            IDM_RULE_ALLOWLOOPBACK => &mut s.rule_allow_loopback,
+            IDM_RULE_ALLOW6TO4 => &mut s.rule_allow_6to4,
+            IDM_RULE_ALLOWWINDOWSUPDATE => &mut s.rule_allow_windows_update,
             _ => return,
         };
         *field = !*field;
@@ -3392,9 +3412,27 @@ fn on_toggle(hwnd: HWND, id: u16) {
                 autosize_active_listview_columns(state);
             }
         }
-        // The remaining toggles are persisted but have no visible
-        // effect yet — load_on_startup wires into the registry
-        // when M9 lands, etc.
+        IDM_LOADONSTARTUP_CHK => {
+            // Write or remove the HKCU\...\Run\amwall registry
+            // value so Explorer launches us at user logon. Same
+            // hive upstream uses (`StartUpExtensionLoad` doesn't
+            // exist — the canonical mechanism is the Run key).
+            if let Err(e) = super::startup::set_load_on_startup(new_value) {
+                eprintln!("amwall: load_on_startup registry write failed: {e}");
+            }
+        }
+        IDM_RULE_BLOCKOUTBOUND
+        | IDM_RULE_BLOCKINBOUND
+        | IDM_RULE_ALLOWLOOPBACK
+        | IDM_RULE_ALLOW6TO4
+        | IDM_RULE_ALLOWWINDOWSUPDATE => {
+            // Each of these reshapes the install-time filter set.
+            // If filters are already on, push the new posture
+            // through immediately so the toggle is visible without
+            // making the user click "Disable filters" then "Enable
+            // filters" by hand.
+            reinstall_filters_if_active(state);
+        }
         _ => {}
     }
 }
@@ -3474,13 +3512,20 @@ fn on_enable_filters(hwnd: HWND) {
         }
     } else {
         // ---- Enable path ----
-        let (blocklist, persistent) = {
+        let (blocklist, global_rules, persistent) = {
             let s = state.app.settings.borrow();
             (
                 crate::install::BlocklistConfig {
                     spy: blocklist_mode_to_action(s.blocklist_spy),
                     update: blocklist_mode_to_action(s.blocklist_update),
                     extra: blocklist_mode_to_action(s.blocklist_extra),
+                },
+                crate::install::GlobalRulesConfig {
+                    block_outbound: s.rule_block_outbound,
+                    block_inbound: s.rule_block_inbound,
+                    allow_loopback: s.rule_allow_loopback,
+                    allow_6to4: s.rule_allow_6to4,
+                    allow_windows_update: s.rule_allow_windows_update,
                 },
                 s.install_boottime_filters,
             )
@@ -3490,6 +3535,7 @@ fn on_enable_filters(hwnd: HWND) {
             &state.app.profile.borrow(),
             Some(&state.app.internal_profile),
             &blocklist,
+            &global_rules,
             persistent,
         ) {
             Ok(r) => r,
@@ -3556,13 +3602,20 @@ fn reinstall_filters_if_active(state: &WndState) {
         return;
     }
 
-    let (blocklist, persistent) = {
+    let (blocklist, global_rules, persistent) = {
         let s = state.app.settings.borrow();
         (
             crate::install::BlocklistConfig {
                 spy: blocklist_mode_to_action(s.blocklist_spy),
                 update: blocklist_mode_to_action(s.blocklist_update),
                 extra: blocklist_mode_to_action(s.blocklist_extra),
+            },
+            crate::install::GlobalRulesConfig {
+                block_outbound: s.rule_block_outbound,
+                block_inbound: s.rule_block_inbound,
+                allow_loopback: s.rule_allow_loopback,
+                allow_6to4: s.rule_allow_6to4,
+                allow_windows_update: s.rule_allow_windows_update,
             },
             s.install_boottime_filters,
         )
@@ -3572,6 +3625,7 @@ fn reinstall_filters_if_active(state: &WndState) {
         &state.app.profile.borrow(),
         Some(&state.app.internal_profile),
         &blocklist,
+        &global_rules,
         persistent,
     ) {
         Ok(r) => r,

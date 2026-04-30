@@ -90,6 +90,7 @@ pub struct Settings {
     pub rule_block_inbound: bool,
     pub rule_allow_loopback: bool,
     pub rule_allow_6to4: bool,
+    pub rule_allow_windows_update: bool,
     pub use_stealth_mode: bool,
     pub install_boottime_filters: bool,
     pub use_certificates: bool,
@@ -161,6 +162,7 @@ impl Default for Settings {
             rule_block_inbound: false,
             rule_allow_loopback: true,
             rule_allow_6to4: false,
+            rule_allow_windows_update: false,
             use_stealth_mode: false,
             install_boottime_filters: false,
             use_certificates: false,
@@ -259,6 +261,11 @@ impl Settings {
         kv(&mut buf, "rule_block_inbound", self.rule_block_inbound);
         kv(&mut buf, "rule_allow_loopback", self.rule_allow_loopback);
         kv(&mut buf, "rule_allow_6to4", self.rule_allow_6to4);
+        kv(
+            &mut buf,
+            "rule_allow_windows_update",
+            self.rule_allow_windows_update,
+        );
         kv(&mut buf, "use_stealth_mode", self.use_stealth_mode);
         kv(&mut buf, "install_boottime_filters", self.install_boottime_filters);
         kv(&mut buf, "use_certificates", self.use_certificates);
@@ -378,6 +385,7 @@ fn apply_kv(s: &mut Settings, key: &str, value: &str) {
         "rule_block_inbound" => s.rule_block_inbound = b,
         "rule_allow_loopback" => s.rule_allow_loopback = b,
         "rule_allow_6to4" => s.rule_allow_6to4 = b,
+        "rule_allow_windows_update" => s.rule_allow_windows_update = b,
         "use_stealth_mode" => s.use_stealth_mode = b,
         "install_boottime_filters" => s.install_boottime_filters = b,
         "use_certificates" => s.use_certificates = b,

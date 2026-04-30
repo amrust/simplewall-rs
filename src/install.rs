@@ -124,6 +124,35 @@ pub struct BlocklistConfig {
     pub extra: BlocklistAction,
 }
 
+/// Global rules from Settings → Rules tab. Each toggle adds a
+/// matching filter to the install set when on. Implemented as a
+/// `Default::default()` (all-false) struct so non-GUI callers
+/// (CLI -install) can opt out of the whole bag at once.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct GlobalRulesConfig {
+    /// Block every outbound connection at the ALE layer. Per-app
+    /// permits installed after this still win (they get a higher
+    /// weight); the toggle is "block-by-default for everything
+    /// else even without the default-deny."
+    pub block_outbound: bool,
+    /// Block every inbound connection at the ALE accept layer.
+    pub block_inbound: bool,
+    /// Permit traffic to/from 127.0.0.0/8 (v4) and ::1/128 (v6).
+    /// Above per-app permits in weight so loopback always works
+    /// even when the app's outbound rule is Block.
+    pub allow_loopback: bool,
+    /// Permit IPv6-in-IPv4 (protocol 41) tunneling. Currently a
+    /// no-op — needs IP_PACKET layer support which we don't have
+    /// yet. Toggle persists; install path documents the gap.
+    pub allow_6to4: bool,
+    /// Permit `%systemroot%\System32\svchost.exe` traffic — the
+    /// service host that wuauserv (Windows Update) runs in.
+    /// Coarse but effective: lets Windows Update's network
+    /// activity through without the user authoring a per-app
+    /// rule. Same approach upstream takes.
+    pub allow_windows_update: bool,
+}
+
 impl BlocklistConfig {
     /// Resolve which action to apply to a single blocklist rule
     /// based on its name prefix. Returns `Disable` for unknown
@@ -167,7 +196,14 @@ pub fn install_profile(
     profile: &Profile,
     persistent: bool,
 ) -> Result<InstallReport, InstallError> {
-    install_with_internal(engine, profile, None, &BlocklistConfig::default(), persistent)
+    install_with_internal(
+        engine,
+        profile,
+        None,
+        &BlocklistConfig::default(),
+        &GlobalRulesConfig::default(),
+        persistent,
+    )
 }
 
 /// Like `install_profile`, but also installs the bundled internal
@@ -196,6 +232,7 @@ pub fn install_with_internal(
     user_profile: &Profile,
     internal_profile: Option<&Profile>,
     blocklist: &BlocklistConfig,
+    global_rules: &GlobalRulesConfig,
     persistent: bool,
 ) -> Result<InstallReport, InstallError> {
     provider::add_with_key(
@@ -288,10 +325,161 @@ pub fn install_with_internal(
     //    deny was installed.
     filters_added += install_default_deny(engine, persistent)?;
 
+    // 6. Settings → Rules global toggles. Each "on" flag adds one
+    //    or more filters at higher weight than the per-app permits.
+    //    Installed last so they sit at the top of the sublayer's
+    //    arbitration order — block-all-outbound dominates per-app
+    //    permits when both are set, and allow-loopback dominates
+    //    block-all-outbound. Mirrors upstream's _app_changefilters
+    //    pass that handles the same toggles.
+    filters_added += install_global_rules(engine, persistent, global_rules)?;
+
     Ok(InstallReport {
         filters_added,
         rules_skipped,
     })
+}
+
+/// Install the optional Settings → Rules filters per the
+/// per-toggle config. Each enabled flag emits 2-4 filters at
+/// higher weight than per-app permits. See `GlobalRulesConfig`
+/// for the per-flag semantics.
+fn install_global_rules(
+    engine: &WfpEngine,
+    persistent: bool,
+    cfg: &GlobalRulesConfig,
+) -> Result<u32, InstallError> {
+    use crate::wfp::condition::FilterCondition;
+    use std::net::{Ipv4Addr, Ipv6Addr};
+
+    let mut count = 0u32;
+
+    // Block all outbound — empty-condition Block at the connect
+    // ALE layers. Weight 14 lands above per-app permits (which
+    // use the default mid-weight) but below allow_loopback (15)
+    // so loopback still works when both flags are on.
+    if cfg.block_outbound {
+        for layer in &[FWPM_LAYER_ALE_AUTH_CONNECT_V4, FWPM_LAYER_ALE_AUTH_CONNECT_V6] {
+            filter::add(
+                engine,
+                "amwall block-all-outbound",
+                "amwall: Settings -> Rules -> Block outbound for all",
+                layer,
+                &SUBLAYER_KEY,
+                Some(&PROVIDER_KEY),
+                &[],
+                FilterAction::Block,
+                persistent,
+                Some(14),
+            )?;
+            count += 1;
+        }
+    }
+
+    // Block all inbound — same shape, accept-side ALE layers.
+    if cfg.block_inbound {
+        for layer in &[
+            FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4,
+            FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6,
+        ] {
+            filter::add(
+                engine,
+                "amwall block-all-inbound",
+                "amwall: Settings -> Rules -> Block inbound for all",
+                layer,
+                &SUBLAYER_KEY,
+                Some(&PROVIDER_KEY),
+                &[],
+                FilterAction::Block,
+                persistent,
+                Some(14),
+            )?;
+            count += 1;
+        }
+    }
+
+    // Allow loopback — Permit at all four ALE layers, gated by
+    // RemoteAddr in the loopback range. Weight 15 (above the
+    // block-all toggles).
+    if cfg.allow_loopback {
+        let v4_loopback = FilterCondition::RemoteAddrV4 {
+            addr: Ipv4Addr::new(127, 0, 0, 0),
+            prefix: Some(8),
+        };
+        let v6_loopback = FilterCondition::RemoteAddrV6 {
+            addr: Ipv6Addr::LOCALHOST,
+            prefix: Some(128),
+        };
+        for layer in &[FWPM_LAYER_ALE_AUTH_CONNECT_V4, FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4] {
+            filter::add(
+                engine,
+                "amwall allow-loopback-v4",
+                "amwall: Settings -> Rules -> Allow loopback (v4)",
+                layer,
+                &SUBLAYER_KEY,
+                Some(&PROVIDER_KEY),
+                std::slice::from_ref(&v4_loopback),
+                FilterAction::Permit,
+                persistent,
+                Some(15),
+            )?;
+            count += 1;
+        }
+        for layer in &[FWPM_LAYER_ALE_AUTH_CONNECT_V6, FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6] {
+            filter::add(
+                engine,
+                "amwall allow-loopback-v6",
+                "amwall: Settings -> Rules -> Allow loopback (v6)",
+                layer,
+                &SUBLAYER_KEY,
+                Some(&PROVIDER_KEY),
+                std::slice::from_ref(&v6_loopback),
+                FilterAction::Permit,
+                persistent,
+                Some(15),
+            )?;
+            count += 1;
+        }
+    }
+
+    // Allow Windows Update — Permit on the svchost.exe AppPath at
+    // all four ALE layers. Coarse but matches upstream's strategy
+    // (svchost hosts wuauserv + Background Intelligent Transfer).
+    if cfg.allow_windows_update {
+        let svchost = std::path::PathBuf::from(r"C:\Windows\System32\svchost.exe");
+        if svchost.is_file() {
+            let cond = FilterCondition::AppPath(svchost);
+            for layer in &[
+                FWPM_LAYER_ALE_AUTH_CONNECT_V4,
+                FWPM_LAYER_ALE_AUTH_CONNECT_V6,
+                FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4,
+                FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6,
+            ] {
+                filter::add(
+                    engine,
+                    "amwall allow-windows-update",
+                    "amwall: Settings -> Rules -> Allow Windows Update (svchost.exe)",
+                    layer,
+                    &SUBLAYER_KEY,
+                    Some(&PROVIDER_KEY),
+                    std::slice::from_ref(&cond),
+                    FilterAction::Permit,
+                    persistent,
+                    Some(15),
+                )?;
+                count += 1;
+            }
+        }
+    }
+
+    // Allow IPv6 6to4 (protocol 41) — not yet implemented.
+    // Tunneled-IPv6-in-IPv4 lives at the IP_PACKET layer, which
+    // we don't currently install at. Toggle persists so settings
+    // round-trip cleanly; install path is a no-op until the
+    // IP_PACKET plumbing lands.
+    let _ = cfg.allow_6to4;
+
+    Ok(count)
 }
 
 /// Walk `apps` and install a Permit filter for each enabled
