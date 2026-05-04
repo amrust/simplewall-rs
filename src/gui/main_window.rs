@@ -2067,13 +2067,33 @@ fn drain_events(hwnd: HWND, state: &WndState) {
     // app is still cataloged + persisted (so once the user exits
     // fullscreen they'll see the new Blocked entry on the Apps
     // tab) — only the modal-style interruption is suppressed.
+    let suppress_centered = state.app.settings.borrow().notification_fullscreen_silent
+        && is_user_in_fullscreen();
+    if filters_active && notify && !new_apps.is_empty() && !suppress_centered {
+        process_connect_prompts(hwnd, state, &new_apps);
+    }
+
+    // notification_on_tray: pop a tray-icon balloon for each new
+    // app the centered prompt would have / did show. Routes
+    // through Shell_NotifyIcon NIM_MODIFY + NIIF_INFO so the
+    // user sees blocks accumulate in the action center without
+    // a focus-stealing dialog. Independent of suppress_centered:
+    // the user can have both, just centered, or just balloon.
     if filters_active
         && notify
         && !new_apps.is_empty()
-        && !(state.app.settings.borrow().notification_fullscreen_silent
-            && is_user_in_fullscreen())
+        && state.app.settings.borrow().notification_on_tray
     {
-        process_connect_prompts(hwnd, state, &new_apps);
+        for (path, remote) in &new_apps {
+            let title = format!(
+                "amwall - blocked: {}",
+                path.file_name()
+                    .map(|s| s.to_string_lossy().into_owned())
+                    .unwrap_or_else(|| path.display().to_string())
+            );
+            let body = format!("Connecting to {remote}");
+            super::tray::show_balloon(hwnd, &title, &body);
+        }
     }
 
     if profile_changed {

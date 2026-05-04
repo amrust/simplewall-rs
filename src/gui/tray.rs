@@ -24,8 +24,8 @@ use std::mem::size_of;
 use windows::Win32::Foundation::{HWND, POINT};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::Shell::{
-    NIF_ICON, NIF_MESSAGE, NIF_SHOWTIP, NIF_TIP, NIM_ADD, NIM_DELETE, NIM_MODIFY,
-    NOTIFYICONDATAW, Shell_NotifyIconW,
+    NIF_ICON, NIF_INFO, NIF_MESSAGE, NIF_SHOWTIP, NIF_TIP, NIIF_INFO, NIM_ADD, NIM_DELETE,
+    NIM_MODIFY, NOTIFY_ICON_INFOTIP_FLAGS, NOTIFYICONDATAW, Shell_NotifyIconW,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CreatePopupMenu, DestroyMenu, GetCursorPos, IsIconic, IsWindowVisible,
@@ -118,6 +118,39 @@ pub fn remove(hwnd: HWND) {
 /// flicker the notification area).
 pub fn update(hwnd: HWND, active: bool) {
     let nid = build_data(hwnd, active);
+    unsafe {
+        let _ = Shell_NotifyIconW(NIM_MODIFY, &nid);
+    }
+}
+
+/// Pop a tray-icon balloon ("info" style — title + body, OS-
+/// styled). Used by the drop-event flow when the user has
+/// `notification_on_tray` enabled, so a packet block can surface
+/// passively in the action center even when the centered Allow/
+/// Block dialog is suppressed (fullscreen game) or unwanted.
+///
+/// Title is capped at 47 wide chars + NUL (NOTIFYICONDATAW.szInfoTitle
+/// is 64 elements but Win32 docs cap displayable text at 48 chars
+/// pre-Windows 10; we honour the safer cap to avoid truncation
+/// surprises). Body capped at 255 wide chars + NUL.
+///
+/// Mirrors upstream simplewall's `_r_tray_popup` call shape used
+/// at `timer.c:170-187` for timer-expiry notifications.
+pub fn show_balloon(hwnd: HWND, title: &str, body: &str) {
+    let mut nid = NOTIFYICONDATAW {
+        cbSize: size_of::<NOTIFYICONDATAW>() as u32,
+        hWnd: hwnd,
+        uID: TRAY_UID,
+        uFlags: NIF_INFO,
+        ..Default::default()
+    };
+    let wtitle = wide(title);
+    let n = wtitle.len().min(nid.szInfoTitle.len() - 1);
+    nid.szInfoTitle[..n].copy_from_slice(&wtitle[..n]);
+    let wbody = wide(body);
+    let n = wbody.len().min(nid.szInfo.len() - 1);
+    nid.szInfo[..n].copy_from_slice(&wbody[..n]);
+    nid.dwInfoFlags = NOTIFY_ICON_INFOTIP_FLAGS(NIIF_INFO.0);
     unsafe {
         let _ = Shell_NotifyIconW(NIM_MODIFY, &nid);
     }
