@@ -3,6 +3,20 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/amrust/amwall/releases/latest"><img src="https://img.shields.io/github/v/release/amrust/amwall?style=flat-square&label=version&color=blue" alt="version" /></a>
+  <a href="https://github.com/amrust/amwall/releases"><img src="https://img.shields.io/github/downloads/amrust/amwall/total?style=flat-square&label=downloads&color=brightgreen" alt="downloads" /></a>
+  <a href="https://github.com/amrust/amwall/issues"><img src="https://img.shields.io/github/issues/amrust/amwall?style=flat-square&label=issues&color=yellow" alt="issues" /></a>
+  <a href="https://github.com/amrust/amwall/graphs/contributors"><img src="https://img.shields.io/github/contributors/amrust/amwall?style=flat-square&label=contributors&color=brightgreen" alt="contributors" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/amrust/amwall?style=flat-square&label=license&color=orange" alt="license" /></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/amrust/amwall/releases/latest/download/amwall-x86_64.msi">
+    <img src="https://img.shields.io/badge/Download_amwall-Windows_x64_MSI-1976d2?style=for-the-badge&logo=windows&logoColor=white" alt="Download amwall for Windows" />
+  </a>
+</p>
+
+<p align="center">
   <img src="assets/screenshot.png" alt="amwall main window" />
 </p>
 

@@ -93,17 +93,27 @@ jobs:
         # in the workflow log.
         run: cargo wix --no-build --nocapture --target x86_64-pc-windows-msvc
 
-      - name: Locate MSI
+      - name: Locate MSI + create stable-named copy
+        # cargo-wix names its output `amwall-<version>-x86_64.msi`,
+        # which is great for the asset list (users can tell which
+        # version they're grabbing) but breaks
+        # `releases/latest/download/<filename>` URLs in the README
+        # download button — those need a filename that doesn't
+        # change between releases. Solve by attaching BOTH:
+        #   - amwall-<version>-x86_64.msi  (versioned, original)
+        #   - amwall-x86_64.msi            (stable, copy)
         id: msi
         shell: pwsh
         run: |
-          $msi = Get-ChildItem -Path "target/wix" -Filter "*.msi" | Select-Object -First 1
+          $msi = Get-ChildItem -Path "target/wix" -Filter "amwall-*-x86_64.msi" | Select-Object -First 1
           if (-not $msi) {
             Write-Error "No MSI found under target/wix"
             exit 1
           }
-          "path=$($msi.FullName)" >> $env:GITHUB_OUTPUT
-          "name=$($msi.Name)" >> $env:GITHUB_OUTPUT
+          $stable = Join-Path $msi.Directory.FullName "amwall-x86_64.msi"
+          Copy-Item $msi.FullName $stable -Force
+          "versioned=$($msi.FullName)" >> $env:GITHUB_OUTPUT
+          "stable=$stable" >> $env:GITHUB_OUTPUT
 
       - name: Create draft release with MSI
         # `draft: true` so the user reviews the release before
@@ -111,10 +121,15 @@ jobs:
         # false once the workflow is proven for the project.
         # `generate_release_notes: true` autopopulates the body
         # from commits since the previous tag.
+        # Both the versioned and the stable-named MSI are
+        # attached so the README's "Download" button can use
+        # `releases/latest/download/amwall-x86_64.msi`.
         uses: softprops/action-gh-release@v2
         with:
           draft: true
           generate_release_notes: true
-          files: ${{ steps.msi.outputs.path }}
+          files: |
+            ${{ steps.msi.outputs.versioned }}
+            ${{ steps.msi.outputs.stable }}
           name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
