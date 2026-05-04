@@ -252,17 +252,31 @@ pub fn target_from_source(
         }
         IDC_APPS_UWP => {
             let pkg = uwp_packages.get(source_idx)?;
-            // No path-based match for UWP — package family name
-            // identifier needs a separate App-or-Package model
-            // (M5.4d). For now the menu shows but Allow/Block are
-            // grayed.
+            // UWP rows identify by package SID — the textual
+            // `S-1-15-2-…` form upstream simplewall stores in
+            // profile.xml's `<item path="…" />`. Routing the SID
+            // through `binary_path` (which is path-shaped only by
+            // type — `App::kind_for` reclassifies on the SID
+            // prefix) lets the right-click handlers reuse the
+            // same upsert path as File and Service rows.
+            //
+            // If `package_sid` is None (registry hive partially
+            // corrupt or no PackageSid value) the row degrades
+            // gracefully: display still works, but Allow/Block
+            // can't add it to the profile because there's
+            // nothing to install a filter against.
+            let sid = match &pkg.package_sid {
+                Some(s) => std::path::PathBuf::from(s),
+                None => std::path::PathBuf::new(),
+            };
+            let existing = profile.apps.iter().find(|a| a.path == sid);
             Some(ContextTarget {
                 listview_id,
                 row,
                 display_name: pkg.display_name.clone(),
-                binary_path: PathBuf::new(),
-                in_profile: false,
-                current_is_enabled: false,
+                binary_path: sid,
+                in_profile: existing.is_some(),
+                current_is_enabled: existing.map(|a| a.is_enabled).unwrap_or(false),
             })
         }
         _ => None,
@@ -342,11 +356,30 @@ mod tests {
     }
 
     #[test]
-    fn uwp_row_never_in_profile_yet() {
+    fn uwp_row_with_sid_routes_through_binary_path() {
+        let sid = "S-1-15-2-3110756066-2507771734-389907848-353554127-1230786711-3973453966-120447785";
         let pkg = super::super::uwp_enum::PackageEntry {
             display_name: "Calculator".into(),
             package_full_name: "Microsoft.WindowsCalculator_11.x_x64__abc".into(),
             install_path: PathBuf::from(r"C:\Program Files\WindowsApps\foo"),
+            package_sid: Some(sid.to_string()),
+        };
+        let profile = fixture_profile(Vec::new());
+        let tgt =
+            target_from_source(IDC_APPS_UWP, 0, 0, &profile, &[], std::slice::from_ref(&pkg))
+                .unwrap();
+        assert!(!tgt.in_profile);
+        assert_eq!(tgt.binary_path, PathBuf::from(sid));
+        assert_eq!(tgt.display_name, "Calculator");
+    }
+
+    #[test]
+    fn uwp_row_without_sid_degrades_to_empty_path() {
+        let pkg = super::super::uwp_enum::PackageEntry {
+            display_name: "BrokenHive".into(),
+            package_full_name: "Some.Broken.Package_x_y__z".into(),
+            install_path: PathBuf::new(),
+            package_sid: None,
         };
         let profile = fixture_profile(Vec::new());
         let tgt =
@@ -354,7 +387,6 @@ mod tests {
                 .unwrap();
         assert!(!tgt.in_profile);
         assert!(tgt.binary_path.as_os_str().is_empty());
-        assert_eq!(tgt.display_name, "Calculator");
     }
 
     #[test]

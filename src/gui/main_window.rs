@@ -3204,8 +3204,11 @@ fn confirm_bulk_delete(hwnd: HWND, count: usize) -> bool {
 
 /// Allow / Block toggle. Upserts an App entry at `target.binary_path`:
 /// updates `is_enabled` if one exists, creates a new one otherwise.
-/// No-op for UWP rows (binary_path is empty until M5.4d adds the
-/// package-family-name model).
+/// `binary_path` carries an exe path for File rows, an image path
+/// for Service rows, and a `S-1-15-2-…` SID string for UWP rows
+/// (`App::kind_for` reclassifies based on the prefix). The empty-
+/// path bail only fires now if the registry hive is partially
+/// corrupt and a UWP row had no PackageSid value to read.
 fn on_context_set_enabled(hwnd: HWND, enable: bool) {
     use crate::profile::App as ProfileApp;
     let state = match unsafe { state_ref(hwnd) } {
@@ -3220,7 +3223,7 @@ fn on_context_set_enabled(hwnd: HWND, enable: bool) {
         set_status_text(
             state.status.get(),
             0,
-            "UWP packages not yet wired to profile (path-only model).",
+            "Cannot add: missing identifier (UWP package SID unavailable).",
         );
         return;
     }

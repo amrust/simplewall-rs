@@ -38,25 +38,32 @@
 
 use std::path::PathBuf;
 
-use windows::Win32::Foundation::{ERROR_NO_MORE_ITEMS, ERROR_SUCCESS};
+use windows::Win32::Foundation::{ERROR_NO_MORE_ITEMS, ERROR_SUCCESS, HLOCAL, LocalFree, PSID};
+use windows::Win32::Security::Authorization::ConvertSidToStringSidW;
 use windows::Win32::System::Registry::{
     HKEY, HKEY_CURRENT_USER, KEY_ENUMERATE_SUB_KEYS, KEY_QUERY_VALUE, REG_SAM_FLAGS,
     RegCloseKey, RegEnumKeyExW, RegOpenKeyExW, RegQueryValueExW,
 };
-use windows::core::PCWSTR;
+use windows::core::{PCWSTR, PWSTR};
 
 const REPOSITORY_KEY: &str = r"Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages";
 
 /// One row in the UWP listview. `display_name` is the human-
 /// readable label (preferred for display), `package_full_name` is
-/// the registry-key form a firewall rule needs as an identifier,
-/// and `install_path` is where the package's binaries live (used by
-/// future rule-creation flows that need an AppPath).
+/// the registry-key form, `install_path` is where the package's
+/// binaries live, and `package_sid` is the textual SID
+/// (`S-1-15-2-…`) that WFP filters key off of.
+///
+/// `package_sid` is `Option` because the `PackageSid` registry
+/// value is occasionally absent on partially-corrupt hives — a
+/// row without one still renders in the UWP tab but can't be
+/// used to install a per-app permit.
 #[derive(Debug, Clone)]
 pub struct PackageEntry {
     pub display_name: String,
     pub package_full_name: String,
     pub install_path: PathBuf,
+    pub package_sid: Option<String>,
 }
 
 /// Enumerate every UWP package registered for the current user.
@@ -94,6 +101,7 @@ pub fn enumerate() -> Vec<PackageEntry> {
                 display_name: derive_name_part(&name).to_string(),
                 package_full_name: name,
                 install_path: PathBuf::new(),
+                package_sid: None,
             });
         }
     }
@@ -115,6 +123,12 @@ fn read_package_entry(parent: HKEY, full_name: &str) -> Option<PackageEntry> {
 
     let raw_display = read_string_value(sub, "DisplayName").unwrap_or_default();
     let install = read_string_value(sub, "PackageRootFolder").unwrap_or_default();
+    // PackageSid is a binary REG_BINARY value holding a raw SID
+    // (variable-length). Convert to the textual S-1-15-2-… form
+    // upstream stores in profile.xml so we can use it as both
+    // the listview row identifier AND the install-time filter
+    // condition.
+    let package_sid = read_binary_value(sub, "PackageSid").and_then(|bytes| sid_bytes_to_string(&bytes));
 
     unsafe {
         let _ = RegCloseKey(sub);
@@ -135,7 +149,37 @@ fn read_package_entry(parent: HKEY, full_name: &str) -> Option<PackageEntry> {
         display_name,
         package_full_name: full_name.to_string(),
         install_path: PathBuf::from(install),
+        package_sid,
     })
+}
+
+/// Convert raw SID bytes (as stored in the registry's `PackageSid`
+/// REG_BINARY value) into the textual `S-1-15-2-…` representation
+/// via `ConvertSidToStringSidW`. Frees the LocalAlloc'd Win32
+/// buffer immediately. Returns `None` for malformed input.
+fn sid_bytes_to_string(bytes: &[u8]) -> Option<String> {
+    if bytes.is_empty() {
+        return None;
+    }
+    let psid = PSID(bytes.as_ptr() as *mut _);
+    let mut wide = PWSTR::null();
+    if unsafe { ConvertSidToStringSidW(psid, &mut wide) }.is_err() {
+        return None;
+    }
+    if wide.is_null() {
+        return None;
+    }
+    // Walk the wide buffer to its NUL.
+    let mut len = 0usize;
+    while unsafe { *wide.0.add(len) } != 0 {
+        len += 1;
+    }
+    let slice = unsafe { std::slice::from_raw_parts(wide.0, len) };
+    let s = String::from_utf16_lossy(slice);
+    unsafe {
+        let _ = LocalFree(HLOCAL(wide.0 as *mut _));
+    }
+    Some(s)
 }
 
 /// Extract the "name" portion of a package full name. The format is
@@ -229,6 +273,43 @@ fn read_string_value(key: HKEY, name: &str) -> Option<String> {
         buf.pop();
     }
     Some(String::from_utf16_lossy(&buf))
+}
+
+/// Read a REG_BINARY value as a raw byte buffer. Returns `None`
+/// if the value is missing, empty, or the read fails.
+fn read_binary_value(key: HKEY, name: &str) -> Option<Vec<u8>> {
+    let wname: Vec<u16> = name.encode_utf16().chain(std::iter::once(0)).collect();
+    let mut size: u32 = 0;
+    let probe = unsafe {
+        RegQueryValueExW(
+            key,
+            PCWSTR(wname.as_ptr()),
+            None,
+            None,
+            None,
+            Some(&mut size),
+        )
+    };
+    if probe != ERROR_SUCCESS || size == 0 {
+        return None;
+    }
+    let mut buf = vec![0u8; size as usize];
+    let mut size_io = size;
+    let res = unsafe {
+        RegQueryValueExW(
+            key,
+            PCWSTR(wname.as_ptr()),
+            None,
+            None,
+            Some(buf.as_mut_ptr()),
+            Some(&mut size_io),
+        )
+    };
+    if res != ERROR_SUCCESS {
+        return None;
+    }
+    buf.truncate(size_io as usize);
+    Some(buf)
 }
 
 #[cfg(test)]
