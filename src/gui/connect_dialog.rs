@@ -18,9 +18,13 @@
 // Result delivery: the dialog can't return a value to the caller
 // (it's modeless, the caller doesn't wait), so the user's choice
 // flows back via `PostMessageW(parent, WM_USER_CONNECT_ALLOW,
-// path_box, 0)` for Allow. Block / X just destroy the window —
-// the App's already at `is_enabled=false` from the catalog step
-// so no further action is needed.
+// path_box, 0)` for Allow and `WM_USER_CONNECT_BLOCK` for Block.
+// Block sets `is_silent=true` on the app so subsequent drops for
+// the same exe don't re-prompt (matches upstream simplewall
+// `notifications.c:87`: `ptr_app->is_silent = (button_id == IDC_BLOCK_BTN);`).
+// X / dismiss just destroys the window without setting is_silent —
+// the App already sits at `is_enabled=false` from auto-catalog, so
+// "close without choosing" naturally means "stay blocked, may re-prompt".
 
 #![cfg(windows)]
 
@@ -72,12 +76,18 @@ const TIMER_SAFETY: usize = 0x1A1A;
 /// `wparam` holds a `Box<PathBuf>` cast to `usize` — the parent
 /// reclaims it via `Box::from_raw` and uses the path to flip
 /// `is_enabled = true` on the matching `profile.apps` entry.
-///
-/// Block / X close paths don't post anything: the App was
-/// auto-cataloged at `is_enabled=false`, which is exactly the
-/// "Block" outcome.
 pub const WM_USER_CONNECT_ALLOW: u32 =
     windows::Win32::UI::WindowsAndMessaging::WM_USER + 0x102;
+
+/// Posted when the user clicks Block. Same `Box<PathBuf>`
+/// payload shape as Allow; the parent flips `is_silent = true`
+/// on the matching `profile.apps` entry so subsequent drops for
+/// the same exe don't re-prompt. `is_enabled` is already false
+/// from auto-catalog, so the user stays blocked — Block here is
+/// the "stop bothering me about this app" signal, not a
+/// state change to the block decision itself.
+pub const WM_USER_CONNECT_BLOCK: u32 =
+    windows::Win32::UI::WindowsAndMessaging::WM_USER + 0x103;
 
 /// State stashed in the dialog's GWLP_USERDATA. Heap-allocated
 /// because the dialog is modeless and lives past `show_async`'s
@@ -235,9 +245,18 @@ unsafe extern "system" fn dialog_proc(
                 }
                 IDC_PROMPT_BLOCK => {
                     // App already at is_enabled=false from the
-                    // catalog step — nothing to send. Just
-                    // dismiss the dialog.
+                    // catalog step. Posting BLOCK tells the
+                    // parent to also set is_silent=true so
+                    // future drops for this exe don't re-prompt.
+                    let path_box = Box::new(state.path.clone());
+                    let path_raw = Box::into_raw(path_box) as *mut c_void as isize;
                     unsafe {
+                        let _ = PostMessageW(
+                            state.parent,
+                            WM_USER_CONNECT_BLOCK,
+                            WPARAM(path_raw as usize),
+                            LPARAM(0),
+                        );
                         let _ = DestroyWindow(hwnd);
                     }
                     1

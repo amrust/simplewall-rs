@@ -866,6 +866,10 @@ unsafe extern "system" fn wnd_proc(
             on_connect_allow(hwnd, wparam);
             LRESULT(0)
         }
+        m if m == super::connect_dialog::WM_USER_CONNECT_BLOCK => {
+            on_connect_block(hwnd, wparam);
+            LRESULT(0)
+        }
         m if m == super::tray::WM_USER_TRAYICON => {
             on_tray_message(hwnd, lparam);
             LRESULT(0)
@@ -1852,16 +1856,36 @@ fn auto_catalog_drops(
 /// drop since filters went on. One dialog per entry, ever:
 /// already-in-profile apps never reach this list.
 ///
+/// Skips entries whose `profile.apps` row is `is_silent=true`.
+/// Auto-catalog creates new entries with `is_silent=false`, so
+/// in the current code path this gate never fires — but it's
+/// the parity-correct check (upstream's `_app_logthread` reads
+/// `INFO_IS_SILENT` before calling `_app_notify_addobject`,
+/// `log.c:1391-1395`), and any future code path that re-feeds
+/// already-cataloged apps into this function will respect the
+/// user's "stop bothering me" preference.
+///
 /// Modeless / non-focus-stealing — `show_async` returns
 /// immediately. The user's Allow click flows back via
-/// `WM_USER_CONNECT_ALLOW` to the main window's wndproc, which
-/// flips `is_enabled` and reinstalls filters. Block / X is a
-/// no-op (the App's already at `is_enabled=false`).
+/// `WM_USER_CONNECT_ALLOW`, which flips `is_enabled`. Block
+/// flows back via `WM_USER_CONNECT_BLOCK`, which sets
+/// `is_silent`. X / dismiss leaves both fields untouched.
 fn process_connect_prompts(
     hwnd: HWND,
+    state: &WndState,
     new_apps: &[(std::path::PathBuf, String)],
 ) {
+    let profile = state.app.profile.borrow();
     for (path, remote) in new_apps {
+        let silenced = profile
+            .apps
+            .iter()
+            .find(|a| a.path == *path)
+            .map(|a| a.is_silent)
+            .unwrap_or(false);
+        if silenced {
+            continue;
+        }
         super::connect_dialog::show_async(hwnd, path, remote);
     }
 }
@@ -1885,6 +1909,50 @@ fn is_user_in_fullscreen() -> bool {
         state,
         QUNS_RUNNING_D3D_FULL_SCREEN | QUNS_PRESENTATION_MODE | QUNS_BUSY
     )
+}
+
+/// Handler for `WM_USER_CONNECT_BLOCK` — user clicked Block on
+/// the connect prompt. Sets `is_silent = true` on the matching
+/// `profile.apps` entry so future drops for the same exe don't
+/// re-prompt. `is_enabled` stays `false` (already set by auto-
+/// catalog). No filter reinstall: the per-app permit set is
+/// driven by `is_enabled`, which is unchanged.
+///
+/// Mirrors upstream simplewall's `notifications.c:87`:
+/// `ptr_app->is_silent = (button_id == IDC_BLOCK_BTN);`.
+fn on_connect_block(hwnd: HWND, wparam: WPARAM) {
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+    let path_raw = wparam.0 as *mut std::path::PathBuf;
+    if path_raw.is_null() {
+        return;
+    }
+    let path_box = unsafe { Box::from_raw(path_raw) };
+    let path: std::path::PathBuf = *path_box;
+
+    {
+        let mut profile = state.app.profile.borrow_mut();
+        if let Some(app) = profile.apps.iter_mut().find(|a| a.path == path) {
+            app.is_silent = true;
+        } else {
+            return;
+        }
+    }
+    save_profile_to_disk(state);
+    populate_apps_tab(state);
+    on_tab_change(hwnd);
+    set_status_text(
+        state.status.get(),
+        0,
+        &format!(
+            "Silenced: {}",
+            path.file_name()
+                .map(|s| s.to_string_lossy().into_owned())
+                .unwrap_or_else(|| path.display().to_string())
+        ),
+    );
 }
 
 /// Handler for `WM_USER_CONNECT_ALLOW` posted by the connect-
@@ -2005,7 +2073,7 @@ fn drain_events(hwnd: HWND, state: &WndState) {
         && !(state.app.settings.borrow().notification_fullscreen_silent
             && is_user_in_fullscreen())
     {
-        process_connect_prompts(hwnd, &new_apps);
+        process_connect_prompts(hwnd, state, &new_apps);
     }
 
     if profile_changed {
