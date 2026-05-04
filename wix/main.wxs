@@ -108,13 +108,15 @@
     </Feature>
 
     <!-- WixUI_InstallDir: standard install UI with a folder picker.
-         Flow is Welcome -> InstallDir -> Verify -> Progress -> Finish.
-         No license dialog (GPL-3.0 doesn't require click-through;
-         LICENSE ships next to amwall.exe and is also on GitHub). -->
+         Flow is Welcome -> License -> InstallDir -> Verify -> Progress
+         -> Finish. WixUILicenseRtf points at wix/License.rtf, which
+         is generated from LICENSE (GPL-3.0) so the dialog shows the
+         actual license text instead of WiX's Lorem ipsum default. -->
     <UI>
       <UIRef Id="WixUI_InstallDir" />
     </UI>
     <Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONFOLDER" />
+    <WixVariable Id="WixUILicenseRtf" Value="wix\License.rtf" />
 
     <!-- Add/Remove Programs metadata. Without explicit values,
          WiX synthesises some from <Package> attributes; setting
