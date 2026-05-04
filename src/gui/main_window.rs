@@ -1071,10 +1071,8 @@ fn on_tray_message(hwnd: HWND, lparam: LPARAM) {
                 }
             }
         }
-        WM_LBUTTONDBLCLK => {
-            if !single_click {
-                super::tray::toggle_main_window(hwnd);
-            }
+        WM_LBUTTONDBLCLK if !single_click => {
+            super::tray::toggle_main_window(hwnd);
         }
         WM_RBUTTONUP | WM_CONTEXTMENU => {
             super::tray::show_context_menu(hwnd, state.filters_active.get());
@@ -3547,10 +3545,8 @@ fn on_toggle(hwnd: HWND, id: u16) {
             // Filename / full-path display affects Apps tab rendering.
             populate_apps_tab(state);
         }
-        IDM_AUTOSIZECOLUMNS_CHK => {
-            if new_value {
-                autosize_active_listview_columns(state);
-            }
+        IDM_AUTOSIZECOLUMNS_CHK if new_value => {
+            autosize_active_listview_columns(state);
         }
         IDM_LOADONSTARTUP_CHK => {
             // Write or remove the HKCU\...\Run\amwall registry
