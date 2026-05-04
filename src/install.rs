@@ -55,6 +55,42 @@ const PROVIDER_NAME: &str = "amwall";
 const PROVIDER_DESCRIPTION: &str =
     "Rust port of simplewall — Windows Filtering Platform firewall";
 const SUBLAYER_NAME: &str = "amwall sublayer";
+
+/// Convert a textual SID like `"S-1-15-2-…"` into the raw byte
+/// sequence WFP wants for `FWP_SID`. Wraps `ConvertStringSidToSidW`
+/// (advapi32) and copies the kernel-allocated SID into our own
+/// `Vec<u8>` so the caller gets stable ownership and we can free
+/// the Win32 buffer immediately.
+///
+/// Returns `None` for malformed inputs — the underlying Win32
+/// call validates the structure (correct prefix, well-formed
+/// subAuthority list).
+fn parse_sid_string(s: &str) -> Option<Vec<u8>> {
+    use windows::Win32::Foundation::{HLOCAL, LocalFree, PSID};
+    use windows::Win32::Security::Authorization::ConvertStringSidToSidW;
+    use windows::Win32::Security::GetLengthSid;
+    use windows::core::PCWSTR;
+
+    let wide: Vec<u16> = s.encode_utf16().chain(std::iter::once(0)).collect();
+    let mut psid = PSID::default();
+    if unsafe { ConvertStringSidToSidW(PCWSTR(wide.as_ptr()), &mut psid) }.is_err() {
+        return None;
+    }
+    if psid.0.is_null() {
+        return None;
+    }
+    let len = unsafe { GetLengthSid(psid) } as usize;
+    let bytes = unsafe { std::slice::from_raw_parts(psid.0 as *const u8, len) }.to_vec();
+    // ConvertStringSidToSidW allocates with LocalAlloc; release
+    // via LocalFree per the MSDN contract. windows-rs 0.54 spells
+    // this as `LocalFree(HLOCAL(ptr))` and returns the freed
+    // handle (always 0 on success).
+    unsafe {
+        let _ = LocalFree(HLOCAL(psid.0));
+    }
+    Some(bytes)
+}
+
 /// Sublayer weight — mid-range so we don't override system filters
 /// at higher weights but rank above default ones. Matches the
 /// upstream `FW_SUBLAYER_WEIGHT` default.
@@ -719,9 +755,11 @@ fn install_stealth_filters(
 }
 
 /// Walk `apps` and install a Permit filter for each enabled
-/// File-kind entry. Service-shaped and UWP-SID entries skip with
-/// `skipped += 1`. Any underlying WFP error short-circuits the
-/// whole walk so the caller's accumulated counts stay accurate.
+/// entry. File entries use `AppPath`; UWP entries use
+/// `PackageSid`. Service-shaped entries still skip with
+/// `skipped += 1` (M11 follow-up territory). Any underlying WFP
+/// error short-circuits the whole walk so the caller's
+/// accumulated counts stay accurate.
 fn install_per_app_filters(
     engine: &WfpEngine,
     apps: &[crate::profile::App],
@@ -738,17 +776,45 @@ fn install_per_app_filters(
             // we ever wanted to surface "not installed" rows.
             continue;
         }
-        if app.kind() != AppKind::File {
-            // Service / UWP entries don't use AppPath; they need
-            // their own resolution path (service name → exe;
-            // UWP SID → package family token). Skip cleanly.
-            counts.skipped += 1;
-            continue;
-        }
 
-        let conds = [crate::wfp::condition::FilterCondition::AppPath(
-            app.path.clone(),
-        )];
+        let conds = match app.kind() {
+            AppKind::File => vec![crate::wfp::condition::FilterCondition::AppPath(
+                app.path.clone(),
+            )],
+            AppKind::Uwp => {
+                // app.path holds the SID string ("S-1-15-2-…").
+                // Convert to raw bytes via ConvertStringSidToSidW
+                // so the WFP `FWP_SID` condition has something to
+                // point at. Mirrors upstream simplewall
+                // packages.c:_app_package_getpackagebysid which
+                // stores the SID-as-string and parses to bytes
+                // at filter-add time.
+                let sid_string = app.path.to_string_lossy().into_owned();
+                match parse_sid_string(&sid_string) {
+                    Some(bytes) => vec![
+                        crate::wfp::condition::FilterCondition::PackageSid(bytes),
+                    ],
+                    None => {
+                        // Malformed SID — surface but don't abort
+                        // the rest of the install. Count as skipped
+                        // so the user sees something didn't take.
+                        eprintln!(
+                            "amwall: per-app permit skipped: invalid UWP SID `{sid_string}`"
+                        );
+                        counts.skipped += 1;
+                        continue;
+                    }
+                }
+            }
+            AppKind::Service => {
+                // Service-shaped entries need svc_name -> exe-path
+                // resolution AND a service-SID security descriptor
+                // condition. Out of scope for the UWP follow-up;
+                // tracked separately.
+                counts.skipped += 1;
+                continue;
+            }
+        };
 
         // FwpmGetAppIdFromFileName0 fails for paths that don't
         // exist on disk (an old simplewall profile may reference
@@ -1200,6 +1266,36 @@ mod tests {
             addr: Some(AddrSpec::Ipv6(s.parse().unwrap())),
             port: None,
         }
+    }
+
+    /// `parse_sid_string` round-trips a real well-known SID into
+    /// a non-empty byte buffer of the expected length.
+    /// `S-1-5-32-544` (BUILTIN\\Administrators) is a stable
+    /// well-known SID with two subAuthority entries:
+    ///
+    /// - 1 byte revision
+    /// - 1 byte subAuthorityCount = 2
+    /// - 6 bytes IdentifierAuthority (NT_AUTHORITY = {0,0,0,0,0,5})
+    /// - 2 × 4 bytes subAuthority (32, 544)
+    ///
+    /// 16 bytes total. The exact byte count locks in that we
+    /// copied the whole structure, not just the header.
+    #[test]
+    fn parse_sid_string_round_trips_well_known_sid() {
+        let bytes = parse_sid_string("S-1-5-32-544").expect("valid SID");
+        assert_eq!(bytes.len(), 16);
+        // Revision byte is always 1; subAuthorityCount byte is 2.
+        assert_eq!(bytes[0], 1);
+        assert_eq!(bytes[1], 2);
+    }
+
+    #[test]
+    fn parse_sid_string_rejects_garbage() {
+        assert!(parse_sid_string("not-a-sid").is_none());
+        assert!(parse_sid_string("").is_none());
+        // A real-looking SID with a malformed subAuthority — Win32
+        // rejects this even though the prefix is right.
+        assert!(parse_sid_string("S-1-15-2-").is_none());
     }
 
     #[test]

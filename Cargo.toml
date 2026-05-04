@@ -26,6 +26,7 @@ windows = { version = "0.54", features = [
     "Win32_NetworkManagement_WindowsFilteringPlatform",
     "Win32_Networking_WinSock",
     "Win32_Security",
+    "Win32_Security_Authorization",
     "Win32_Security_Cryptography",
     "Win32_Security_WinTrust",
     "Win32_Storage_FileSystem",

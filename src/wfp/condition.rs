@@ -20,12 +20,12 @@ use windows::Win32::NetworkManagement::WindowsFilteringPlatform::{
     FWP_BYTE_ARRAY16, FWP_BYTE_BLOB, FWP_BYTE_BLOB_TYPE, FWP_CONDITION_VALUE0,
     FWP_CONDITION_VALUE0_0, FWP_DIRECTION, FWP_DIRECTION_INBOUND, FWP_DIRECTION_OUTBOUND,
     FWP_MATCH_EQUAL, FWP_MATCH_FLAGS_NONE_SET, FWP_MATCH_RANGE, FWP_RANGE0, FWP_RANGE_TYPE,
-    FWP_UINT8, FWP_UINT16, FWP_UINT32, FWP_V4_ADDR_AND_MASK, FWP_V4_ADDR_MASK,
-    FWP_V6_ADDR_AND_MASK, FWP_V6_ADDR_MASK, FWP_VALUE0, FWP_VALUE0_0, FWPM_CONDITION_ALE_APP_ID,
-    FWPM_CONDITION_DIRECTION, FWPM_CONDITION_FLAGS, FWPM_CONDITION_IP_LOCAL_ADDRESS,
-    FWPM_CONDITION_IP_LOCAL_PORT, FWPM_CONDITION_IP_PROTOCOL, FWPM_CONDITION_IP_REMOTE_ADDRESS,
-    FWPM_CONDITION_IP_REMOTE_PORT, FWPM_FILTER_CONDITION0, FwpmFreeMemory0,
-    FwpmGetAppIdFromFileName0,
+    FWP_SID, FWP_UINT8, FWP_UINT16, FWP_UINT32, FWP_V4_ADDR_AND_MASK, FWP_V4_ADDR_MASK,
+    FWP_V6_ADDR_AND_MASK, FWP_V6_ADDR_MASK, FWP_VALUE0, FWP_VALUE0_0,
+    FWPM_CONDITION_ALE_APP_ID, FWPM_CONDITION_ALE_PACKAGE_ID, FWPM_CONDITION_DIRECTION,
+    FWPM_CONDITION_FLAGS, FWPM_CONDITION_IP_LOCAL_ADDRESS, FWPM_CONDITION_IP_LOCAL_PORT,
+    FWPM_CONDITION_IP_PROTOCOL, FWPM_CONDITION_IP_REMOTE_ADDRESS, FWPM_CONDITION_IP_REMOTE_PORT,
+    FWPM_FILTER_CONDITION0, FwpmFreeMemory0, FwpmGetAppIdFromFileName0,
 };
 
 /// At ICMP layers (`FWPM_LAYER_*ICMP_ERROR_*`), WFP repurposes
@@ -131,6 +131,14 @@ pub enum FilterCondition {
     /// FWP_CONDITION_FLAG_IS_APPCONTAINER_LOOPBACK` so loopback
     /// traffic is excluded from the block.
     FlagsNoneSet(u32),
+    /// UWP package SID — matches against `FWPM_CONDITION_ALE_PACKAGE_ID`
+    /// with `FWP_SID`. Carries the raw SID byte sequence (variable-
+    /// length, must already be a valid SID — produced by
+    /// `ConvertStringSidToSidW` and copied into an owned `Vec<u8>`).
+    /// Compiled to a pointer into our own storage, so the kernel
+    /// reads the bytes without us having to keep a Win32 `LocalFree`-
+    /// owned buffer alive.
+    PackageSid(Vec<u8>),
 }
 
 /// Compile a slice of `FilterCondition` into a parallel array of
@@ -157,6 +165,7 @@ pub(super) fn compile(
         v6_addrs: Vec::with_capacity(conditions.len()),
         app_id_blobs: Vec::new(),
         ranges: Vec::new(),
+        package_sids: Vec::new(),
         natives: Vec::with_capacity(conditions.len()),
     };
 
@@ -227,6 +236,8 @@ pub(super) fn compile(
                     Anonymous: FWP_CONDITION_VALUE0_0 { uint32: *mask },
                 },
             },
+
+            FilterCondition::PackageSid(bytes) => storage.fc_package_sid(bytes),
         };
         storage.natives.push(native);
     }
@@ -266,6 +277,11 @@ pub(super) struct CompiledConditions {
     /// `valueLow`/`valueHigh` of `FWP_VALUE0`) referenced by
     /// `rangeValue` pointers in compiled range conditions.
     ranges: Vec<Box<FWP_RANGE0>>,
+    /// Boxed SID byte sequences referenced by `sid` pointers in
+    /// compiled `PackageSid` conditions. `Box` keeps the
+    /// allocation address stable as the outer `Vec` grows, same
+    /// rationale as `v4_masks`.
+    package_sids: Vec<Box<Vec<u8>>>,
     /// The compiled native conditions, in the same order as the
     /// input slice. Pointers within these reference into the three
     /// `Box` vecs above and into the WFP-heap blobs.
@@ -422,6 +438,25 @@ impl CompiledConditions {
                 Anonymous: FWP_CONDITION_VALUE0_0 { byteBlob: blob_ptr },
             },
         })
+    }
+
+    /// Build a `FWPM_CONDITION_ALE_PACKAGE_ID` condition pointing
+    /// at our owned copy of the SID bytes. The kernel reads the
+    /// SID structure (variable-length: header + subAuthorityCount
+    /// + N×subAuthority words) directly from this buffer.
+    fn fc_package_sid(&mut self, bytes: &[u8]) -> FWPM_FILTER_CONDITION0 {
+        let owned = Box::new(bytes.to_vec());
+        let raw_ptr =
+            owned.as_ptr() as *mut windows::Win32::Security::SID;
+        self.package_sids.push(owned);
+        FWPM_FILTER_CONDITION0 {
+            fieldKey: FWPM_CONDITION_ALE_PACKAGE_ID,
+            matchType: FWP_MATCH_EQUAL,
+            conditionValue: FWP_CONDITION_VALUE0 {
+                r#type: FWP_SID,
+                Anonymous: FWP_CONDITION_VALUE0_0 { sid: raw_ptr },
+            },
+        }
     }
 
     fn fc_v6_addr(&mut self, field: GUID, addr: Ipv6Addr) -> FWPM_FILTER_CONDITION0 {
