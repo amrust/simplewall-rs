@@ -2613,11 +2613,18 @@ fn on_tab_change(hwnd: HWND) {
 /// notifications (EN_CHANGE, etc.); 0 for menu / accelerator
 /// messages.
 fn on_command(hwnd: HWND, id: u32, notif: u32) {
-    // Search edit notification: refilter active tab as the user
-    // types. EN_CHANGE = 0x0300.
+    // Search edit (the toolbar rebar's filter box). EN_CHANGE
+    // refilters the active tab as the user types; the other
+    // edit-control notifications (EN_SETFOCUS=0x0100,
+    // EN_KILLFOCUS=0x0200, EN_UPDATE=0x0400, etc.) we don't
+    // care about — but we must still early-return on them so
+    // they don't fall through to the menu-id match below and
+    // hit the "menu id 104 not yet wired up" catchall.
     const EN_CHANGE: u32 = 0x0300;
-    if (id as i32) == IDC_SEARCH && notif == EN_CHANGE {
-        on_search_changed(hwnd);
+    if (id as i32) == IDC_SEARCH {
+        if notif == EN_CHANGE {
+            on_search_changed(hwnd);
+        }
         return;
     }
     let id = id as u16;
