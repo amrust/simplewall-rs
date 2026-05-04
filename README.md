@@ -142,7 +142,36 @@ Tracked in GitHub issues. The high-level milestones are:
 
 ## Contributing
 
-Issues and PRs welcome once the foundation lands. For now this is scaffolding.
+Issues and PRs welcome.
+
+**Scope.** amwall is a parity port: the goal is to behave like upstream [henrypp/simplewall v3.8.7](https://github.com/henrypp/simplewall) in idiomatic Rust, not to invent new features. PRs that add functionality not present in upstream are out of scope; PRs that fix gaps relative to upstream, fix bugs, or improve the Rust-side internals are exactly what this project wants. When in doubt, cross-reference the upstream behaviour against the C source before changing semantics.
+
+**Local setup.**
+
+- Rust 1.85 or newer (matches `rust-version` in [Cargo.toml](Cargo.toml))
+- Windows SDK (any recent version; the `windows` crate handles version differences)
+- WiX Toolset 3.x if you intend to build the MSI installer locally — `choco install wixtoolset -y` from an elevated shell
+
+**Gate triad** — every PR must pass these locally and they're re-run on every release tag:
+
+```
+cargo build --release --target x86_64-pc-windows-msvc
+cargo clippy --all-targets --target x86_64-pc-windows-msvc -- -D warnings
+cargo test --target x86_64-pc-windows-msvc
+```
+
+The release workflow won't produce an MSI if any of these fail, so a PR that breaks them blocks releases for everyone.
+
+**Live testing.** Many WFP behaviours can't be exercised from `cargo test` because they require admin and a live Base Filtering Engine. Tests that fall in this bucket are marked `#[ignore]` with a justification — run them with `cargo test -- --ignored` from an elevated shell. The "Build + run amwall ELEVATED" VS Code task captures stderr to `swaplog.txt` for live-session debugging.
+
+**PR conventions.**
+
+- Conventional-style subject line (e.g. `gui: M11.2 explicit is_silent gate`, `wfp: fix CNDL0104`)
+- Commit body explains the *why* and references the upstream behaviour being matched (file + line in henrypp/simplewall when relevant)
+- Reference [issue #1](https://github.com/amrust/amwall/issues/1) for milestone-shaped work
+- Don't squash-merge series of milestone commits — the per-milestone history is load-bearing for the parity-tracking issue
+
+**Reporting bugs.** Filter-management failures usually surface in `swaplog.txt` (alongside the exe in portable mode, or `%APPDATA%\amwall\swaplog.txt` in installed mode). Attach it to issues. For a snapshot of the kernel filter state at the time of the bug, run `netsh wfp show filters` from an elevated shell and attach `filters.xml`.
 
 ## Not affiliated
 
