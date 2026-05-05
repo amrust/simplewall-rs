@@ -24,7 +24,7 @@
 
 A Rust port of [simplewall](https://github.com/henrypp/simplewall), a lightweight tool for configuring [Windows Filtering Platform (WFP)](https://learn.microsoft.com/en-us/windows/win32/fwp/windows-filtering-platform-start-page) — the kernel-level network filtering API that sits underneath Windows Firewall.
 
-> **Status:** v1.1 — feature-complete parity port of upstream simplewall v3.8.7, plus community-wishlist items upstream has accepted but not shipped (e.g. auto-allow Microsoft-signed binaries). Live progress is tracked in [issue #1](https://github.com/amrust/amwall/issues/1); installer downloads at [Releases](https://github.com/amrust/amwall/releases).
+> **Status:** Live progress and roadmap tracked in [issue #1](https://github.com/amrust/amwall/issues/1). Installer downloads at [Releases](https://github.com/amrust/amwall/releases).
 
 ## Goal
 
