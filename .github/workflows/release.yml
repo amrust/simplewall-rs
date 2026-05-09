@@ -77,21 +77,39 @@ jobs:
             Write-Host "candle.exe already on PATH"
           }
 
-      - name: Install cargo-wix
-        # `--locked` uses the upstream Cargo.lock so we get a
-        # reproducible cargo-wix version. Cached by rust-cache
-        # above so steady-state cost is ~5 seconds.
-        run: cargo install cargo-wix --locked
+      - name: Build MSI (multilingual)
+        # Build with candle/light directly instead of cargo-wix
+        # so we can pass -cultures for multi-language support.
+        # WixUIExtension ships with pre-translated UI strings
+        # (Next, Back, Cancel, etc.) for all listed cultures.
+        # Our wix/lang/*.wxl files provide translations for the
+        # custom Changelog dialog strings.
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+          $targetBin = "target\x86_64-pc-windows-msvc\release"
+          New-Item -ItemType Directory -Path "target\wix" -Force | Out-Null
 
-      - name: Build MSI
-        # --no-build skips a redundant cargo build (we already
-        # built in "Run gates"). --target makes cargo-wix resolve
-        # $(var.CargoTargetBinDir) to
-        # target\x86_64-pc-windows-msvc\release, which matches
-        # main.wxs's File Source path. --nocapture passes through
-        # WiX's stdout/stderr so candle/light errors are visible
-        # in the workflow log.
-        run: cargo wix --no-build --nocapture --target x86_64-pc-windows-msvc
+          # Compile
+          candle.exe -nologo `
+            "-dVersion=$version" `
+            "-dCargoTargetBinDir=$targetBin" `
+            -ext WixUIExtension `
+            -out target\wix\main.wixobj `
+            wix\main.wxs
+
+          # Collect all .wxl locale files
+          $locFiles = Get-ChildItem wix\lang\*.wxl | ForEach-Object { "-loc"; $_.FullName }
+          $cultures = (Get-ChildItem wix\lang\*.wxl | ForEach-Object { $_.BaseName }) -join ";"
+
+          # Link with all cultures — MSI auto-selects based on
+          # system locale at install time
+          light.exe -nologo `
+            -ext WixUIExtension `
+            -out "target\wix\amwall-$version-x86_64.msi" `
+            -cultures:$cultures `
+            @locFiles `
+            target\wix\main.wixobj
 
       - name: Locate MSI + create stable-named copy
         # cargo-wix names its output `amwall-<version>-x86_64.msi`,

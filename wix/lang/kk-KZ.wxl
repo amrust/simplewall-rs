@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization Culture="kk-KZ" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <String Id="ChangelogDlgTitle">amwall - Жаңалықтар</String>
+  <String Id="ChangelogTitle">amwall жаңалықтары</String>
+  <String Id="ChangelogDesc">Ағымдағы және алдыңғы нұсқалардың негізгі өзгерістері.</String>
+</WixLocalization>

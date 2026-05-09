@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization Culture="hu-HU" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <String Id="ChangelogDlgTitle">amwall - Újdonságok</String>
+  <String Id="ChangelogTitle">Újdonságok az amwall-ban</String>
+  <String Id="ChangelogDesc">A jelenlegi és korábbi verziók újdonságai.</String>
+</WixLocalization>

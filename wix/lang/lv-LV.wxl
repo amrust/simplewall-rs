@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization Culture="lv-LV" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <String Id="ChangelogDlgTitle">amwall - Jaunumi</String>
+  <String Id="ChangelogTitle">Jaunumi amwall</String>
+  <String Id="ChangelogDesc">Pašreizējās un iepriekšējo versiju galvenie jaunumi.</String>
+</WixLocalization>
