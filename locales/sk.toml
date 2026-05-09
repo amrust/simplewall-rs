@@ -1,0 +1,396 @@
+# amwall — Slovenčina (slovenský jazyk).
+# Lokalizačný súbor pre slovenský jazyk.
+
+# --- Názvy panela ponuky ---
+[menu]
+file = "&Súbor"
+edit = "&Upraviť"
+view = "&Zobrazenie"
+settings = "&Nastavenia"
+rules = "&Pravidlá"
+blocklist = "&Zoznam blokovaných"
+help = "&Pomocník"
+
+# --- Položky ponuky Súbor ---
+[file]
+settings = "&Nastavenia\tCtrl+P"
+add_app = "&Pridať aplikáciu…\tCtrl+O"
+import = "&Importovať…"
+export = "&Exportovať…"
+exit = "&Ukončiť"
+
+# --- Položky ponuky Upraviť ---
+[edit]
+purge_unused = "Odstrániť &nepoužívané aplikácie"
+purge_timers = "Odstrániť &časovače"
+clear_log = "&Vymazať záznamy"
+refresh = "&Obnoviť\tF5"
+
+# --- Položky ponuky Zobrazenie ---
+[view]
+always_on_top = "Vždy &navrchu"
+dark_theme = "Použiť &tmavú tému"
+autosize_columns = "&Automatická veľkosť stĺpcov"
+filenames_only = "Zobraziť iba názvy &súborov"
+show_search = "Zobraziť panel &hľadania"
+layout_details = "Rozloženie: &Podrobnosti"
+layout_icons = "Rozloženie: &Ikony"
+layout_tiles = "Rozloženie: &Dlaždice"
+icon_small = "Veľkosť ikony: &Malá"
+icon_large = "Veľkosť ikony: &Veľká"
+icon_extralarge = "Veľkosť ikony: &Extra veľká"
+font = "&Písmo…"
+
+# --- Položky ponuky Nastavenia ---
+[settings]
+load_on_startup = "&Spustiť pri štarte systému"
+start_minimized = "Spustiť &minimalizovane"
+skip_uac = "Preskočiť upozornenie UAC"
+check_updates = "Kontrolovať &aktualizácie"
+auto_allow_microsoft = "Automaticky povoliť programy podpísané &Microsoftom"
+check_signatures = "Kontrolovať digitálne &podpisy aplikácií"
+check_hashes = "Kontrolovať SHA-256 &hash aplikácií"
+
+# --- Podponuka Pravidlá ---
+[rules]
+block_outbound = "Blokovať &odchádzajúce pre všetkých"
+block_inbound = "Blokovať &prichádzajúce pre všetkých"
+allow_loopback = "Povoliť &loopback"
+allow_6to4 = "Povoliť IPv6 (&6to4)"
+allow_windows_update = "Povoliť &Windows Update"
+
+# --- Podponuka Zoznam blokovaných ---
+[blocklist]
+disable = "&Zakázať"
+allow = "&Povoliť"
+block = "&Blokovať"
+spy_telemetry = "Microsoft &špehovanie a telemetria"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft &aplikácie"
+
+# --- Položky ponuky Pomocník ---
+[help]
+website = "&Webová stránka"
+check_updates = "&Skontrolovať aktualizácie"
+about = "&O programe"
+emergency_reset = "&Núdzový reset WFP..."
+
+# --- Označenia kariet ---
+[tab]
+apps = "Aplikácie"
+services = "Služby"
+uwp = "UWP aplikácie"
+blocklist = "Zoznam blokovaných"
+system_rules = "Systémové pravidlá"
+user_rules = "Používateľské pravidlá"
+connections = "Pripojenia"
+packets_log = "Záznamy paketov"
+
+# --- Hlavičky stĺpcov ---
+[column]
+name = "Názov"
+added = "Pridané"
+path = "Cesta"
+date = "Dátum"
+protocol = "Protokol"
+direction = "Smer"
+address_src = "Adresa (zdroj)"
+host_src = "Hostiteľ (zdroj)"
+port_src = "Port (zdroj)"
+address_dst = "Adresa (cieľ)"
+host_dst = "Hostiteľ (cieľ)"
+port_dst = "Port (cieľ)"
+state = "Stav"
+filter = "Filter"
+index = "#"
+
+# --- Hlavičky skupín ---
+[group]
+blocked = "Blokované"
+blocked_silent = "Blokované (ticho)"
+timer = "Časovač"
+special = "Špeciálne aplikácie"
+allowed = "Povolené"
+enabled = "Povolené"
+disabled = "Zakázané"
+
+# --- Popisy na paneli nástrojov ---
+[tooltip]
+enable_filters = "Povoliť filtre (Ctrl+T)"
+new_rule = "Vytvoriť nové používateľské pravidlo"
+enable_notifications = "Povoliť upozornenia pre blokovanú prevádzku"
+enable_log = "Zaznamenávať blokovanú prevádzku do súboru"
+enable_ui_log = "Zobraziť záznamy paketov v rozhraní"
+reload = "Znovu načítať profil z disku (F5)"
+open_settings = "Otvoriť nastavenia"
+open_log_file = "Otvoriť súbor záznamov paketov"
+clear_log = "Vymazať záznamy paketov"
+open_releases = "Otvoriť stránku vydaní na GitHub"
+
+# --- Označenia tlačidiel na paneli nástrojov ---
+[toolbar]
+enable_filters = "Povoliť filtre"
+disable_filters = "Zakázať filtre"
+
+# --- Správy stavového riadka ---
+[status]
+filters_enabled = "Filtre sú povolené."
+filters_disabled = "Filtre sú zakázané."
+imported_simplewall = "Importovaný simplewall profil."
+checking_updates = "Kontrola aktualizácií..."
+up_to_date = "Aktuálne."
+update_check_failed = "Kontrola aktualizácií zlyhala."
+nothing_to_remove = "Nie je čo odstrániť z profilu."
+engine_failed = "Otvorenie WFP enginu zlyhalo."
+uninstall_failed = "Odinštalovanie filtrov zlyhalo."
+install_failed = "Inštalácia filtrov zlyhala."
+app_exists = "Aplikácia už existuje v profile."
+app_added = "Aplikácia pridaná."
+rule_added = "Pravidlo pridané."
+rule_updated = "Pravidlo aktualizované."
+rule_deleted = "Pravidlo vymazané."
+autosave_failed = "Automatické uloženie zlyhalo."
+import_read_error = "Import zlyhal: chyba čítania."
+import_parse_error = "Import zlyhal: chyba analýzy."
+imported = "Importované."
+export_write_error = "Export zlyhal: chyba zápisu."
+exported = "Exportované."
+refresh_read_error = "Obnovenie zlyhalo: chyba čítania."
+refresh_parse_error = "Obnovenie zlyhalo: chyba analýzy."
+profile_reloaded = "Profil znovu načítaný."
+no_unused = "Žiadne nepoužívané aplikácie na odstránenie."
+no_timers = "Žiadne aktívne časovače."
+log_cleared = "Záznamy vymazané."
+font_failed = "Načítanie písma zlyhalo; vrátené na predchádzajúce."
+font_updated = "Písmo aktualizované."
+emergency_done = "Núdzový reset dokončený."
+auto_allowed_one = "Automaticky povolená 1 Microsoftom podpísaná aplikácia"
+auto_allowed_many = "Automaticky povolených %{count} Microsoftom podpísaných aplikácií"
+silenced = "Stíšené: %{name}"
+allowed_count = "Povolené: %{name}"
+connecting = "Pripájanie k %{remote}"
+removed_entries = "Odstránených %{count} položiek z profilu."
+purged_apps = "Odstránených %{count} nepoužívaných aplikácií."
+cleared_timers = "Vymazaných %{count} časovačov aplikácií."
+skip_uac_enabled = "Preskočenie UAC: povolené. Budúce spustenia nebudú zobrazovať UAC pre administrátorov."
+skip_uac_disabled = "Preskočenie UAC: zakázané. Budúce spustenia budú zobrazovať UAC pre administrátorské akcie."
+hash_drift_one = "Zmena hashu: %{name}"
+hash_drift_many = "Zmena hashu u %{count} aplikácií (pozri záznamy)"
+filters_removed = "%{filters} filter(ov) odstránených, %{sublayers} podvrstva(iev) vyčistených."
+filters_installed = "%{added} filter(ov) nainštalovaných, %{skipped} preskočených."
+tray_blocked = "amwall - blokované: %{name}"
+
+# --- Názvy dialógov ---
+[dialog]
+update_available = "amwall - dostupná aktualizácia"
+check_updates = "amwall - Kontrola aktualizácií"
+confirm_bulk_delete = "Potvrdenie hromadného vymazania"
+admin_required = "Vyžadovaný administrátor"
+delete_rule = "Vymazať pravidlo"
+exit = "Ukončiť amwall?"
+clear_log = "Vymazať záznamy"
+allow_blocked = "Povoliť predtým blokovanú prevádzku?"
+emergency_reset = "Núdzový reset WFP"
+about_title = "O programe amwall"
+about_app = "amwall"
+settings_title = "Nastavenia"
+properties_signed = "amwall - Vlastnosti (podpísané %{signer})"
+
+# --- Texty správ dialógov ---
+[message]
+update_available_body = "amwall %{latest} je dostupný (používate %{current}).\n\nOtvoriť stránku vydaní v prehliadači?"
+update_uptodate_body = "Aktuálna verzia: %{current}\nNajnovšia verzia: %{latest}\n\nUž je aktuálne."
+update_error_body = "Nepodarilo sa pripojiť na GitHub na kontrolu aktualizácií.\n\nMožné príčiny: žiadny internet, firewall blokuje amwall od odchádzajúceho HTTPS, alebo limit GitHub API (60 anonymných požiadaviek za hodinu). Skúste to neskôr."
+admin_required_body = "Správa filtrov vyžaduje administrátorské oprávnenia.\n\nZatvorte amwall a znovu spustite zo zvýšeného príkazového riadka\n(pravý klik → \"Spustiť ako správca\")."
+delete_rule_confirm = "Vymazať pravidlo \"%{name}\"?"
+bulk_delete_confirm = "Odstrániť %{count} položiek z profilu?\n\nTáto akcia sa nedá vrátiť."
+exit_body = "Filtre sú momentálne povolené. Ukončenie amwall ponechá filtre na mieste (prežijú ukončenie procesu). Pokračovať?"
+clear_log_body = "Vymazať záznamy paketov? Toto vyprázdni záznamy v pamäti a skráti súbor záznamov na disku. Akcia sa nedá vrátiť."
+emergency_reset_body = "Núdzový reset vykoná:\n\n• Odstráni každý WFP filter, ktorý amwall nainštaloval\n• Vyprázdni profil aplikácií a zoznam používateľských pravidiel\n• Vypne Povoliť filtre\n\nPoužite toto, ak amwall blokuje niečo, čo nedokážete identifikovať a potrebujete obnoviť predvolené sieťové správanie OS. Zmena je okamžitá. Pokračovať?"
+allow_one_body = "%{name} je momentálne blokovaná. Povolenie mu umožní prístup k sieti pri ďalšom pokuse.\n\nPokračovať?"
+allow_many_body = "%{count} predtým blokovaných aplikácií bude nastavených na Povoliť. Budú mať prístup k sieti pri ďalšom pokuse.\n\nPokračovať?"
+blocked_notification = "Blokované: %{app}"
+
+# --- Kontextová ponuka ---
+[context]
+allow = "Povoliť"
+block = "Blokovať"
+copy_details = "&Kopírovať podrobnosti"
+properties = "Vlastnosti\tEnter"
+remove_from_profile = "Odstrániť z profilu\tDel"
+explore = "Preskúmať (otvoriť priečinok)\tCtrl+E"
+copy = "Kopírovať názov\tCtrl+C"
+
+# --- Ponuka v systémovej lište ---
+[tray]
+show = "Zobraziť amwall"
+enable_filters = "Povoliť filtre"
+disable_filters = "Zakázať filtre"
+settings = "Nastavenia..."
+exit = "Ukončiť amwall"
+
+# --- Sprievodca prvým spustením ---
+[wizard]
+title = "Vitajte v amwall"
+subtitle = "Importovať konfiguráciu simplewall?"
+import_btn = "Importovať"
+start_fresh_btn = "Začať odznova"
+body = """amwall našiel existujúcu konfiguráciu simplewall:
+
+• Cesta: %{path}
+• %{apps} aplikácií s pravidlami
+• %{rules} vlastných pravidiel
+
+Import skopíruje profile.xml z simplewall do amwall a použije ho ako východiskový bod. simplewall zostane nainštalovaný a jeho existujúce filtre v jadre zostanú aktívne — zakážte simplewall pred kliknutím na \"Povoliť filtre\" v amwall, aby ste predišli prekrývaniu pravidiel oboch firewallov.
+
+Môžete spustiť Súbor → Importovať neskôr, ak teraz preskočíte."""
+
+# --- Karty dialógu nastavení ---
+[settings_tab]
+general = "Všeobecné"
+interface = "Rozhranie"
+highlighting = "Zvýrazňovanie"
+rules = "Pravidlá"
+blocklist = "Zoznam blokovaných"
+notifications = "Upozornenia"
+logging = "Záznamy"
+exclude = "Výnimky"
+
+# --- Karty editora pravidiel ---
+[rule_editor]
+general = "Všeobecné"
+rule = "Pravidlo"
+apps = "Aplikácie"
+
+# --- Označenia protokolov ---
+[protocol]
+any = "Akýkoľvek"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Označenia rodiny adries ---
+[version]
+any = "Akákoľvek"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Označenia smeru ---
+[direction]
+outbound = "Odchádzajúce"
+inbound = "Prichádzajúce"
+both = "Oba"
+other = "Iné"
+
+# --- Označenia akcií ---
+[action]
+allow = "Povoliť"
+block = "Blokovať"
+permit = "Umožniť"
+
+# --- Nastavenia: Všeobecné ---
+[rc_general]
+group_config = "Všeobecná konfigurácia"
+always_on_top = "Vždy navrchu"
+load_on_startup = "Spustiť pri štarte systému"
+start_minimized = "Spustiť minimalizovane"
+skip_uac = "Preskočiť upozornenie \"User Account Control\""
+check_updates = "Pravidelne kontrolovať aktualizácie (odporúčané)"
+group_language = "Jazyk"
+select_language = "Vybrať jazyk:"
+
+# --- Nastavenia: Rozhranie ---
+[rc_interface]
+group_confirm = "Potvrdenia"
+confirm_exit = "Zobraziť potvrdzovací dialóg pri ukončení"
+confirm_exit_timer = "Zobraziť potvrdzovací dialóg pri ukončení, keď sú aktívne časovače"
+confirm_log_clear = "Potvrdiť pri vymazávaní súboru záznamov"
+confirm_allow = "Potvrdiť povolenie predtým blokovanej prevádzky"
+group_tray = "Ikona systémovej lišty"
+tray_single_click = "Jedným kliknutím na ikonu systémovej lišty otvoriť"
+
+# --- Nastavenia: Zvýrazňovanie ---
+[rc_highlight]
+group = "Zvýrazňovanie"
+hint = "Dvojklikom na položku ju zmeníte."
+
+# --- Nastavenia: Pravidlá ---
+[rc_rules]
+group_connections = "Pripojenia"
+block_outbound = "Blokovať odchádzajúce pripojenia pre všetkých"
+block_inbound = "Blokovať prichádzajúce pripojenia pre všetkých"
+allow_loopback = "Povoliť loopback pripojenia pre všetkých"
+allow_6to4 = "Povoliť IPv6 presmerovania (6to4) pre všetkých"
+group_security = "Bezpečnosť"
+stealth_mode = "Zabrániť skenovaniu portov (režim utajenia)"
+boottime_filters = "Povoliť filtre pri štarte"
+group_advanced = "Pokročilé"
+check_signatures = "Kontrolovať digitálne podpisy aplikácií"
+use_hashes = "Používať hashe súborov na identifikáciu aplikácií"
+resolve_addresses = "Prekladať sieťové adresy"
+
+# --- Nastavenia: Zoznam blokovaných ---
+[rc_blocklist]
+group_spy = "Microsoft špehovanie a telemetria"
+group_update = "Microsoft Update"
+group_apps = "Microsoft aplikácie"
+
+# --- Nastavenia: Upozornenia ---
+[rc_notifications]
+group = "Upozornenia"
+enable = "Povoliť upozornenia o paketoch"
+sound = "Povoliť zvuk upozornení"
+fullscreen = "Povoliť tichý režim pri aplikácii na celú obrazovku v popredí"
+on_tray = "Zobraziť okno upozornení v systémovej lište"
+timeout = "Časový limit medzi podobnými upozorneniami (sek.):"
+
+# --- Nastavenia: Záznamy ---
+[rc_logging]
+group_log = "Záznamy paketov"
+enable = "Povoliť zaznamenávanie paketov do súboru"
+max_size = "Maximálna veľkosť záznamov (kB):"
+group_viewer = "Prehliadač záznamov"
+group_ui = "Rozhranie"
+enable_ui = "Povoliť zaznamenávanie paketov v rozhraní"
+
+# --- Nastavenia: Výnimky ---
+[rc_exclude]
+group_notif = "Upozornenia: neupozorňovať na ..."
+blocklist = "zoznam blokovaných"
+user_rules = "používateľské pravidlá"
+group_log = "Záznamy: nezaznamenávať ..."
+stealth = "pripojenia skenera portov"
+allowed = "povolené pripojenia"
+
+# --- Dialóg vlastností aplikácie ---
+[rc_properties]
+title = "Vlastnosti aplikácie"
+path = "Cesta:"
+comment = "Komentár:"
+group_settings = "Nastavenia:"
+enabled = "Povolené (povoliť prevádzku tejto aplikácie)"
+silent = "Tiché (bez upozornení)"
+save = "Uložiť"
+close = "Zavrieť"
+
+# --- Dialóg žiadosti o pripojenie ---
+[rc_prompt]
+title = "amwall - žiadosť o pripojenie aplikácie"
+header = "Aplikácia sa pokúša pripojiť:"
+question = "Povoliť prevádzku tejto aplikácie alebo ponechať blokovanú?"
+allow = "Povoliť"
+block = "Blokovať"
+
+# --- Dialóg editora pravidiel ---
+[rc_editor]
+add_rule_title = "Záznam pravidla"
+save = "Uložiť"
+close = "Zavrieť"
+
+# --- Filtre dialógu súborov ---
+[filter]
+xml_profile = "XML profil (*.xml)"
+all_files = "Všetky súbory (*.*)"
+executable = "Spustiteľný súbor (*.exe)"

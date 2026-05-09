@@ -1,0 +1,398 @@
+# amwall — Fichier de langue française.
+# Toutes les clés correspondent à la structure de en.toml.
+# Seules les valeurs sont traduites ; les paramètres (%{…})
+# et raccourcis clavier restent inchangés.
+
+# --- Barre de menus ---
+[menu]
+file = "&Fichier"
+edit = "&Édition"
+view = "&Affichage"
+settings = "&Paramètres"
+rules = "&Règles"
+blocklist = "&Liste de blocage"
+help = "&Aide"
+
+# --- Menu Fichier ---
+[file]
+settings = "&Paramètres\tCtrl+P"
+add_app = "&Ajouter une app…\tCtrl+O"
+import = "&Importer…"
+export = "&Exporter…"
+exit = "&Quitter"
+
+# --- Menu Édition ---
+[edit]
+purge_unused = "Purger les apps &inutilisées"
+purge_timers = "Purger les &minuteries"
+clear_log = "&Effacer le journal"
+refresh = "&Actualiser\tF5"
+
+# --- Menu Affichage ---
+[view]
+always_on_top = "Toujours au &premier plan"
+dark_theme = "Thème &sombre"
+autosize_columns = "&Ajuster les colonnes"
+filenames_only = "Afficher uniquement les &noms de fichiers"
+show_search = "Afficher la barre de &recherche"
+layout_details = "Disposition : &Détails"
+layout_icons = "Disposition : &Icônes"
+layout_tiles = "Disposition : &Tuiles"
+icon_small = "Taille d'icône : &Petite"
+icon_large = "Taille d'icône : &Grande"
+icon_extralarge = "Taille d'icône : &Très grande"
+font = "Po&lice…"
+
+# --- Menu Paramètres ---
+[settings]
+load_on_startup = "&Charger au démarrage du système"
+start_minimized = "Démarrer &minimisé"
+skip_uac = "Ignorer l'avertissement UAC"
+check_updates = "Vérifier les mises à &jour"
+auto_allow_microsoft = "Autoriser automatiquement les programmes signés &Microsoft"
+check_signatures = "Vérifier les &signatures numériques des apps"
+check_hashes = "Vérifier le &hash SHA-256 des apps"
+
+# --- Sous-menu Règles ---
+[rules]
+block_outbound = "Bloquer les connexions &sortantes pour tous"
+block_inbound = "Bloquer les connexions &entrantes pour tous"
+allow_loopback = "Autoriser le &loopback"
+allow_6to4 = "Autoriser IPv6 (&6to4)"
+allow_windows_update = "Autoriser &Windows Update"
+
+# --- Sous-menu Liste de blocage ---
+[blocklist]
+disable = "&Désactiver"
+allow = "&Autoriser"
+block = "&Bloquer"
+spy_telemetry = "&Espionnage et télémétrie Microsoft"
+ms_update = "Microsoft &Update"
+ms_apps = "&Applications Microsoft"
+
+# --- Menu Aide ---
+[help]
+website = "Site &web"
+check_updates = "&Vérifier les mises à jour"
+about = "À &propos"
+emergency_reset = "Réinitialisation &d'urgence WFP..."
+
+# --- Onglets ---
+[tab]
+apps = "Apps"
+services = "Services"
+uwp = "Apps UWP"
+blocklist = "Liste de blocage"
+system_rules = "Règles système"
+user_rules = "Règles utilisateur"
+connections = "Connexions"
+packets_log = "Journal des paquets"
+
+# --- En-têtes de colonnes ---
+[column]
+name = "Nom"
+added = "Ajouté"
+path = "Chemin"
+date = "Date"
+protocol = "Protocole"
+direction = "Direction"
+address_src = "Adresse (Source)"
+host_src = "Hôte (Source)"
+port_src = "Port (Source)"
+address_dst = "Adresse (Destination)"
+host_dst = "Hôte (Destination)"
+port_dst = "Port (Destination)"
+state = "État"
+filter = "Filtre"
+index = "#"
+
+# --- En-têtes de groupes ---
+[group]
+blocked = "Bloqué"
+blocked_silent = "Bloqué (silencieux)"
+timer = "Minuterie"
+special = "Apps spéciales"
+allowed = "Autorisé"
+enabled = "Activé"
+disabled = "Désactivé"
+
+# --- Info-bulles de la barre d'outils ---
+[tooltip]
+enable_filters = "Activer les filtres (Ctrl+T)"
+new_rule = "Créer une nouvelle règle utilisateur"
+enable_notifications = "Activer les notifications pour le trafic bloqué"
+enable_log = "Enregistrer le trafic bloqué dans un fichier"
+enable_ui_log = "Afficher le journal des paquets dans l'interface"
+reload = "Recharger le profil depuis le disque (F5)"
+open_settings = "Ouvrir les paramètres"
+open_log_file = "Ouvrir le fichier journal des paquets"
+clear_log = "Effacer le journal des paquets"
+open_releases = "Ouvrir la page des releases GitHub"
+
+# --- Libellés de la barre d'outils ---
+[toolbar]
+enable_filters = "Activer les filtres"
+disable_filters = "Désactiver les filtres"
+
+# --- Barre d'état ---
+[status]
+filters_enabled = "Les filtres sont activés."
+filters_disabled = "Les filtres sont désactivés."
+imported_simplewall = "Profil simplewall importé."
+checking_updates = "Vérification des mises à jour..."
+up_to_date = "À jour."
+update_check_failed = "Échec de la vérification des mises à jour."
+nothing_to_remove = "Rien à supprimer du profil."
+engine_failed = "Impossible d'ouvrir le moteur WFP."
+uninstall_failed = "Échec de la désinstallation des filtres."
+install_failed = "Échec de l'installation des filtres."
+app_exists = "App déjà présente dans le profil."
+app_added = "App ajoutée."
+rule_added = "Règle ajoutée."
+rule_updated = "Règle mise à jour."
+rule_deleted = "Règle supprimée."
+autosave_failed = "Échec de la sauvegarde automatique."
+import_read_error = "Échec de l'import : erreur de lecture."
+import_parse_error = "Échec de l'import : erreur d'analyse."
+imported = "Importé."
+export_write_error = "Échec de l'export : erreur d'écriture."
+exported = "Exporté."
+refresh_read_error = "Échec de l'actualisation : erreur de lecture."
+refresh_parse_error = "Échec de l'actualisation : erreur d'analyse."
+profile_reloaded = "Profil rechargé."
+no_unused = "Aucune app inutilisée à purger."
+no_timers = "Aucune minuterie active."
+log_cleared = "Journal effacé."
+font_failed = "Échec du chargement de la police ; rétablie."
+font_updated = "Police mise à jour."
+emergency_done = "Réinitialisation d'urgence terminée."
+auto_allowed_one = "1 app signée Microsoft autorisée automatiquement"
+auto_allowed_many = "%{count} apps signées Microsoft autorisées automatiquement"
+silenced = "Mis en sourdine : %{name}"
+allowed_count = "Autorisé : %{name}"
+connecting = "Connexion à %{remote}"
+removed_entries = "%{count} entrées supprimées du profil."
+purged_apps = "%{count} app(s) inutilisée(s) purgée(s)."
+cleared_timers = "%{count} minuterie(s) d'app effacée(s)."
+skip_uac_enabled = "Ignorer UAC : activé. Les prochains lancements n'afficheront pas l'UAC pour les administrateurs."
+skip_uac_disabled = "Ignorer UAC : désactivé. Les prochains lancements afficheront l'UAC pour les actions administrateur."
+hash_drift_one = "Dérive de hash : %{name}"
+hash_drift_many = "Dérive de hash sur %{count} apps (voir le journal)"
+filters_removed = "%{filters} filtre(s) supprimé(s), %{sublayers} sous-couche(s) effacée(s)."
+filters_installed = "%{added} filtre(s) installé(s), %{skipped} ignoré(s)."
+tray_blocked = "amwall – bloqué : %{name}"
+
+# --- Titres des boîtes de dialogue ---
+[dialog]
+update_available = "amwall – mise à jour disponible"
+check_updates = "amwall – Vérifier les mises à jour"
+confirm_bulk_delete = "Confirmer la suppression en masse"
+admin_required = "Administrateur requis"
+delete_rule = "Supprimer la règle"
+exit = "Quitter amwall ?"
+clear_log = "Effacer le journal"
+allow_blocked = "Autoriser le trafic précédemment bloqué ?"
+emergency_reset = "Réinitialisation d'urgence WFP"
+about_title = "À propos d'amwall"
+about_app = "amwall"
+settings_title = "Paramètres"
+properties_signed = "amwall – Propriétés (signé par %{signer})"
+
+# --- Messages des boîtes de dialogue ---
+[message]
+update_available_body = "amwall %{latest} est disponible (vous utilisez %{current}).\n\nOuvrir la page des releases dans votre navigateur ?"
+update_uptodate_body = "Version actuelle : %{current}\nDernière version : %{latest}\n\nDéjà à jour."
+update_error_body = "Impossible de contacter GitHub pour vérifier les mises à jour.\n\nCauses possibles : pas d'internet, le pare-feu bloque les connexions HTTPS sortantes d'amwall, ou la limite de débit de l'API GitHub (60 requêtes anonymes par heure). Réessayez plus tard."
+admin_required_body = "La gestion des filtres nécessite les privilèges Administrateur.\n\nFermez amwall et relancez-le depuis un terminal élevé\n(clic droit → « Exécuter en tant qu'administrateur »)."
+delete_rule_confirm = "Supprimer la règle « %{name} » ?"
+bulk_delete_confirm = "Supprimer %{count} entrées du profil ?\n\nCette action est irréversible."
+exit_body = "Les filtres sont actuellement activés. Quitter amwall les laissera en place (ils survivent à l'arrêt du processus). Continuer ?"
+clear_log_body = "Effacer le journal des paquets ? Cela vide l'onglet journal en mémoire et tronque le fichier journal sur le disque. L'action est irréversible."
+emergency_reset_body = "La réinitialisation d'urgence va :\n\n• Supprimer tous les filtres WFP installés par amwall\n• Vider les listes de profils d'apps et de règles utilisateur\n• Désactiver « Activer les filtres »\n\nUtilisez cette option si amwall bloque quelque chose que vous ne pouvez pas identifier et que vous devez restaurer le comportement réseau par défaut du système. La modification est immédiate. Continuer ?"
+allow_one_body = "%{name} est actuellement bloqué. L'autoriser lui permettra d'accéder au réseau lors de sa prochaine tentative.\n\nContinuer ?"
+allow_many_body = "%{count} apps précédemment bloquées seront autorisées. Elles pourront accéder au réseau lors de leur prochaine tentative.\n\nContinuer ?"
+blocked_notification = "Bloqué : %{app}"
+
+# --- Menu contextuel ---
+[context]
+allow = "Autoriser"
+block = "Bloquer"
+copy_details = "&Copier les détails"
+properties = "Propriétés\tEnter"
+remove_from_profile = "Supprimer du profil\tDel"
+explore = "Explorer (ouvrir le dossier)\tCtrl+E"
+copy = "Copier le nom\tCtrl+C"
+
+# --- Menu de la zone de notification ---
+[tray]
+show = "Afficher amwall"
+enable_filters = "Activer les filtres"
+disable_filters = "Désactiver les filtres"
+settings = "Paramètres..."
+exit = "Quitter amwall"
+
+# --- Assistant de premier lancement ---
+[wizard]
+title = "Bienvenue dans amwall"
+subtitle = "Importer la configuration simplewall ?"
+import_btn = "Importer"
+start_fresh_btn = "Repartir de zéro"
+body = """amwall a trouvé une configuration simplewall existante :
+
+• Chemin : %{path}
+• %{apps} app(s) avec des règles
+• %{rules} règle(s) personnalisée(s)
+
+L'importation copie le profile.xml de simplewall vers amwall et l'utilise comme point de départ. simplewall reste installé et ses filtres noyau existants restent actifs — désactivez simplewall avant de cliquer sur « Activer les filtres » dans amwall pour éviter que les deux pare-feu n'appliquent des règles en conflit.
+
+Vous pourrez importer plus tard via Fichier → Importer."""
+
+# --- Onglets du dialogue Paramètres ---
+[settings_tab]
+general = "Général"
+interface = "Interface"
+highlighting = "Mise en évidence"
+rules = "Règles"
+blocklist = "Liste de blocage"
+notifications = "Notifications"
+logging = "Journalisation"
+exclude = "Exclusions"
+
+# --- Onglets de l'éditeur de règles ---
+[rule_editor]
+general = "Général"
+rule = "Règle"
+apps = "Apps"
+
+# --- Protocoles ---
+[protocol]
+any = "Tous"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Famille d'adresses ---
+[version]
+any = "Tous"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Direction ---
+[direction]
+outbound = "Sortant"
+inbound = "Entrant"
+both = "Les deux"
+other = "Autre"
+
+# --- Action ---
+[action]
+allow = "Autoriser"
+block = "Bloquer"
+permit = "Permettre"
+
+# --- Page Paramètres : Général ---
+[rc_general]
+group_config = "Configuration générale"
+always_on_top = "Toujours au premier plan"
+load_on_startup = "Charger au démarrage du système"
+start_minimized = "Démarrer minimisé"
+skip_uac = "Ignorer l'avertissement « Contrôle de compte d'utilisateur »"
+check_updates = "Vérifier périodiquement les mises à jour (recommandé)"
+group_language = "Langue"
+select_language = "Sélectionner la langue :"
+
+# --- Page Paramètres : Interface ---
+[rc_interface]
+group_confirm = "Confirmations"
+confirm_exit = "Afficher le dialogue de confirmation à la fermeture"
+confirm_exit_timer = "Afficher le dialogue de confirmation à la fermeture quand des minuteries sont actives"
+confirm_log_clear = "Confirmer l'effacement du fichier journal"
+confirm_allow = "Confirmer l'autorisation du trafic précédemment bloqué"
+group_tray = "Icône de la zone de notification"
+tray_single_click = "Simple clic sur l'icône pour ouvrir"
+
+# --- Page Paramètres : Mise en évidence ---
+[rc_highlight]
+group = "Mise en évidence"
+hint = "Double-cliquez sur un élément pour le modifier."
+
+# --- Page Paramètres : Règles ---
+[rc_rules]
+group_connections = "Connexions"
+block_outbound = "Bloquer les connexions sortantes pour tous"
+block_inbound = "Bloquer les connexions entrantes pour tous"
+allow_loopback = "Autoriser les connexions loopback pour tous"
+allow_6to4 = "Autoriser les redirections IPv6 (6to4) pour tous"
+group_security = "Sécurité"
+stealth_mode = "Empêcher le balayage de ports (mode furtif)"
+boottime_filters = "Activer les filtres au démarrage"
+group_advanced = "Avancé"
+check_signatures = "Vérifier les signatures numériques des apps"
+use_hashes = "Utiliser les hashes de fichiers pour l'identification des apps"
+resolve_addresses = "Résoudre les adresses réseau"
+
+# --- Page Paramètres : Liste de blocage ---
+[rc_blocklist]
+group_spy = "Espionnage et télémétrie Microsoft"
+group_update = "Microsoft Update"
+group_apps = "Applications Microsoft"
+
+# --- Page Paramètres : Notifications ---
+[rc_notifications]
+group = "Notifications"
+enable = "Activer les notifications de paquets"
+sound = "Activer le son des notifications"
+fullscreen = "Activer le mode silencieux quand une app plein écran est au premier plan"
+on_tray = "Afficher la fenêtre de notification dans la zone de notification"
+timeout = "Délai entre notifications similaires (sec.) :"
+
+# --- Page Paramètres : Journalisation ---
+[rc_logging]
+group_log = "Journal des paquets"
+enable = "Activer la journalisation des paquets dans un fichier"
+max_size = "Taille maximale du journal (ko) :"
+group_viewer = "Visionneuse du journal"
+group_ui = "Interface"
+enable_ui = "Activer la journalisation des paquets dans l'interface"
+
+# --- Page Paramètres : Exclusions ---
+[rc_exclude]
+group_notif = "Notifications : ne pas notifier pour …"
+blocklist = "liste de blocage"
+user_rules = "règles utilisateur"
+group_log = "Journalisation : ne pas enregistrer …"
+stealth = "connexions de balayage de ports"
+allowed = "connexions autorisées"
+
+# --- Dialogue Propriétés de l'app ---
+[rc_properties]
+title = "Propriétés de l'app"
+path = "Chemin :"
+comment = "Commentaire :"
+group_settings = "Paramètres :"
+enabled = "Activé (autoriser le trafic de cette app)"
+silent = "Silencieux (pas de notifications)"
+save = "Enregistrer"
+close = "Fermer"
+
+# --- Dialogue de demande de connexion ---
+[rc_prompt]
+title = "amwall – demande de connexion d'une application"
+header = "Une application tente de se connecter :"
+question = "Autoriser le trafic de cette app ou le garder bloqué ?"
+allow = "Autoriser"
+block = "Bloquer"
+
+# --- Dialogue de l'éditeur de règles ---
+[rc_editor]
+add_rule_title = "Entrée de règle"
+save = "Enregistrer"
+close = "Fermer"
+
+# --- Filtres de fichiers ---
+[filter]
+xml_profile = "Profil XML (*.xml)"
+all_files = "Tous les fichiers (*.*)"
+executable = "Exécutable (*.exe)"

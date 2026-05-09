@@ -1,0 +1,396 @@
+# amwall — Azərbaycan dili lokallaşdırması.
+# Bu fayl en.toml faylının Azərbaycan dilinə tərcüməsidir.
+
+# --- Menyu başlıqları ---
+[menu]
+file = "&Fayl"
+edit = "&Redaktə"
+view = "&Görünüş"
+settings = "&Parametrlər"
+rules = "&Qaydalar"
+blocklist = "&Qara siyahı"
+help = "&Kömək"
+
+# --- Fayl menyusu ---
+[file]
+settings = "&Parametrlər\tCtrl+P"
+add_app = "&Tətbiq əlavə et…\tCtrl+O"
+import = "&İdxal…"
+export = "&İxrac…"
+exit = "&Çıxış"
+
+# --- Redaktə menyusu ---
+[edit]
+purge_unused = "İstifadə olunmayan &tətbiqləri sil"
+purge_timers = "&Taymerləri sil"
+clear_log = "&Jurnalı təmizlə"
+refresh = "&Yenilə\tF5"
+
+# --- Görünüş menyusu ---
+[view]
+always_on_top = "Həmişə &üstdə"
+dark_theme = "&Tünd mövzu"
+autosize_columns = "&Sütunları avtoölçüləndir"
+filenames_only = "Yalnız fayl &adlarını göstər"
+show_search = "&Axtarış panelini göstər"
+layout_details = "Düzən: &Ətraflı"
+layout_icons = "Düzən: &Nişanlar"
+layout_tiles = "Düzən: &Plitələr"
+icon_small = "Nişan ölçüsü: &Kiçik"
+icon_large = "Nişan ölçüsü: &Böyük"
+icon_extralarge = "Nişan ölçüsü: &Çox böyük"
+font = "&Şrift…"
+
+# --- Parametrlər menyusu ---
+[settings]
+load_on_startup = "&Sistem başlanğıcında yüklə"
+start_minimized = "&Kiçildilmiş başlat"
+skip_uac = "UAC xəbərdarlığını keç"
+check_updates = "Yeniləmələri &yoxla"
+auto_allow_microsoft = "&Microsoft imzalı proqramlara avtomatik icazə"
+check_signatures = "Tətbiqlərin rəqəmsal &imzasını yoxla"
+check_hashes = "Tətbiqlərin SHA-256 &heşini yoxla"
+
+# --- Qaydalar alt menyusu ---
+[rules]
+block_outbound = "&Çıxış bağlantıları hamısı üçün blokla"
+block_inbound = "&Giriş bağlantıları hamısı üçün blokla"
+allow_loopback = "&loopback icazə ver"
+allow_6to4 = "IPv6 (&6to4) icazə ver"
+allow_windows_update = "&Windows Update icazə ver"
+
+# --- Qara siyahı alt menyusu ---
+[blocklist]
+disable = "&Söndür"
+allow = "&İcazə ver"
+block = "&Blokla"
+spy_telemetry = "Microsoft &casusluq və telemetriya"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft &tətbiqləri"
+
+# --- Kömək menyusu ---
+[help]
+website = "&Veb-sayt"
+check_updates = "Yeniləmələri &yoxla"
+about = "&Haqqında"
+emergency_reset = "&Təcili WFP sıfırlaması..."
+
+# --- Qoyma adları ---
+[tab]
+apps = "Tətbiqlər"
+services = "Xidmətlər"
+uwp = "UWP tətbiqlər"
+blocklist = "Qara siyahı"
+system_rules = "Sistem qaydaları"
+user_rules = "İstifadəçi qaydaları"
+connections = "Bağlantılar"
+packets_log = "Paketlər jurnalı"
+
+# --- Sütun başlıqları ---
+[column]
+name = "Ad"
+added = "Əlavə edildi"
+path = "Yol"
+date = "Tarix"
+protocol = "Protokol"
+direction = "İstiqamət"
+address_src = "Ünvan (Mənbə)"
+host_src = "Host (Mənbə)"
+port_src = "Port (Mənbə)"
+address_dst = "Ünvan (Təyinat)"
+host_dst = "Host (Təyinat)"
+port_dst = "Port (Təyinat)"
+state = "Vəziyyət"
+filter = "Filtr"
+index = "#"
+
+# --- Qrup başlıqları ---
+[group]
+blocked = "Bloklanmış"
+blocked_silent = "Bloklanmış (səssiz)"
+timer = "Taymer"
+special = "Xüsusi tətbiqlər"
+allowed = "İcazə verilmiş"
+enabled = "Aktiv"
+disabled = "Söndürülmüş"
+
+# --- Alət paneli ipucları ---
+[tooltip]
+enable_filters = "Filtrləri aktivləşdir (Ctrl+T)"
+new_rule = "Yeni istifadəçi qaydası yarat"
+enable_notifications = "Bloklanmış trafik bildirişlərini aktivləşdir"
+enable_log = "Bloklanmış trafiki fayla yaz"
+enable_ui_log = "Paketlər jurnalını interfeysdə göstər"
+reload = "Profili diskdən yenidən yüklə (F5)"
+open_settings = "Parametrləri aç"
+open_log_file = "Paketlər jurnalı faylını aç"
+clear_log = "Paketlər jurnalını təmizlə"
+open_releases = "GitHub buraxılışlar səhifəsini aç"
+
+# --- Alət paneli düymə yazıları ---
+[toolbar]
+enable_filters = "Filtrləri aktivləşdir"
+disable_filters = "Filtrləri söndür"
+
+# --- Status paneli mesajları ---
+[status]
+filters_enabled = "Filtrlər aktivdir."
+filters_disabled = "Filtrlər söndürülüb."
+imported_simplewall = "simplewall profili idxal edildi."
+checking_updates = "Yeniləmələr yoxlanılır..."
+up_to_date = "Son versiyadır."
+update_check_failed = "Yeniləmə yoxlaması uğursuz oldu."
+nothing_to_remove = "Profildən silinəcək heç nə yoxdur."
+engine_failed = "WFP mühərrikini açmaq alınmadı."
+uninstall_failed = "Filtrin silinməsi uğursuz oldu."
+install_failed = "Filtrin quraşdırılması uğursuz oldu."
+app_exists = "Tətbiq artıq profildədir."
+app_added = "Tətbiq əlavə edildi."
+rule_added = "Qayda əlavə edildi."
+rule_updated = "Qayda yeniləndi."
+rule_deleted = "Qayda silindi."
+autosave_failed = "Avtomatik saxlama uğursuz oldu."
+import_read_error = "İdxal uğursuz oldu: oxuma xətası."
+import_parse_error = "İdxal uğursuz oldu: təhlil xətası."
+imported = "İdxal edildi."
+export_write_error = "İxrac uğursuz oldu: yazma xətası."
+exported = "İxrac edildi."
+refresh_read_error = "Yeniləmə uğursuz oldu: oxuma xətası."
+refresh_parse_error = "Yeniləmə uğursuz oldu: təhlil xətası."
+profile_reloaded = "Profil yenidən yükləndi."
+no_unused = "Silinəcək istifadə olunmayan tətbiq yoxdur."
+no_timers = "Aktiv taymerlər yoxdur."
+log_cleared = "Jurnal təmizləndi."
+font_failed = "Şrift yüklənmədi; geri qaytarıldı."
+font_updated = "Şrift yeniləndi."
+emergency_done = "Təcili sıfırlama tamamlandı."
+auto_allowed_one = "Microsoft imzalı 1 tətbiqə avtomatik icazə verildi"
+auto_allowed_many = "Microsoft imzalı %{count} tətbiqə avtomatik icazə verildi"
+silenced = "Səssizləşdirildi: %{name}"
+allowed_count = "İcazə verildi: %{name}"
+connecting = "%{remote} ünvanına qoşulur"
+removed_entries = "Profildən %{count} qeyd silindi."
+purged_apps = "%{count} istifadə olunmayan tətbiq silindi."
+cleared_timers = "%{count} tətbiq taymeri təmizləndi."
+skip_uac_enabled = "UAC keçmə: aktivdir. Gələcək başlatmalar admin istifadəçilər üçün UAC göstərməyəcək."
+skip_uac_disabled = "UAC keçmə: söndürülüb. Gələcək başlatmalar admin əməliyyatları üçün UAC göstərəcək."
+hash_drift_one = "Heş dəyişikliyi: %{name}"
+hash_drift_many = "%{count} tətbiqdə heş dəyişikliyi (jurnala baxın)"
+filters_removed = "%{filters} filtr silindi, %{sublayers} alt qat təmizləndi."
+filters_installed = "%{added} filtr quraşdırıldı, %{skipped} keçildi."
+tray_blocked = "amwall - bloklandı: %{name}"
+
+# --- Dialoq başlıqları ---
+[dialog]
+update_available = "amwall - yeniləmə mövcuddur"
+check_updates = "amwall - Yeniləmələri yoxla"
+confirm_bulk_delete = "Toplu silməni təsdiqlə"
+admin_required = "Administrator tələb olunur"
+delete_rule = "Qaydanı sil"
+exit = "amwall-dan çıxılsın?"
+clear_log = "Jurnalı təmizlə"
+allow_blocked = "Əvvəl bloklanmış trafikə icazə verilsin?"
+emergency_reset = "Təcili WFP sıfırlaması"
+about_title = "amwall haqqında"
+about_app = "amwall"
+settings_title = "Parametrlər"
+properties_signed = "amwall - Xüsusiyyətlər (%{signer} tərəfindən imzalanıb)"
+
+# --- Dialoq mətn mesajları ---
+[message]
+update_available_body = "amwall %{latest} mövcuddur (siz %{current} versiyasını istifadə edirsiniz).\n\nBuraxılışlar səhifəsini brauzerdə açmaq istəyirsiniz?"
+update_uptodate_body = "Cari versiya: %{current}\nSon versiya: %{latest}\n\nArtıq son versiyadır."
+update_error_body = "Yeniləmələri yoxlamaq üçün GitHub-a qoşulmaq mümkün olmadı.\n\nMümkün səbəblər: internet yoxdur, firewall amwall-ın çıxış HTTPS-ini bloklayır, və ya GitHub API limiti (saatda 60 anonim sorğu). Daha sonra yenidən cəhd edin."
+admin_required_body = "Filtr idarəetməsi Administrator imtiyazları tələb edir.\n\namwall-ı bağlayın və yüksəldilmiş əmr sətirindən yenidən başladın\n(sağ klik → \"Administrator olaraq çalışdır\")."
+delete_rule_confirm = "\"%{name}\" qaydası silinsin?"
+bulk_delete_confirm = "Profildən %{count} qeyd silinsin?\n\nBu əməliyyat geri qaytarıla bilməz."
+exit_body = "Filtrlər hazırda aktivdir. amwall-dan çıxmaq onları yerində saxlayacaq (proses bitdikdən sonra da qalırlar). Davam edilsin?"
+clear_log_body = "Paketlər jurnalı təmizlənsin? Bu, yaddaşdakı jurnal qoymasını boşaldır və diskdəki jurnal faylını kəsir. Bu əməliyyat geri qaytarıla bilməz."
+emergency_reset_body = "Təcili sıfırlama:\n\n• amwall-ın quraşdırdığı bütün WFP filtrlərini silir\n• Tətbiqlər Profili və İstifadəçi qaydaları siyahılarını boşaldır\n• \"Filtrləri aktivləşdir\" funksiyasını söndürür\n\nBunu amwall-ın nəyisə bloklaması və onu müəyyən edə bilmədiyiniz zaman, ƏS-in standart şəbəkə davranışını bərpa etmək üçün istifadə edin. Dəyişiklik dərhal tətbiq olunur. Davam edilsin?"
+allow_one_body = "%{name} hazırda bloklanıb. İcazə vermək ona növbəti cəhdində şəbəkəyə çıxmağa imkan verəcək.\n\nDavam edilsin?"
+allow_many_body = "%{count} əvvəl bloklanmış tətbiq İcazə rejiminə keçiriləcək. Onlar növbəti cəhdlərində şəbəkəyə çıxacaqlar.\n\nDavam edilsin?"
+blocked_notification = "Bloklandı: %{app}"
+
+# --- Kontekst menyusu ---
+[context]
+allow = "İcazə ver"
+block = "Blokla"
+copy_details = "&Detalları kopyala"
+properties = "Xüsusiyyətlər\tEnter"
+remove_from_profile = "Profildən sil\tDel"
+explore = "Qovluğu aç\tCtrl+E"
+copy = "Adı kopyala\tCtrl+C"
+
+# --- Sistem tepsisi menyusu ---
+[tray]
+show = "amwall-ı göstər"
+enable_filters = "Filtrləri aktivləşdir"
+disable_filters = "Filtrləri söndür"
+settings = "Parametrlər..."
+exit = "amwall-dan çıx"
+
+# --- İlk başlatma sehrbazı ---
+[wizard]
+title = "amwall-a xoş gəldiniz"
+subtitle = "simplewall konfiqurasiyası idxal edilsin?"
+import_btn = "İdxal"
+start_fresh_btn = "Sıfırdan başla"
+body = """amwall mövcud simplewall konfiqurasiyası tapdı:
+
+• Yol: %{path}
+• %{apps} qaydası olan tətbiq
+• %{rules} xüsusi qayda
+
+İdxal, simplewall-ın profile.xml faylını amwall-a kopyalayır və onu başlanğıc nöqtəsi kimi istifadə edir. simplewall quraşdırılmış qalır və mövcud nüvə filtrləri aktiv qalır — hər iki firewall-ın üst-üstə düşən qaydalarının qarşısını almaq üçün amwall-da \"Filtrləri aktivləşdir\" düyməsini basmadan əvvəl simplewall-ı söndürün.
+
+İndi keçsəniz, sonradan Fayl → İdxal ilə edə bilərsiniz."""
+
+# --- Parametrlər dialoqu qoymaları ---
+[settings_tab]
+general = "Ümumi"
+interface = "İnterfeys"
+highlighting = "Vurğulama"
+rules = "Qaydalar"
+blocklist = "Qara siyahı"
+notifications = "Bildirişlər"
+logging = "Jurnallaşdırma"
+exclude = "İstisnalar"
+
+# --- Qayda redaktoru qoymaları ---
+[rule_editor]
+general = "Ümumi"
+rule = "Qayda"
+apps = "Tətbiqlər"
+
+# --- Protokol etiketləri ---
+[protocol]
+any = "İstənilən"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Ünvan ailəsi etiketləri ---
+[version]
+any = "İstənilən"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- İstiqamət etiketləri ---
+[direction]
+outbound = "Çıxış"
+inbound = "Giriş"
+both = "Hər ikisi"
+other = "Digər"
+
+# --- Əməliyyat etiketləri ---
+[action]
+allow = "İcazə ver"
+block = "Blokla"
+permit = "İcazə"
+
+# --- Parametrlər səhifəsi: Ümumi ---
+[rc_general]
+group_config = "Ümumi konfiqurasiya"
+always_on_top = "Həmişə üstdə"
+load_on_startup = "Sistem başlanğıcında yüklə"
+start_minimized = "Kiçildilmiş başlat"
+skip_uac = "\"İstifadəçi Hesabına Nəzarət\" xəbərdarlığını keç"
+check_updates = "Vaxtaşırı yeniləmələri yoxla (tövsiyə olunur)"
+group_language = "Dil"
+select_language = "Dil seçin:"
+
+# --- Parametrlər səhifəsi: İnterfeys ---
+[rc_interface]
+group_confirm = "Təsdiqləmələr"
+confirm_exit = "Çıxışda təsdiqləmə dialoqu göstər"
+confirm_exit_timer = "Aktiv taymerlər olduqda çıxışda təsdiqləmə göstər"
+confirm_log_clear = "Jurnal faylını təmizləyərkən təsdiqlə"
+confirm_allow = "Əvvəl bloklanmış trafikə icazə verərkən təsdiqlə"
+group_tray = "Tepsi nişanı"
+tray_single_click = "Tepsi nişanına tək klikləməklə aç"
+
+# --- Parametrlər səhifəsi: Vurğulama ---
+[rc_highlight]
+group = "Vurğulama"
+hint = "Dəyişdirmək üçün elementə iki dəfə klikləyin."
+
+# --- Parametrlər səhifəsi: Qaydalar ---
+[rc_rules]
+group_connections = "Bağlantılar"
+block_outbound = "Çıxış bağlantılarını hamısı üçün blokla"
+block_inbound = "Giriş bağlantılarını hamısı üçün blokla"
+allow_loopback = "loopback bağlantılarına hamısı üçün icazə ver"
+allow_6to4 = "IPv6 yönləndirmələrinə (6to4) hamısı üçün icazə ver"
+group_security = "Təhlükəsizlik"
+stealth_mode = "Port skanlamanın qarşısını al (gizli rejim)"
+boottime_filters = "Yükləmə vaxtı filtrlərini aktivləşdir"
+group_advanced = "Əlavə"
+check_signatures = "Tətbiqlərin rəqəmsal imzasını yoxla"
+use_hashes = "Tətbiq identifikasiyası üçün fayl heşlərini istifadə et"
+resolve_addresses = "Şəbəkə ünvanlarını həll et"
+
+# --- Parametrlər səhifəsi: Qara siyahı ---
+[rc_blocklist]
+group_spy = "Microsoft casusluq və telemetriya"
+group_update = "Microsoft Update"
+group_apps = "Microsoft tətbiqləri"
+
+# --- Parametrlər səhifəsi: Bildirişlər ---
+[rc_notifications]
+group = "Bildirişlər"
+enable = "Paket bildirişlərini aktivləşdir"
+sound = "Bildiriş səsini aktivləşdir"
+fullscreen = "Tam ekran tətbiqi ön planda olduqda səssiz rejimi aktivləşdir"
+on_tray = "Bildiriş pəncərəsini tepsidə göstər"
+timeout = "Oxşar bildirişlər arasında fasilə (san.):"
+
+# --- Parametrlər səhifəsi: Jurnallaşdırma ---
+[rc_logging]
+group_log = "Paketlər jurnalı"
+enable = "Paketlərin fayla jurnallaşdırılmasını aktivləşdir"
+max_size = "Maksimum jurnal ölçüsü (kB):"
+group_viewer = "Jurnal görüntüləyicisi"
+group_ui = "İnterfeys"
+enable_ui = "İnterfeysdə paket jurnallaşdırmasını aktivləşdir"
+
+# --- Parametrlər səhifəsi: İstisnalar ---
+[rc_exclude]
+group_notif = "Bildirişlər: bildirməmək..."
+blocklist = "qara siyahı"
+user_rules = "istifadəçi qaydaları"
+group_log = "Jurnallaşdırma: yazmamaq..."
+stealth = "port skaneri bağlantıları"
+allowed = "icazə verilmiş bağlantılar"
+
+# --- Tətbiq xüsusiyyətləri dialoqu ---
+[rc_properties]
+title = "Tətbiq xüsusiyyətləri"
+path = "Yol:"
+comment = "Şərh:"
+group_settings = "Parametrlər:"
+enabled = "Aktiv (bu tətbiqin trafikinə icazə ver)"
+silent = "Səssiz (bildirişsiz)"
+save = "Saxla"
+close = "Bağla"
+
+# --- Bağlantı sorğusu dialoqu ---
+[rc_prompt]
+title = "amwall - tətbiq bağlantı sorğusu"
+header = "Tətbiq qoşulmağa çalışır:"
+question = "Bu tətbiqin trafikinə icazə verilsin, yoxsa bloklanmış saxlansın?"
+allow = "İcazə ver"
+block = "Blokla"
+
+# --- Qayda redaktoru dialoqu ---
+[rc_editor]
+add_rule_title = "Qayda qeydi"
+save = "Saxla"
+close = "Bağla"
+
+# --- Fayl dialoqu filtrləri ---
+[filter]
+xml_profile = "XML profil (*.xml)"
+all_files = "Bütün fayllar (*.*)"
+executable = "İcra olunan fayl (*.exe)"

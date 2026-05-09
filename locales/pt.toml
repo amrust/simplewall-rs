@@ -1,0 +1,397 @@
+# amwall — Localização para Português Europeu.
+# Tradução de locales/en.toml. Mantenha as chaves inalteradas,
+# traduza apenas os valores. Marcadores %{…} devem permanecer intactos.
+
+# --- Títulos da barra de menus ---
+[menu]
+file = "&Ficheiro"
+edit = "&Editar"
+view = "&Ver"
+settings = "&Definições"
+rules = "&Regras"
+blocklist = "Lista de &bloqueio"
+help = "Aj&uda"
+
+# --- Itens do menu Ficheiro ---
+[file]
+settings = "&Definições\tCtrl+P"
+add_app = "&Adicionar aplicação…\tCtrl+O"
+import = "&Importar…"
+export = "&Exportar…"
+exit = "&Sair"
+
+# --- Itens do menu Editar ---
+[edit]
+purge_unused = "Eliminar aplicações &não utilizadas"
+purge_timers = "Eliminar &temporizadores"
+clear_log = "&Limpar registo"
+refresh = "&Atualizar\tF5"
+
+# --- Itens do menu Ver ---
+[view]
+always_on_top = "Sempre no &topo"
+dark_theme = "Utilizar tema &escuro"
+autosize_columns = "&Ajustar largura das colunas"
+filenames_only = "Mostrar apenas nomes de &ficheiros"
+show_search = "Mostrar barra de pe&squisa"
+layout_details = "Disposição: &Detalhes"
+layout_icons = "Disposição: &Ícones"
+layout_tiles = "Disposição: &Mosaicos"
+icon_small = "Tamanho do ícone: &Pequeno"
+icon_large = "Tamanho do ícone: &Grande"
+icon_extralarge = "Tamanho do ícone: &Extra-grande"
+font = "&Tipo de letra…"
+
+# --- Itens do menu Definições ---
+[settings]
+load_on_startup = "&Carregar no arranque do sistema"
+start_minimized = "Iniciar &minimizado"
+skip_uac = "Ignorar aviso do UAC"
+check_updates = "Verificar &atualizações"
+auto_allow_microsoft = "Permitir automaticamente programas assinados pela &Microsoft"
+check_signatures = "Verificar assinaturas &digitais das aplicações"
+check_hashes = "Verificar &hash SHA-256 das aplicações"
+
+# --- Submenu Regras ---
+[rules]
+block_outbound = "Bloquear ligações de &saída para todos"
+block_inbound = "Bloquear ligações de &entrada para todos"
+allow_loopback = "Permitir &loopback"
+allow_6to4 = "Permitir IPv6 (&6to4)"
+allow_windows_update = "Permitir &Windows Update"
+
+# --- Submenu Blocklist ---
+[blocklist]
+disable = "&Desativar"
+allow = "&Permitir"
+block = "&Bloquear"
+spy_telemetry = "&Espionagem e telemetria da Microsoft"
+ms_update = "Microsoft &Update"
+ms_apps = "&Aplicações da Microsoft"
+
+# --- Itens do menu Ajuda ---
+[help]
+website = "&Website"
+check_updates = "&Verificar atualizações"
+about = "&Sobre"
+emergency_reset = "&Reposição de emergência do WFP..."
+
+# --- Rótulos dos separadores ---
+[tab]
+apps = "Aplicações"
+services = "Serviços"
+uwp = "Aplicações UWP"
+blocklist = "Lista de bloqueio"
+system_rules = "Regras do sistema"
+user_rules = "Regras do utilizador"
+connections = "Ligações"
+packets_log = "Registo de pacotes"
+
+# --- Cabeçalhos das colunas ---
+[column]
+name = "Nome"
+added = "Adicionado"
+path = "Caminho"
+date = "Data"
+protocol = "Protocolo"
+direction = "Direção"
+address_src = "Endereço (Origem)"
+host_src = "Anfitrião (Origem)"
+port_src = "Porta (Origem)"
+address_dst = "Endereço (Destino)"
+host_dst = "Anfitrião (Destino)"
+port_dst = "Porta (Destino)"
+state = "Estado"
+filter = "Filtro"
+index = "#"
+
+# --- Cabeçalhos dos grupos ---
+[group]
+blocked = "Bloqueado"
+blocked_silent = "Bloqueado (silencioso)"
+timer = "Temporizador"
+special = "Aplicações especiais"
+allowed = "Permitido"
+enabled = "Ativado"
+disabled = "Desativado"
+
+# --- Dicas da barra de ferramentas ---
+[tooltip]
+enable_filters = "Ativar filtros (Ctrl+T)"
+new_rule = "Criar uma nova regra de utilizador"
+enable_notifications = "Ativar notificações para tráfego bloqueado"
+enable_log = "Registar tráfego bloqueado num ficheiro"
+enable_ui_log = "Mostrar registo de pacotes na interface"
+reload = "Recarregar o perfil a partir do disco (F5)"
+open_settings = "Abrir Definições"
+open_log_file = "Abrir o ficheiro de registo de pacotes"
+clear_log = "Limpar o registo de pacotes"
+open_releases = "Abrir a página de versões no GitHub"
+
+# --- Rótulos dos botões da barra de ferramentas ---
+[toolbar]
+enable_filters = "Ativar filtros"
+disable_filters = "Desativar filtros"
+
+# --- Mensagens da barra de estado ---
+[status]
+filters_enabled = "Filtros ativados."
+filters_disabled = "Filtros desativados."
+imported_simplewall = "Perfil do simplewall importado."
+checking_updates = "A verificar atualizações..."
+up_to_date = "Atualizado."
+update_check_failed = "Falha ao verificar atualizações."
+nothing_to_remove = "Nada para remover do perfil."
+engine_failed = "Falha ao abrir o motor WFP."
+uninstall_failed = "Falha ao desinstalar filtros."
+install_failed = "Falha ao instalar filtros."
+app_exists = "A aplicação já se encontra no perfil."
+app_added = "Aplicação adicionada."
+rule_added = "Regra adicionada."
+rule_updated = "Regra atualizada."
+rule_deleted = "Regra eliminada."
+autosave_failed = "Falha ao guardar automaticamente."
+import_read_error = "Falha na importação: erro de leitura."
+import_parse_error = "Falha na importação: erro de análise."
+imported = "Importado."
+export_write_error = "Falha na exportação: erro de escrita."
+exported = "Exportado."
+refresh_read_error = "Falha na atualização: erro de leitura."
+refresh_parse_error = "Falha na atualização: erro de análise."
+profile_reloaded = "Perfil recarregado."
+no_unused = "Nenhuma aplicação não utilizada para eliminar."
+no_timers = "Nenhum temporizador ativo."
+log_cleared = "Registo limpo."
+font_failed = "Falha ao carregar tipo de letra; revertido."
+font_updated = "Tipo de letra atualizado."
+emergency_done = "Reposição de emergência concluída."
+auto_allowed_one = "1 aplicação assinada pela Microsoft permitida automaticamente"
+auto_allowed_many = "%{count} aplicações assinadas pela Microsoft permitidas automaticamente"
+silenced = "Silenciado: %{name}"
+allowed_count = "Permitido: %{name}"
+connecting = "A ligar a %{remote}"
+removed_entries = "%{count} entradas removidas do perfil."
+purged_apps = "%{count} aplicação(ões) não utilizada(s) eliminada(s)."
+cleared_timers = "%{count} temporizador(es) de aplicação limpo(s)."
+skip_uac_enabled = "Ignorar UAC: ativado. Futuras execuções não mostrarão UAC para utilizadores administradores."
+skip_uac_disabled = "Ignorar UAC: desativado. Futuras execuções mostrarão UAC para ações administrativas."
+hash_drift_one = "Desvio de hash: %{name}"
+hash_drift_many = "Desvio de hash em %{count} aplicações (ver registo)"
+filters_removed = "%{filters} filtro(s) removido(s), %{sublayers} subcamada(s) limpa(s)."
+filters_installed = "%{added} filtro(s) instalado(s), %{skipped} ignorado(s)."
+tray_blocked = "amwall - bloqueado: %{name}"
+
+# --- Títulos dos diálogos ---
+[dialog]
+update_available = "amwall - atualização disponível"
+check_updates = "amwall - Verificar atualizações"
+confirm_bulk_delete = "Confirmar eliminação em massa"
+admin_required = "Administrador necessário"
+delete_rule = "Eliminar regra"
+exit = "Sair do amwall?"
+clear_log = "Limpar registo"
+allow_blocked = "Permitir tráfego anteriormente bloqueado?"
+emergency_reset = "Reposição de emergência do WFP"
+about_title = "Sobre o amwall"
+about_app = "amwall"
+settings_title = "Definições"
+properties_signed = "amwall - Propriedades (assinado por %{signer})"
+
+# --- Corpo das mensagens dos diálogos ---
+[message]
+update_available_body = "amwall %{latest} está disponível (está a executar %{current}).\n\nAbrir a página de versões no navegador?"
+update_uptodate_body = "Versão atual: %{current}\nÚltima versão: %{latest}\n\nJá está atualizado."
+update_error_body = "Não foi possível aceder ao GitHub para verificar atualizações.\n\nCausas possíveis: sem Internet, a firewall a bloquear o amwall de HTTPS de saída, ou limite de pedidos da API do GitHub (60 pedidos anónimos por hora). Tente novamente mais tarde."
+admin_required_body = "A gestão de filtros requer privilégios de Administrador.\n\nFeche o amwall e reinicie a partir de um terminal elevado\n(clique com o botão direito → \"Executar como administrador\")."
+delete_rule_confirm = "Eliminar a regra \"%{name}\"?"
+bulk_delete_confirm = "Remover %{count} entradas do perfil?\n\nEsta ação não pode ser desfeita."
+exit_body = "Os filtros estão ativados de momento. Sair do amwall irá deixá-los em vigor (sobrevivem ao encerramento do processo). Continuar?"
+clear_log_body = "Limpar o registo de pacotes? Isto esvazia o separador de registo em memória e trunca o ficheiro de registo no disco. A ação não pode ser desfeita."
+emergency_reset_body = "A reposição de emergência irá:\n\n• Remover todos os filtros WFP instalados pelo amwall\n• Esvaziar o Perfil de Aplicações e a lista de Regras do utilizador\n• Desativar Ativar filtros\n\nUtilize isto se o amwall estiver a bloquear algo que não consegue identificar e precisar de repor o comportamento de rede predefinido do sistema. A alteração é imediata. Continuar?"
+allow_one_body = "%{name} está bloqueado de momento. Permitir fará com que aceda à rede na próxima tentativa.\n\nContinuar?"
+allow_many_body = "%{count} aplicações anteriormente bloqueadas serão definidas como Permitidas. Acederão à rede na próxima tentativa.\n\nContinuar?"
+blocked_notification = "Bloqueado: %{app}"
+
+# --- Menu de contexto ---
+[context]
+allow = "Permitir"
+block = "Bloquear"
+copy_details = "&Copiar detalhes"
+properties = "Propriedades\tEnter"
+remove_from_profile = "Remover do perfil\tDel"
+explore = "Explorar (abrir pasta)\tCtrl+E"
+copy = "Copiar nome\tCtrl+C"
+
+# --- Menu do tabuleiro ---
+[tray]
+show = "Mostrar amwall"
+enable_filters = "Ativar filtros"
+disable_filters = "Desativar filtros"
+settings = "Definições..."
+exit = "Sair do amwall"
+
+# --- Assistente de primeira execução ---
+[wizard]
+title = "Boas-vindas ao amwall"
+subtitle = "Importar configuração do simplewall?"
+import_btn = "Importar"
+start_fresh_btn = "Começar de raiz"
+body = """O amwall encontrou uma configuração existente do simplewall:
+
+• Caminho: %{path}
+• %{apps} aplicação(ões) com regras
+• %{rules} regra(s) personalizada(s)
+
+A importação copia o profile.xml do simplewall para o amwall e utiliza-o como ponto de partida. O simplewall permanece instalado e os seus filtros de kernel existentes continuam ativos — desative o simplewall antes de clicar em \"Ativar filtros\" no amwall para evitar que ambas as firewalls apliquem regras sobrepostas.
+
+Pode executar Ficheiro → Importar mais tarde, caso queira saltar agora."""
+
+# --- Separadores do diálogo de Definições ---
+[settings_tab]
+general = "Geral"
+interface = "Interface"
+highlighting = "Destaque"
+rules = "Regras"
+blocklist = "Lista de bloqueio"
+notifications = "Notificações"
+logging = "Registo"
+exclude = "Excluir"
+
+# --- Separadores do editor de regras ---
+[rule_editor]
+general = "Geral"
+rule = "Regra"
+apps = "Aplicações"
+
+# --- Rótulos de protocolo ---
+[protocol]
+any = "Qualquer"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Rótulos de família de endereço ---
+[version]
+any = "Qualquer"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Rótulos de direção ---
+[direction]
+outbound = "Saída"
+inbound = "Entrada"
+both = "Ambos"
+other = "Outro"
+
+# --- Rótulos de ação ---
+[action]
+allow = "Permitir"
+block = "Bloquear"
+permit = "Autorizar"
+
+# --- Página de definições: Geral ---
+[rc_general]
+group_config = "Configuração geral"
+always_on_top = "Sempre no topo"
+load_on_startup = "Carregar no arranque do sistema"
+start_minimized = "Iniciar minimizado"
+skip_uac = "Ignorar aviso do \"Controlo de Conta de Utilizador\""
+check_updates = "Verificar atualizações periodicamente (recomendado)"
+group_language = "Idioma"
+select_language = "Selecionar idioma:"
+
+# --- Página de definições: Interface ---
+[rc_interface]
+group_confirm = "Confirmações"
+confirm_exit = "Mostrar diálogo de confirmação ao sair"
+confirm_exit_timer = "Mostrar diálogo de confirmação ao sair com temporizadores ativos"
+confirm_log_clear = "Confirmar ao limpar o ficheiro de registo"
+confirm_allow = "Confirmar ao permitir tráfego anteriormente bloqueado"
+group_tray = "Ícone do tabuleiro"
+tray_single_click = "Clique simples no ícone do tabuleiro para abrir"
+
+# --- Página de definições: Destaque ---
+[rc_highlight]
+group = "Destaque"
+hint = "Faça duplo clique num item para o alterar."
+
+# --- Página de definições: Regras ---
+[rc_rules]
+group_connections = "Ligações"
+block_outbound = "Bloquear ligações de saída para todos"
+block_inbound = "Bloquear ligações de entrada para todos"
+allow_loopback = "Permitir ligações loopback para todos"
+allow_6to4 = "Permitir redirecionamentos IPv6 (6to4) para todos"
+group_security = "Segurança"
+stealth_mode = "Impedir varrimento de portas (modo furtivo)"
+boottime_filters = "Ativar filtros no arranque do sistema"
+group_advanced = "Avançado"
+check_signatures = "Verificar assinaturas digitais das aplicações"
+use_hashes = "Utilizar hashes de ficheiro para identificação de aplicações"
+resolve_addresses = "Resolver endereços de rede"
+
+# --- Página de definições: Blocklist ---
+[rc_blocklist]
+group_spy = "Espionagem e telemetria da Microsoft"
+group_update = "Microsoft Update"
+group_apps = "Aplicações da Microsoft"
+
+# --- Página de definições: Notificações ---
+[rc_notifications]
+group = "Notificações"
+enable = "Ativar notificações de pacotes"
+sound = "Ativar som de notificações"
+fullscreen = "Ativar modo silencioso com aplicação em ecrã inteiro"
+on_tray = "Mostrar janela de notificação no tabuleiro"
+timeout = "Tempo entre notificações semelhantes (seg.):"
+
+# --- Página de definições: Registo ---
+[rc_logging]
+group_log = "Registo de pacotes"
+enable = "Ativar registo de pacotes num ficheiro"
+max_size = "Tamanho máximo do registo (kB):"
+group_viewer = "Visualizador de registo"
+group_ui = "Interface"
+enable_ui = "Ativar registo de pacotes na interface"
+
+# --- Página de definições: Excluir ---
+[rc_exclude]
+group_notif = "Notificações: não notificar sobre ..."
+blocklist = "lista de bloqueio"
+user_rules = "regras do utilizador"
+group_log = "Registo: não registar ..."
+stealth = "ligações de varrimento de portas"
+allowed = "ligações permitidas"
+
+# --- Diálogo de propriedades da aplicação ---
+[rc_properties]
+title = "Propriedades da aplicação"
+path = "Caminho:"
+comment = "Comentário:"
+group_settings = "Definições:"
+enabled = "Ativado (permitir tráfego desta aplicação)"
+silent = "Silencioso (sem notificações)"
+save = "Guardar"
+close = "Fechar"
+
+# --- Diálogo de pedido de ligação ---
+[rc_prompt]
+title = "amwall - pedido de ligação de aplicação"
+header = "Uma aplicação está a tentar ligar-se:"
+question = "Permitir o tráfego desta aplicação ou mantê-la bloqueada?"
+allow = "Permitir"
+block = "Bloquear"
+
+# --- Diálogo do editor de regras ---
+[rc_editor]
+add_rule_title = "Entrada de regra"
+save = "Guardar"
+close = "Fechar"
+
+# --- Filtros de diálogo de ficheiro ---
+[filter]
+xml_profile = "Perfil XML (*.xml)"
+all_files = "Todos os ficheiros (*.*)"
+executable = "Executável (*.exe)"

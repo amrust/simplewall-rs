@@ -1,0 +1,396 @@
+# amwall — 한국어 로케일 파일.
+# en.toml에서 번역. 모든 TOML 키와 %{variable} 자리 표시자는 그대로 유지.
+
+# --- 메뉴 모음 제목 ---
+[menu]
+file = "파일"
+edit = "편집"
+view = "보기"
+settings = "설정"
+rules = "규칙"
+blocklist = "차단 목록"
+help = "도움말"
+
+# --- 파일 메뉴 항목 ---
+[file]
+settings = "설정\tCtrl+P"
+add_app = "앱 추가…\tCtrl+O"
+import = "가져오기…"
+export = "내보내기…"
+exit = "종료"
+
+# --- 편집 메뉴 항목 ---
+[edit]
+purge_unused = "미사용 앱 제거"
+purge_timers = "타이머 제거"
+clear_log = "로그 지우기"
+refresh = "새로 고침\tF5"
+
+# --- 보기 메뉴 항목 ---
+[view]
+always_on_top = "항상 위에 표시"
+dark_theme = "어두운 테마 사용"
+autosize_columns = "열 너비 자동 조정"
+filenames_only = "파일 이름만 표시"
+show_search = "검색 표시줄 표시"
+layout_details = "레이아웃: 자세히"
+layout_icons = "레이아웃: 아이콘"
+layout_tiles = "레이아웃: 타일"
+icon_small = "아이콘 크기: 작게"
+icon_large = "아이콘 크기: 크게"
+icon_extralarge = "아이콘 크기: 매우 크게"
+font = "글꼴…"
+
+# --- 설정 메뉴 항목 ---
+[settings]
+load_on_startup = "시스템 시작 시 로드"
+start_minimized = "최소화 상태로 시작"
+skip_uac = "UAC 경고 건너뛰기"
+check_updates = "업데이트 확인"
+auto_allow_microsoft = "Microsoft 서명 프로그램 자동 허용"
+check_signatures = "앱의 디지털 서명 확인"
+check_hashes = "앱의 SHA-256 해시 확인"
+
+# --- 규칙 하위 메뉴 ---
+[rules]
+block_outbound = "모든 아웃바운드 차단"
+block_inbound = "모든 인바운드 차단"
+allow_loopback = "loopback 허용"
+allow_6to4 = "IPv6 (6to4) 허용"
+allow_windows_update = "Windows Update 허용"
+
+# --- 차단 목록 하위 메뉴 ---
+[blocklist]
+disable = "비활성화"
+allow = "허용"
+block = "차단"
+spy_telemetry = "Microsoft 스파이웨어 및 원격 측정"
+ms_update = "Microsoft Update"
+ms_apps = "Microsoft 응용 프로그램"
+
+# --- 도움말 메뉴 항목 ---
+[help]
+website = "웹사이트"
+check_updates = "업데이트 확인"
+about = "정보"
+emergency_reset = "긴급 WFP 초기화..."
+
+# --- 탭 레이블 ---
+[tab]
+apps = "앱"
+services = "서비스"
+uwp = "UWP 앱"
+blocklist = "차단 목록"
+system_rules = "시스템 규칙"
+user_rules = "사용자 규칙"
+connections = "연결"
+packets_log = "패킷 로그"
+
+# --- 열 머리글 ---
+[column]
+name = "이름"
+added = "추가됨"
+path = "경로"
+date = "날짜"
+protocol = "프로토콜"
+direction = "방향"
+address_src = "주소 (출발지)"
+host_src = "호스트 (출발지)"
+port_src = "포트 (출발지)"
+address_dst = "주소 (목적지)"
+host_dst = "호스트 (목적지)"
+port_dst = "포트 (목적지)"
+state = "상태"
+filter = "필터"
+index = "#"
+
+# --- 그룹 머리글 ---
+[group]
+blocked = "차단됨"
+blocked_silent = "차단됨 (무음)"
+timer = "타이머"
+special = "특수 앱"
+allowed = "허용됨"
+enabled = "활성화됨"
+disabled = "비활성화됨"
+
+# --- 도구 모음 도구 설명 ---
+[tooltip]
+enable_filters = "필터 활성화 (Ctrl+T)"
+new_rule = "새 사용자 규칙 만들기"
+enable_notifications = "차단된 트래픽에 대한 알림 활성화"
+enable_log = "차단된 트래픽을 파일에 기록"
+enable_ui_log = "UI에 패킷 로그 표시"
+reload = "디스크에서 프로필 다시 로드 (F5)"
+open_settings = "설정 열기"
+open_log_file = "패킷 로그 파일 열기"
+clear_log = "패킷 로그 지우기"
+open_releases = "GitHub 릴리스 페이지 열기"
+
+# --- 도구 모음 버튼 레이블 ---
+[toolbar]
+enable_filters = "필터 활성화"
+disable_filters = "필터 비활성화"
+
+# --- 상태 표시줄 메시지 ---
+[status]
+filters_enabled = "필터가 활성화되었습니다."
+filters_disabled = "필터가 비활성화되었습니다."
+imported_simplewall = "simplewall 프로필을 가져왔습니다."
+checking_updates = "업데이트 확인 중..."
+up_to_date = "최신 상태입니다."
+update_check_failed = "업데이트 확인에 실패했습니다."
+nothing_to_remove = "프로필에서 제거할 항목이 없습니다."
+engine_failed = "WFP 엔진을 열 수 없습니다."
+uninstall_failed = "필터 제거에 실패했습니다."
+install_failed = "필터 설치에 실패했습니다."
+app_exists = "앱이 이미 프로필에 있습니다."
+app_added = "앱이 추가되었습니다."
+rule_added = "규칙이 추가되었습니다."
+rule_updated = "규칙이 업데이트되었습니다."
+rule_deleted = "규칙이 삭제되었습니다."
+autosave_failed = "자동 저장에 실패했습니다."
+import_read_error = "가져오기 실패: 읽기 오류."
+import_parse_error = "가져오기 실패: 구문 분석 오류."
+imported = "가져왔습니다."
+export_write_error = "내보내기 실패: 쓰기 오류."
+exported = "내보냈습니다."
+refresh_read_error = "새로 고침 실패: 읽기 오류."
+refresh_parse_error = "새로 고침 실패: 구문 분석 오류."
+profile_reloaded = "프로필을 다시 로드했습니다."
+no_unused = "제거할 미사용 앱이 없습니다."
+no_timers = "활성 타이머가 없습니다."
+log_cleared = "로그를 지웠습니다."
+font_failed = "글꼴 로드에 실패하여 되돌렸습니다."
+font_updated = "글꼴이 업데이트되었습니다."
+emergency_done = "긴급 초기화가 완료되었습니다."
+auto_allowed_one = "Microsoft 서명 앱 1개를 자동 허용했습니다"
+auto_allowed_many = "Microsoft 서명 앱 %{count}개를 자동 허용했습니다"
+silenced = "무음 처리: %{name}"
+allowed_count = "허용됨: %{name}"
+connecting = "%{remote}에 연결 중"
+removed_entries = "프로필에서 %{count}개 항목을 제거했습니다."
+purged_apps = "미사용 앱 %{count}개를 제거했습니다."
+cleared_timers = "앱 타이머 %{count}개를 지웠습니다."
+skip_uac_enabled = "UAC 건너뛰기: 활성화됨. 향후 관리자 사용자의 실행 시 UAC가 표시되지 않습니다."
+skip_uac_disabled = "UAC 건너뛰기: 비활성화됨. 향후 관리자 작업 시 UAC가 표시됩니다."
+hash_drift_one = "해시 변경: %{name}"
+hash_drift_many = "%{count}개 앱에서 해시가 변경되었습니다 (로그 참조)"
+filters_removed = "%{filters}개 필터를 제거하고 %{sublayers}개 하위 계층을 지웠습니다."
+filters_installed = "%{added}개 필터를 설치하고 %{skipped}개를 건너뛰었습니다."
+tray_blocked = "amwall - 차단됨: %{name}"
+
+# --- 대화 상자 제목 ---
+[dialog]
+update_available = "amwall - 업데이트 사용 가능"
+check_updates = "amwall - 업데이트 확인"
+confirm_bulk_delete = "일괄 삭제 확인"
+admin_required = "관리자 권한 필요"
+delete_rule = "규칙 삭제"
+exit = "amwall을 종료하시겠습니까?"
+clear_log = "로그 지우기"
+allow_blocked = "이전에 차단된 트래픽을 허용하시겠습니까?"
+emergency_reset = "긴급 WFP 초기화"
+about_title = "amwall 정보"
+about_app = "amwall"
+settings_title = "설정"
+properties_signed = "amwall - 속성 (서명자: %{signer})"
+
+# --- 대화 상자 본문 메시지 ---
+[message]
+update_available_body = "amwall %{latest}을(를) 사용할 수 있습니다 (현재 %{current} 실행 중).\n\n브라우저에서 릴리스 페이지를 여시겠습니까?"
+update_uptodate_body = "현재 버전: %{current}\n최신 버전: %{latest}\n\n이미 최신 상태입니다."
+update_error_body = "GitHub에 연결하여 업데이트를 확인할 수 없습니다.\n\n가능한 원인: 인터넷 연결 없음, 방화벽이 amwall의 아웃바운드 HTTPS를 차단, 또는 GitHub API 속도 제한 (시간당 익명 요청 60회). 나중에 다시 시도하세요."
+admin_required_body = "필터 관리에는 관리자 권한이 필요합니다.\n\namwall을 닫고 관리자 권한 터미널에서 다시 실행하세요\n(마우스 오른쪽 버튼 → \"관리자 권한으로 실행\")."
+delete_rule_confirm = "규칙 \"%{name}\"을(를) 삭제하시겠습니까?"
+bulk_delete_confirm = "프로필에서 %{count}개 항목을 제거하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다."
+exit_body = "필터가 현재 활성화되어 있습니다. amwall을 종료해도 필터는 유지됩니다 (프로세스 종료 후에도 유효). 계속하시겠습니까?"
+clear_log_body = "패킷 로그를 지우시겠습니까? 메모리의 로그 탭이 비워지고 디스크의 로그 파일이 잘립니다. 이 작업은 되돌릴 수 없습니다."
+emergency_reset_body = "긴급 초기화는 다음을 수행합니다:\n\n• amwall이 설치한 모든 WFP 필터 제거\n• 앱 프로필 및 사용자 규칙 목록 비우기\n• 필터 활성화 해제\n\namwall이 식별할 수 없는 것을 차단하고 있어 OS 기본 네트워크 동작을 복원해야 할 때 사용하세요. 변경 사항은 즉시 적용됩니다. 계속하시겠습니까?"
+allow_one_body = "%{name}이(가) 현재 차단되어 있습니다. 허용하면 다음 시도 시 네트워크에 접근할 수 있습니다.\n\n계속하시겠습니까?"
+allow_many_body = "이전에 차단된 %{count}개 앱이 허용으로 설정됩니다. 다음 시도 시 네트워크에 접근할 수 있습니다.\n\n계속하시겠습니까?"
+blocked_notification = "차단됨: %{app}"
+
+# --- 컨텍스트 메뉴 ---
+[context]
+allow = "허용"
+block = "차단"
+copy_details = "세부 정보 복사"
+properties = "속성\tEnter"
+remove_from_profile = "프로필에서 제거\tDel"
+explore = "폴더 열기\tCtrl+E"
+copy = "이름 복사\tCtrl+C"
+
+# --- 트레이 메뉴 ---
+[tray]
+show = "amwall 표시"
+enable_filters = "필터 활성화"
+disable_filters = "필터 비활성화"
+settings = "설정..."
+exit = "amwall 종료"
+
+# --- 첫 실행 마법사 ---
+[wizard]
+title = "amwall에 오신 것을 환영합니다"
+subtitle = "simplewall 설정을 가져오시겠습니까?"
+import_btn = "가져오기"
+start_fresh_btn = "새로 시작"
+body = """amwall이 기존 simplewall 설정을 발견했습니다:
+
+• 경로: %{path}
+• %{apps}개 앱 및 규칙
+• %{rules}개 사용자 지정 규칙
+
+가져오기는 simplewall의 profile.xml을 amwall로 복사하여 시작점으로 사용합니다. simplewall은 설치된 상태로 유지되며 기존 커널 필터도 활성 상태입니다. 규칙이 중복 적용되지 않도록 amwall에서 "필터 활성화"를 클릭하기 전에 simplewall을 비활성화하세요.
+
+지금 건너뛰어도 나중에 파일 → 가져오기에서 실행할 수 있습니다."""
+
+# --- 설정 대화 상자 탭 ---
+[settings_tab]
+general = "일반"
+interface = "인터페이스"
+highlighting = "강조 표시"
+rules = "규칙"
+blocklist = "차단 목록"
+notifications = "알림"
+logging = "로그 기록"
+exclude = "제외"
+
+# --- 규칙 편집기 탭 ---
+[rule_editor]
+general = "일반"
+rule = "규칙"
+apps = "앱"
+
+# --- 프로토콜 레이블 ---
+[protocol]
+any = "모두"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- 주소 체계 레이블 ---
+[version]
+any = "모두"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- 방향 레이블 ---
+[direction]
+outbound = "아웃바운드"
+inbound = "인바운드"
+both = "양방향"
+other = "기타"
+
+# --- 동작 레이블 ---
+[action]
+allow = "허용"
+block = "차단"
+permit = "승인"
+
+# --- 설정 페이지: 일반 ---
+[rc_general]
+group_config = "일반 설정"
+always_on_top = "항상 위에 표시"
+load_on_startup = "시스템 시작 시 로드"
+start_minimized = "최소화 상태로 시작"
+skip_uac = "\"사용자 계정 컨트롤\" 프롬프트 경고 건너뛰기"
+check_updates = "정기적으로 업데이트 확인 (권장)"
+group_language = "언어"
+select_language = "언어 선택:"
+
+# --- 설정 페이지: 인터페이스 ---
+[rc_interface]
+group_confirm = "확인"
+confirm_exit = "종료 시 확인 대화 상자 표시"
+confirm_exit_timer = "타이머 활성 시 종료 확인 대화 상자 표시"
+confirm_log_clear = "로그 파일 지우기 시 확인"
+confirm_allow = "이전에 차단된 트래픽 허용 시 확인"
+group_tray = "트레이 아이콘"
+tray_single_click = "트레이 아이콘 한 번 클릭으로 열기"
+
+# --- 설정 페이지: 강조 표시 ---
+[rc_highlight]
+group = "강조 표시"
+hint = "항목을 두 번 클릭하여 변경합니다."
+
+# --- 설정 페이지: 규칙 ---
+[rc_rules]
+group_connections = "연결"
+block_outbound = "모든 아웃바운드 연결 차단"
+block_inbound = "모든 인바운드 연결 차단"
+allow_loopback = "모든 loopback 연결 허용"
+allow_6to4 = "모든 IPv6 리디렉션 (6to4) 허용"
+group_security = "보안"
+stealth_mode = "포트 스캔 방지 (스텔스 모드)"
+boottime_filters = "부팅 시 필터 활성화"
+group_advanced = "고급"
+check_signatures = "앱의 디지털 서명 확인"
+use_hashes = "파일 해시로 앱 식별"
+resolve_addresses = "네트워크 주소 확인"
+
+# --- 설정 페이지: 차단 목록 ---
+[rc_blocklist]
+group_spy = "Microsoft 스파이웨어 및 원격 측정"
+group_update = "Microsoft Update"
+group_apps = "Microsoft 응용 프로그램"
+
+# --- 설정 페이지: 알림 ---
+[rc_notifications]
+group = "알림"
+enable = "패킷 알림 활성화"
+sound = "알림 소리 활성화"
+fullscreen = "전체 화면 앱이 전경에 있을 때 무음 모드 활성화"
+on_tray = "트레이에 알림 창 표시"
+timeout = "유사 알림 간 시간 초과 (초):"
+
+# --- 설정 페이지: 로그 기록 ---
+[rc_logging]
+group_log = "패킷 로그"
+enable = "패킷을 파일에 기록 활성화"
+max_size = "최대 로그 크기 (kB):"
+group_viewer = "로그 뷰어"
+group_ui = "인터페이스"
+enable_ui = "UI에서 패킷 기록 활성화"
+
+# --- 설정 페이지: 제외 ---
+[rc_exclude]
+group_notif = "알림: 다음에 대해 알리지 않음..."
+blocklist = "차단 목록"
+user_rules = "사용자 규칙"
+group_log = "로그 기록: 다음을 기록하지 않음..."
+stealth = "포트 스캐너 연결"
+allowed = "허용된 연결"
+
+# --- 앱 속성 대화 상자 ---
+[rc_properties]
+title = "앱 속성"
+path = "경로:"
+comment = "설명:"
+group_settings = "설정:"
+enabled = "활성화됨 (이 앱의 트래픽 허용)"
+silent = "무음 (알림 없음)"
+save = "저장"
+close = "닫기"
+
+# --- 연결 프롬프트 대화 상자 ---
+[rc_prompt]
+title = "amwall - 응용 프로그램 연결 요청"
+header = "응용 프로그램이 연결을 시도하고 있습니다:"
+question = "이 앱의 트래픽을 허용하시겠습니까, 아니면 차단 상태를 유지하시겠습니까?"
+allow = "허용"
+block = "차단"
+
+# --- 규칙 편집기 대화 상자 ---
+[rc_editor]
+add_rule_title = "규칙 입력"
+save = "저장"
+close = "닫기"
+
+# --- 파일 대화 상자 필터 ---
+[filter]
+xml_profile = "XML 프로필 (*.xml)"
+all_files = "모든 파일 (*.*)"
+executable = "실행 파일 (*.exe)"

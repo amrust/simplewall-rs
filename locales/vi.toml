@@ -1,0 +1,396 @@
+# amwall — Bản dịch tiếng Việt.
+# Sao chép từ en.toml và dịch tất cả các giá trị sang tiếng Việt.
+
+# --- Tiêu đề thanh menu ---
+[menu]
+file = "&Tệp"
+edit = "&Chỉnh sửa"
+view = "&Xem"
+settings = "&Cài đặt"
+rules = "&Quy tắc"
+blocklist = "Danh sách &chặn"
+help = "Trợ &giúp"
+
+# --- Mục menu Tệp ---
+[file]
+settings = "&Cài đặt\tCtrl+P"
+add_app = "&Thêm ứng dụng…\tCtrl+O"
+import = "&Nhập…"
+export = "&Xuất…"
+exit = "T&hoát"
+
+# --- Mục menu Chỉnh sửa ---
+[edit]
+purge_unused = "Xóa ứng dụng &không dùng"
+purge_timers = "Xóa bộ hẹn &giờ"
+clear_log = "&Xóa nhật ký"
+refresh = "&Làm mới\tF5"
+
+# --- Mục menu Xem ---
+[view]
+always_on_top = "Luôn ở &trên cùng"
+dark_theme = "Giao diện &tối"
+autosize_columns = "Tự &động chỉnh cột"
+filenames_only = "Chỉ hiển thị &tên tệp"
+show_search = "Hiển thị thanh tìm &kiếm"
+layout_details = "Bố cục: &Chi tiết"
+layout_icons = "Bố cục: B&iểu tượng"
+layout_tiles = "Bố cục: &Ô xếp"
+icon_small = "Cỡ biểu tượng: &Nhỏ"
+icon_large = "Cỡ biểu tượng: &Lớn"
+icon_extralarge = "Cỡ biểu tượng: Rất &lớn"
+font = "&Phông chữ…"
+
+# --- Mục menu Cài đặt ---
+[settings]
+load_on_startup = "&Khởi động cùng hệ thống"
+start_minimized = "Khởi động ở chế độ thu &nhỏ"
+skip_uac = "Bỏ qua cảnh báo UAC"
+check_updates = "Kiểm tra &cập nhật"
+auto_allow_microsoft = "Tự động cho phép chương trình có chữ ký &Microsoft"
+check_signatures = "Kiểm tra chữ ký &số của ứng dụng"
+check_hashes = "Kiểm tra &hash SHA-256 của ứng dụng"
+
+# --- Menu phụ Quy tắc ---
+[rules]
+block_outbound = "Chặn kết nối &ra cho tất cả"
+block_inbound = "Chặn kết nối &vào cho tất cả"
+allow_loopback = "Cho phép &loopback"
+allow_6to4 = "Cho phép IPv6 (&6to4)"
+allow_windows_update = "Cho phép &Windows Update"
+
+# --- Menu phụ Danh sách chặn ---
+[blocklist]
+disable = "&Tắt"
+allow = "&Cho phép"
+block = "C&hặn"
+spy_telemetry = "&Gián điệp và đo từ xa của Microsoft"
+ms_update = "&Cập nhật Microsoft"
+ms_apps = "Ứng &dụng Microsoft"
+
+# --- Mục menu Trợ giúp ---
+[help]
+website = "&Trang web"
+check_updates = "&Kiểm tra cập nhật"
+about = "&Giới thiệu"
+emergency_reset = "&Đặt lại WFP khẩn cấp..."
+
+# --- Nhãn tab ---
+[tab]
+apps = "Ứng dụng"
+services = "Dịch vụ"
+uwp = "Ứng dụng UWP"
+blocklist = "Danh sách chặn"
+system_rules = "Quy tắc hệ thống"
+user_rules = "Quy tắc người dùng"
+connections = "Kết nối"
+packets_log = "Nhật ký gói tin"
+
+# --- Tiêu đề cột ---
+[column]
+name = "Tên"
+added = "Đã thêm"
+path = "Đường dẫn"
+date = "Ngày"
+protocol = "Giao thức"
+direction = "Hướng"
+address_src = "Địa chỉ (Nguồn)"
+host_src = "Máy chủ (Nguồn)"
+port_src = "Cổng (Nguồn)"
+address_dst = "Địa chỉ (Đích)"
+host_dst = "Máy chủ (Đích)"
+port_dst = "Cổng (Đích)"
+state = "Trạng thái"
+filter = "Bộ lọc"
+index = "#"
+
+# --- Tiêu đề nhóm ---
+[group]
+blocked = "Bị chặn"
+blocked_silent = "Bị chặn (im lặng)"
+timer = "Hẹn giờ"
+special = "Ứng dụng đặc biệt"
+allowed = "Được phép"
+enabled = "Bật"
+disabled = "Tắt"
+
+# --- Chú giải thanh công cụ ---
+[tooltip]
+enable_filters = "Bật bộ lọc (Ctrl+T)"
+new_rule = "Tạo quy tắc người dùng mới"
+enable_notifications = "Bật thông báo cho lưu lượng bị chặn"
+enable_log = "Ghi nhật ký lưu lượng bị chặn ra tệp"
+enable_ui_log = "Hiển thị nhật ký gói tin trong giao diện"
+reload = "Tải lại hồ sơ từ đĩa (F5)"
+open_settings = "Mở Cài đặt"
+open_log_file = "Mở tệp nhật ký gói tin"
+clear_log = "Xóa nhật ký gói tin"
+open_releases = "Mở trang phát hành trên GitHub"
+
+# --- Nhãn nút thanh công cụ ---
+[toolbar]
+enable_filters = "Bật bộ lọc"
+disable_filters = "Tắt bộ lọc"
+
+# --- Thông báo thanh trạng thái ---
+[status]
+filters_enabled = "Bộ lọc đã được bật."
+filters_disabled = "Bộ lọc đã được tắt."
+imported_simplewall = "Đã nhập hồ sơ simplewall."
+checking_updates = "Đang kiểm tra cập nhật..."
+up_to_date = "Đã cập nhật."
+update_check_failed = "Kiểm tra cập nhật thất bại."
+nothing_to_remove = "Không có gì để xóa khỏi hồ sơ."
+engine_failed = "Không thể mở WFP engine."
+uninstall_failed = "Gỡ bộ lọc thất bại."
+install_failed = "Cài bộ lọc thất bại."
+app_exists = "Ứng dụng đã có trong hồ sơ."
+app_added = "Đã thêm ứng dụng."
+rule_added = "Đã thêm quy tắc."
+rule_updated = "Đã cập nhật quy tắc."
+rule_deleted = "Đã xóa quy tắc."
+autosave_failed = "Tự động lưu thất bại."
+import_read_error = "Nhập thất bại: lỗi đọc."
+import_parse_error = "Nhập thất bại: lỗi phân tích."
+imported = "Đã nhập."
+export_write_error = "Xuất thất bại: lỗi ghi."
+exported = "Đã xuất."
+refresh_read_error = "Làm mới thất bại: lỗi đọc."
+refresh_parse_error = "Làm mới thất bại: lỗi phân tích."
+profile_reloaded = "Đã tải lại hồ sơ."
+no_unused = "Không có ứng dụng không dùng để xóa."
+no_timers = "Không có bộ hẹn giờ đang hoạt động."
+log_cleared = "Đã xóa nhật ký."
+font_failed = "Tải phông chữ thất bại; đã hoàn tác."
+font_updated = "Đã cập nhật phông chữ."
+emergency_done = "Đặt lại khẩn cấp hoàn tất."
+auto_allowed_one = "Đã tự động cho phép 1 ứng dụng có chữ ký Microsoft"
+auto_allowed_many = "Đã tự động cho phép %{count} ứng dụng có chữ ký Microsoft"
+silenced = "Đã tắt tiếng: %{name}"
+allowed_count = "Đã cho phép: %{name}"
+connecting = "Đang kết nối đến %{remote}"
+removed_entries = "Đã xóa %{count} mục khỏi hồ sơ."
+purged_apps = "Đã xóa %{count} ứng dụng không dùng."
+cleared_timers = "Đã xóa %{count} bộ hẹn giờ."
+skip_uac_enabled = "Bỏ qua UAC: đã bật. Các lần khởi chạy sau sẽ không hiện UAC cho người dùng quản trị."
+skip_uac_disabled = "Bỏ qua UAC: đã tắt. Các lần khởi chạy sau sẽ hiện UAC cho thao tác quản trị."
+hash_drift_one = "Thay đổi hash: %{name}"
+hash_drift_many = "Thay đổi hash trên %{count} ứng dụng (xem nhật ký)"
+filters_removed = "Đã gỡ %{filters} bộ lọc, đã xóa %{sublayers} lớp phụ."
+filters_installed = "Đã cài %{added} bộ lọc, bỏ qua %{skipped}."
+tray_blocked = "amwall - đã chặn: %{name}"
+
+# --- Tiêu đề hộp thoại ---
+[dialog]
+update_available = "amwall - có bản cập nhật"
+check_updates = "amwall - Kiểm tra cập nhật"
+confirm_bulk_delete = "Xác nhận xóa hàng loạt"
+admin_required = "Yêu cầu quyền Quản trị viên"
+delete_rule = "Xóa quy tắc"
+exit = "Thoát amwall?"
+clear_log = "Xóa nhật ký"
+allow_blocked = "Cho phép lưu lượng đã bị chặn?"
+emergency_reset = "Đặt lại WFP khẩn cấp"
+about_title = "Giới thiệu amwall"
+about_app = "amwall"
+settings_title = "Cài đặt"
+properties_signed = "amwall - Thuộc tính (ký bởi %{signer})"
+
+# --- Nội dung hộp thoại ---
+[message]
+update_available_body = "amwall %{latest} đã có sẵn (bạn đang dùng %{current}).\n\nMở trang phát hành trong trình duyệt?"
+update_uptodate_body = "Phiên bản hiện tại: %{current}\nPhiên bản mới nhất: %{latest}\n\nĐã cập nhật rồi."
+update_error_body = "Không thể kết nối GitHub để kiểm tra cập nhật.\n\nNguyên nhân có thể: không có internet, tường lửa chặn amwall kết nối HTTPS ra ngoài, hoặc giới hạn tốc độ API của GitHub (60 yêu cầu ẩn danh mỗi giờ). Hãy thử lại sau."
+admin_required_body = "Quản lý bộ lọc yêu cầu quyền Quản trị viên.\n\nĐóng amwall và khởi chạy lại từ cửa sổ lệnh nâng cao\n(nhấp chuột phải → \"Chạy với tư cách quản trị viên\")."
+delete_rule_confirm = "Xóa quy tắc \"%{name}\"?"
+bulk_delete_confirm = "Xóa %{count} mục khỏi hồ sơ?\n\nThao tác này không thể hoàn tác."
+exit_body = "Bộ lọc hiện đang bật. Thoát amwall sẽ giữ nguyên chúng (chúng vẫn hoạt động sau khi thoát). Tiếp tục?"
+clear_log_body = "Xóa nhật ký gói tin? Thao tác này sẽ xóa nhật ký trong bộ nhớ và cắt bớt tệp nhật ký trên đĩa. Không thể hoàn tác."
+emergency_reset_body = "Đặt lại khẩn cấp sẽ:\n\n• Xóa mọi bộ lọc WFP mà amwall đã cài\n• Làm trống danh sách Hồ sơ ứng dụng và Quy tắc người dùng\n• Tắt Bật bộ lọc\n\nSử dụng khi amwall đang chặn thứ gì đó bạn không thể xác định và bạn cần khôi phục hành vi mạng mặc định của hệ điều hành. Thay đổi có hiệu lực ngay. Tiếp tục?"
+allow_one_body = "%{name} hiện đang bị chặn. Cho phép sẽ để ứng dụng truy cập mạng lần tới.\n\nTiếp tục?"
+allow_many_body = "%{count} ứng dụng đã bị chặn sẽ được chuyển sang Cho phép. Chúng sẽ truy cập mạng lần tới.\n\nTiếp tục?"
+blocked_notification = "Đã chặn: %{app}"
+
+# --- Menu ngữ cảnh ---
+[context]
+allow = "Cho phép"
+block = "Chặn"
+copy_details = "&Sao chép chi tiết"
+properties = "Thuộc tính\tEnter"
+remove_from_profile = "Xóa khỏi hồ sơ\tDel"
+explore = "Mở thư mục\tCtrl+E"
+copy = "Sao chép tên\tCtrl+C"
+
+# --- Menu khay hệ thống ---
+[tray]
+show = "Hiện amwall"
+enable_filters = "Bật bộ lọc"
+disable_filters = "Tắt bộ lọc"
+settings = "Cài đặt..."
+exit = "Thoát amwall"
+
+# --- Trình hướng dẫn lần đầu ---
+[wizard]
+title = "Chào mừng đến amwall"
+subtitle = "Nhập cấu hình simplewall?"
+import_btn = "Nhập"
+start_fresh_btn = "Bắt đầu mới"
+body = """amwall tìm thấy cấu hình simplewall hiện có:
+
+• Đường dẫn: %{path}
+• %{apps} ứng dụng có quy tắc
+• %{rules} quy tắc tùy chỉnh
+
+Nhập sẽ sao chép profile.xml của simplewall sang amwall và sử dụng làm điểm bắt đầu. simplewall vẫn được cài và các bộ lọc kernel hiện có vẫn hoạt động — tắt simplewall trước khi nhấn "Bật bộ lọc" trong amwall để tránh hai tường lửa áp dụng quy tắc chồng chéo.
+
+Bạn có thể chạy Tệp → Nhập sau nếu bỏ qua bây giờ."""
+
+# --- Tab hộp thoại Cài đặt ---
+[settings_tab]
+general = "Chung"
+interface = "Giao diện"
+highlighting = "Tô sáng"
+rules = "Quy tắc"
+blocklist = "Danh sách chặn"
+notifications = "Thông báo"
+logging = "Ghi nhật ký"
+exclude = "Loại trừ"
+
+# --- Tab trình biên tập quy tắc ---
+[rule_editor]
+general = "Chung"
+rule = "Quy tắc"
+apps = "Ứng dụng"
+
+# --- Nhãn giao thức ---
+[protocol]
+any = "Bất kỳ"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Nhãn họ địa chỉ ---
+[version]
+any = "Bất kỳ"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Nhãn hướng ---
+[direction]
+outbound = "Ra ngoài"
+inbound = "Vào trong"
+both = "Cả hai"
+other = "Khác"
+
+# --- Nhãn hành động ---
+[action]
+allow = "Cho phép"
+block = "Chặn"
+permit = "Chấp nhận"
+
+# --- Trang cài đặt: Chung ---
+[rc_general]
+group_config = "Cấu hình chung"
+always_on_top = "Luôn ở trên cùng"
+load_on_startup = "Khởi động cùng hệ thống"
+start_minimized = "Khởi động ở chế độ thu nhỏ"
+skip_uac = "Bỏ qua cảnh báo \"User Account Control\""
+check_updates = "Kiểm tra cập nhật định kỳ (khuyến nghị)"
+group_language = "Ngôn ngữ"
+select_language = "Chọn ngôn ngữ:"
+
+# --- Trang cài đặt: Giao diện ---
+[rc_interface]
+group_confirm = "Xác nhận"
+confirm_exit = "Hiện hộp thoại xác nhận khi thoát"
+confirm_exit_timer = "Hiện hộp thoại xác nhận khi thoát khi có bộ hẹn giờ"
+confirm_log_clear = "Xác nhận khi xóa tệp nhật ký"
+confirm_allow = "Xác nhận khi cho phép lưu lượng đã bị chặn"
+group_tray = "Biểu tượng khay"
+tray_single_click = "Nhấp một lần vào biểu tượng khay để mở"
+
+# --- Trang cài đặt: Tô sáng ---
+[rc_highlight]
+group = "Tô sáng"
+hint = "Nhấp đúp vào một mục để thay đổi."
+
+# --- Trang cài đặt: Quy tắc ---
+[rc_rules]
+group_connections = "Kết nối"
+block_outbound = "Chặn kết nối ra cho tất cả"
+block_inbound = "Chặn kết nối vào cho tất cả"
+allow_loopback = "Cho phép kết nối loopback cho tất cả"
+allow_6to4 = "Cho phép chuyển hướng IPv6 (6to4) cho tất cả"
+group_security = "Bảo mật"
+stealth_mode = "Ngăn quét cổng (chế độ ẩn)"
+boottime_filters = "Bật bộ lọc khi khởi động"
+group_advanced = "Nâng cao"
+check_signatures = "Kiểm tra chữ ký số của ứng dụng"
+use_hashes = "Sử dụng hash tệp để nhận dạng ứng dụng"
+resolve_addresses = "Phân giải địa chỉ mạng"
+
+# --- Trang cài đặt: Danh sách chặn ---
+[rc_blocklist]
+group_spy = "Gián điệp và đo từ xa của Microsoft"
+group_update = "Cập nhật Microsoft"
+group_apps = "Ứng dụng Microsoft"
+
+# --- Trang cài đặt: Thông báo ---
+[rc_notifications]
+group = "Thông báo"
+enable = "Bật thông báo gói tin"
+sound = "Bật âm thanh thông báo"
+fullscreen = "Bật chế độ im lặng khi ứng dụng toàn màn hình ở phía trước"
+on_tray = "Hiện cửa sổ thông báo tại khay"
+timeout = "Thời gian chờ giữa các thông báo tương tự (giây):"
+
+# --- Trang cài đặt: Ghi nhật ký ---
+[rc_logging]
+group_log = "Nhật ký gói tin"
+enable = "Bật ghi nhật ký gói tin ra tệp"
+max_size = "Kích thước nhật ký tối đa (kB):"
+group_viewer = "Trình xem nhật ký"
+group_ui = "Giao diện"
+enable_ui = "Bật ghi nhật ký gói tin trong giao diện"
+
+# --- Trang cài đặt: Loại trừ ---
+[rc_exclude]
+group_notif = "Thông báo: không thông báo về ..."
+blocklist = "danh sách chặn"
+user_rules = "quy tắc người dùng"
+group_log = "Ghi nhật ký: không ghi ..."
+stealth = "kết nối quét cổng"
+allowed = "kết nối được phép"
+
+# --- Hộp thoại thuộc tính ứng dụng ---
+[rc_properties]
+title = "Thuộc tính ứng dụng"
+path = "Đường dẫn:"
+comment = "Ghi chú:"
+group_settings = "Cài đặt:"
+enabled = "Bật (cho phép lưu lượng của ứng dụng này)"
+silent = "Im lặng (không thông báo)"
+save = "Lưu"
+close = "Đóng"
+
+# --- Hộp thoại yêu cầu kết nối ---
+[rc_prompt]
+title = "amwall - yêu cầu kết nối ứng dụng"
+header = "Một ứng dụng đang cố kết nối:"
+question = "Cho phép lưu lượng của ứng dụng này, hay tiếp tục chặn?"
+allow = "Cho phép"
+block = "Chặn"
+
+# --- Hộp thoại trình biên tập quy tắc ---
+[rc_editor]
+add_rule_title = "Mục quy tắc"
+save = "Lưu"
+close = "Đóng"
+
+# --- Bộ lọc hộp thoại tệp ---
+[filter]
+xml_profile = "Hồ sơ XML (*.xml)"
+all_files = "Tất cả tệp (*.*)"
+executable = "Tệp thực thi (*.exe)"

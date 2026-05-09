@@ -1,0 +1,396 @@
+# amwall — Latviešu valoda (Latvian).
+# Tulkojuma fails, izveidots pēc en.toml struktūras.
+
+# --- Izvēlņu joslas nosaukumi ---
+[menu]
+file = "&Fails"
+edit = "&Rediģēt"
+view = "&Skats"
+settings = "&Iestatījumi"
+rules = "&Noteikumi"
+blocklist = "&Bloķēšanas saraksts"
+help = "&Palīdzība"
+
+# --- Failu izvēlnes elementi ---
+[file]
+settings = "&Iestatījumi\tCtrl+P"
+add_app = "&Pievienot programmu…\tCtrl+O"
+import = "&Importēt…"
+export = "&Eksportēt…"
+exit = "&Iziet"
+
+# --- Rediģēšanas izvēlnes elementi ---
+[edit]
+purge_unused = "Noņemt &neizmantotās programmas"
+purge_timers = "Noņemt &taimerus"
+clear_log = "&Notīrīt žurnālu"
+refresh = "&Atjaunināt\tF5"
+
+# --- Skata izvēlnes elementi ---
+[view]
+always_on_top = "Vienmēr &virspusē"
+dark_theme = "Izmantot &tumšo motīvu"
+autosize_columns = "&Automātisks kolonnu izmērs"
+filenames_only = "Rādīt tikai &failu nosaukumus"
+show_search = "Rādīt &meklēšanas joslu"
+layout_details = "Izkārtojums: &Detaļas"
+layout_icons = "Izkārtojums: &Ikonas"
+layout_tiles = "Izkārtojums: &Flīzes"
+icon_small = "Ikonu izmērs: &Mazs"
+icon_large = "Ikonu izmērs: &Liels"
+icon_extralarge = "Ikonu izmērs: Ī&paši liels"
+font = "&Fonts…"
+
+# --- Iestatījumu izvēlnes elementi ---
+[settings]
+load_on_startup = "&Ielādēt sistēmas startēšanā"
+start_minimized = "Startēt &minimizētu"
+skip_uac = "Izlaist UAC brīdinājumu"
+check_updates = "Pārbaudīt &atjauninājumus"
+auto_allow_microsoft = "Automātiski atļaut &Microsoft parakstītas programmas"
+check_signatures = "Pārbaudīt programmu digitālos &parakstus"
+check_hashes = "Pārbaudīt programmu SHA-256 &jaucējkodu"
+
+# --- Noteikumu apakšizvēlne ---
+[rules]
+block_outbound = "Bloķēt &izejošos savienojumus visiem"
+block_inbound = "Bloķēt &ienākošos savienojumus visiem"
+allow_loopback = "Atļaut &loopback"
+allow_6to4 = "Atļaut IPv6 (&6to4)"
+allow_windows_update = "Atļaut &Windows Update"
+
+# --- Bloķēšanas saraksta apakšizvēlne ---
+[blocklist]
+disable = "&Atspējot"
+allow = "&Atļaut"
+block = "&Bloķēt"
+spy_telemetry = "Microsoft &spiegošana un telemetrija"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft &programmas"
+
+# --- Palīdzības izvēlnes elementi ---
+[help]
+website = "&Vietne"
+check_updates = "&Pārbaudīt atjauninājumus"
+about = "&Par"
+emergency_reset = "&Avārijas WFP atiestatīšana..."
+
+# --- Cilņu etiķetes ---
+[tab]
+apps = "Programmas"
+services = "Pakalpojumi"
+uwp = "UWP programmas"
+blocklist = "Bloķēšanas saraksts"
+system_rules = "Sistēmas noteikumi"
+user_rules = "Lietotāja noteikumi"
+connections = "Savienojumi"
+packets_log = "Pakešu žurnāls"
+
+# --- Kolonnu virsraksti ---
+[column]
+name = "Nosaukums"
+added = "Pievienots"
+path = "Ceļš"
+date = "Datums"
+protocol = "Protokols"
+direction = "Virziens"
+address_src = "Adrese (avots)"
+host_src = "Resursdators (avots)"
+port_src = "Ports (avots)"
+address_dst = "Adrese (galamērķis)"
+host_dst = "Resursdators (galamērķis)"
+port_dst = "Ports (galamērķis)"
+state = "Stāvoklis"
+filter = "Filtrs"
+index = "#"
+
+# --- Grupu virsraksti ---
+[group]
+blocked = "Bloķēts"
+blocked_silent = "Bloķēts (kluss)"
+timer = "Taimeris"
+special = "Īpašas programmas"
+allowed = "Atļauts"
+enabled = "Iespējots"
+disabled = "Atspējots"
+
+# --- Rīkjoslas rīku padomi ---
+[tooltip]
+enable_filters = "Iespējot filtrus (Ctrl+T)"
+new_rule = "Izveidot jaunu lietotāja noteikumu"
+enable_notifications = "Iespējot paziņojumus par bloķētu trafiku"
+enable_log = "Reģistrēt bloķētu trafiku failā"
+enable_ui_log = "Rādīt pakešu žurnālu saskarnē"
+reload = "Pārlādēt profilu no diska (F5)"
+open_settings = "Atvērt iestatījumus"
+open_log_file = "Atvērt pakešu žurnāla failu"
+clear_log = "Notīrīt pakešu žurnālu"
+open_releases = "Atvērt GitHub laidienu lapu"
+
+# --- Rīkjoslas pogu etiķetes ---
+[toolbar]
+enable_filters = "Iespējot filtrus"
+disable_filters = "Atspējot filtrus"
+
+# --- Statusa joslas ziņojumi ---
+[status]
+filters_enabled = "Filtri ir iespējoti."
+filters_disabled = "Filtri ir atspējoti."
+imported_simplewall = "Importēts simplewall profils."
+checking_updates = "Pārbauda atjauninājumus..."
+up_to_date = "Jaunākā versija."
+update_check_failed = "Atjauninājumu pārbaude neizdevās."
+nothing_to_remove = "Nav ko noņemt no profila."
+engine_failed = "Neizdevās atvērt WFP dzinēju."
+uninstall_failed = "Filtru atinstalēšana neizdevās."
+install_failed = "Filtru instalēšana neizdevās."
+app_exists = "Programma jau ir profilā."
+app_added = "Programma pievienota."
+rule_added = "Noteikums pievienots."
+rule_updated = "Noteikums atjaunināts."
+rule_deleted = "Noteikums dzēsts."
+autosave_failed = "Automātiskā saglabāšana neizdevās."
+import_read_error = "Importēšana neizdevās: lasīšanas kļūda."
+import_parse_error = "Importēšana neizdevās: parsēšanas kļūda."
+imported = "Importēts."
+export_write_error = "Eksportēšana neizdevās: rakstīšanas kļūda."
+exported = "Eksportēts."
+refresh_read_error = "Atjaunināšana neizdevās: lasīšanas kļūda."
+refresh_parse_error = "Atjaunināšana neizdevās: parsēšanas kļūda."
+profile_reloaded = "Profils pārlādēts."
+no_unused = "Nav neizmantotu programmu noņemšanai."
+no_timers = "Nav aktīvu taimeru."
+log_cleared = "Žurnāls notīrīts."
+font_failed = "Fonta ielāde neizdevās; atgriezts."
+font_updated = "Fonts atjaunināts."
+emergency_done = "Avārijas atiestatīšana pabeigta."
+auto_allowed_one = "Automātiski atļauta 1 Microsoft parakstīta programma"
+auto_allowed_many = "Automātiski atļautas %{count} Microsoft parakstītas programmas"
+silenced = "Apklusināts: %{name}"
+allowed_count = "Atļauts: %{name}"
+connecting = "Savienojas ar %{remote}"
+removed_entries = "Noņemti %{count} ieraksti no profila."
+purged_apps = "Noņemtas %{count} neizmantotas programmas."
+cleared_timers = "Notīrīti %{count} programmu taimeri."
+skip_uac_enabled = "UAC izlaišana: iespējota. Turpmākie palaišanas gadījumi nerādīs UAC administratoriem."
+skip_uac_disabled = "UAC izlaišana: atspējota. Turpmākie palaišanas gadījumi rādīs UAC administratoriem."
+hash_drift_one = "Jaucējkoda novirze: %{name}"
+hash_drift_many = "Jaucējkoda novirze %{count} programmās (sk. žurnālu)"
+filters_removed = "%{filters} filtri noņemti, %{sublayers} apakšslāņi notīrīti."
+filters_installed = "%{added} filtri instalēti, %{skipped} izlaisti."
+tray_blocked = "amwall - bloķēts: %{name}"
+
+# --- Dialogu nosaukumi ---
+[dialog]
+update_available = "amwall - pieejams atjauninājums"
+check_updates = "amwall - Pārbaudīt atjauninājumus"
+confirm_bulk_delete = "Apstiprināt masveida dzēšanu"
+admin_required = "Nepieciešamas administratora tiesības"
+delete_rule = "Dzēst noteikumu"
+exit = "Iziet no amwall?"
+clear_log = "Notīrīt žurnālu"
+allow_blocked = "Atļaut iepriekš bloķētu trafiku?"
+emergency_reset = "Avārijas WFP atiestatīšana"
+about_title = "Par amwall"
+about_app = "amwall"
+settings_title = "Iestatījumi"
+properties_signed = "amwall - Rekvizīti (parakstījis %{signer})"
+
+# --- Dialogu teksti ---
+[message]
+update_available_body = "amwall %{latest} ir pieejams (jūs izmantojat %{current}).\n\nAtvērt laidienu lapu pārlūkprogrammā?"
+update_uptodate_body = "Pašreizējā versija: %{current}\nJaunākā versija: %{latest}\n\nJau ir jaunākā versija."
+update_error_body = "Neizdevās sazināties ar GitHub, lai pārbaudītu atjauninājumus.\n\nIespējamie iemesli: nav interneta, ugunsmūris bloķē amwall izejošo HTTPS vai GitHub API ierobežojums (60 anonīmi pieprasījumi stundā). Mēģiniet vēlāk."
+admin_required_body = "Filtru pārvaldībai nepieciešamas administratora tiesības.\n\nAizveriet amwall un palaidiet no jauna ar paaugstinātām tiesībām\n(labais klikšķis → \"Palaist kā administratoram\")."
+delete_rule_confirm = "Dzēst noteikumu \"%{name}\"?"
+bulk_delete_confirm = "Noņemt %{count} ierakstus no profila?\n\nŠo darbību nevar atsaukt."
+exit_body = "Filtri pašlaik ir iespējoti. Izejot no amwall tie paliks aktīvi (tie saglabājas pēc procesa beigām). Turpināt?"
+clear_log_body = "Notīrīt pakešu žurnālu? Tas iztukšos atmiņā esošo žurnāla cilni un saīsinās žurnāla failu diskā. Šo darbību nevar atsaukt."
+emergency_reset_body = "Avārijas atiestatīšana:\n\n• Noņems katru WFP filtru, ko amwall ir instalējis\n• Iztukšos programmu profilu un lietotāja noteikumu sarakstus\n• Izslēgs filtru iespējošanu\n\nIzmantojiet šo, ja amwall bloķē kaut ko, ko nevarat identificēt, un jums jāatjauno OS noklusējuma tīkla uzvedība. Izmaiņas stājas spēkā nekavējoties. Turpināt?"
+allow_one_body = "%{name} pašlaik ir bloķēts. Atļaušana ļaus tam piekļūt tīklam nākamajā reizē, kad tas mēģinās.\n\nTurpināt?"
+allow_many_body = "%{count} iepriekš bloķētas programmas tiks iestatītas kā atļautas. Tās varēs piekļūt tīklam nākamajā reizē, kad mēģinās.\n\nTurpināt?"
+blocked_notification = "Bloķēts: %{app}"
+
+# --- Konteksta izvēlne ---
+[context]
+allow = "Atļaut"
+block = "Bloķēt"
+copy_details = "&Kopēt detaļas"
+properties = "Rekvizīti\tEnter"
+remove_from_profile = "Noņemt no profila\tDel"
+explore = "Atvērt mapi\tCtrl+E"
+copy = "Kopēt nosaukumu\tCtrl+C"
+
+# --- Teknes izvēlne ---
+[tray]
+show = "Rādīt amwall"
+enable_filters = "Iespējot filtrus"
+disable_filters = "Atspējot filtrus"
+settings = "Iestatījumi..."
+exit = "Iziet no amwall"
+
+# --- Pirmās palaišanas vednis ---
+[wizard]
+title = "Laipni lūgti amwall"
+subtitle = "Importēt simplewall konfigurāciju?"
+import_btn = "Importēt"
+start_fresh_btn = "Sākt no jauna"
+body = """amwall atrada esošu simplewall konfigurāciju:
+
+• Ceļš: %{path}
+• %{apps} programmas ar noteikumiem
+• %{rules} pielāgoti noteikumi
+
+Importēšana kopē simplewall profile.xml uz amwall un izmanto to kā sākumpunktu. simplewall paliek instalēts un tā esošie kodola filtri paliek aktīvi — atspējojiet simplewall pirms nospiežat \"Iespējot filtrus\" amwall, lai izvairītos no pārklājošiem noteikumiem.
+
+Vēlāk varat izmantot Fails → Importēt, ja tagad izlaižat."""
+
+# --- Iestatījumu dialoga cilnes ---
+[settings_tab]
+general = "Vispārīgi"
+interface = "Saskarne"
+highlighting = "Izcelšana"
+rules = "Noteikumi"
+blocklist = "Bloķēšanas saraksts"
+notifications = "Paziņojumi"
+logging = "Reģistrēšana"
+exclude = "Izņēmumi"
+
+# --- Noteikumu redaktora cilnes ---
+[rule_editor]
+general = "Vispārīgi"
+rule = "Noteikums"
+apps = "Programmas"
+
+# --- Protokolu etiķetes ---
+[protocol]
+any = "Jebkurš"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Adrešu saimes etiķetes ---
+[version]
+any = "Jebkura"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Virziena etiķetes ---
+[direction]
+outbound = "Izejošs"
+inbound = "Ienākošs"
+both = "Abi"
+other = "Cits"
+
+# --- Darbību etiķetes ---
+[action]
+allow = "Atļaut"
+block = "Bloķēt"
+permit = "Atļaut"
+
+# --- Iestatījumu lapa: Vispārīgi ---
+[rc_general]
+group_config = "Vispārīgā konfigurācija"
+always_on_top = "Vienmēr virspusē"
+load_on_startup = "Ielādēt sistēmas startēšanā"
+start_minimized = "Startēt minimizētu"
+skip_uac = "Izlaist \"User Account Control\" brīdinājumu"
+check_updates = "Periodiski pārbaudīt atjauninājumus (ieteicams)"
+group_language = "Valoda"
+select_language = "Izvēlieties valodu:"
+
+# --- Iestatījumu lapa: Saskarne ---
+[rc_interface]
+group_confirm = "Apstiprinājumi"
+confirm_exit = "Rādīt apstiprinājuma dialogu izejot"
+confirm_exit_timer = "Rādīt apstiprinājuma dialogu izejot, kad taimeri aktīvi"
+confirm_log_clear = "Apstiprināt notīrot žurnāla failu"
+confirm_allow = "Apstiprināt atļaujot iepriekš bloķētu trafiku"
+group_tray = "Teknes ikona"
+tray_single_click = "Viens klikšķis uz teknes ikonas, lai atvērtu"
+
+# --- Iestatījumu lapa: Izcelšana ---
+[rc_highlight]
+group = "Izcelšana"
+hint = "Veiciet dubultklikšķi uz elementa, lai to mainītu."
+
+# --- Iestatījumu lapa: Noteikumi ---
+[rc_rules]
+group_connections = "Savienojumi"
+block_outbound = "Bloķēt izejošos savienojumus visiem"
+block_inbound = "Bloķēt ienākošos savienojumus visiem"
+allow_loopback = "Atļaut loopback savienojumus visiem"
+allow_6to4 = "Atļaut IPv6 pāradresācijas (6to4) visiem"
+group_security = "Drošība"
+stealth_mode = "Novērst portu skenēšanu (slepenais režīms)"
+boottime_filters = "Iespējot sāknēšanas laika filtrus"
+group_advanced = "Papildu"
+check_signatures = "Pārbaudīt programmu digitālos parakstus"
+use_hashes = "Izmantot failu jaucējkodus programmu identificēšanai"
+resolve_addresses = "Atrisināt tīkla adreses"
+
+# --- Iestatījumu lapa: Bloķēšanas saraksts ---
+[rc_blocklist]
+group_spy = "Microsoft spiegošana un telemetrija"
+group_update = "Microsoft Update"
+group_apps = "Microsoft programmas"
+
+# --- Iestatījumu lapa: Paziņojumi ---
+[rc_notifications]
+group = "Paziņojumi"
+enable = "Iespējot pakešu paziņojumus"
+sound = "Iespējot paziņojumu skaņu"
+fullscreen = "Iespējot kluso režīmu, kad pilnekrāna programma priekšplānā"
+on_tray = "Rādīt paziņojumu logu pie teknes"
+timeout = "Taimauts starp līdzīgiem paziņojumiem (sek.):"
+
+# --- Iestatījumu lapa: Reģistrēšana ---
+[rc_logging]
+group_log = "Pakešu žurnāls"
+enable = "Iespējot pakešu reģistrēšanu failā"
+max_size = "Maksimālais žurnāla izmērs (kB):"
+group_viewer = "Žurnāla skatītājs"
+group_ui = "Saskarne"
+enable_ui = "Iespējot pakešu reģistrēšanu saskarnē"
+
+# --- Iestatījumu lapa: Izņēmumi ---
+[rc_exclude]
+group_notif = "Paziņojumi: nepaziņot par ..."
+blocklist = "bloķēšanas sarakstu"
+user_rules = "lietotāja noteikumiem"
+group_log = "Reģistrēšana: nereģistrēt ..."
+stealth = "portu skenēšanas savienojumus"
+allowed = "atļautus savienojumus"
+
+# --- Programmas rekvizītu dialogs ---
+[rc_properties]
+title = "Programmas rekvizīti"
+path = "Ceļš:"
+comment = "Komentārs:"
+group_settings = "Iestatījumi:"
+enabled = "Iespējots (atļaut šīs programmas trafiku)"
+silent = "Klusais režīms (bez paziņojumiem)"
+save = "Saglabāt"
+close = "Aizvērt"
+
+# --- Savienojuma pieprasījuma dialogs ---
+[rc_prompt]
+title = "amwall - programmas savienojuma pieprasījums"
+header = "Programma mēģina savienoties:"
+question = "Atļaut šīs programmas trafiku vai atstāt bloķētu?"
+allow = "Atļaut"
+block = "Bloķēt"
+
+# --- Noteikumu redaktora dialogs ---
+[rc_editor]
+add_rule_title = "Noteikuma ieraksts"
+save = "Saglabāt"
+close = "Aizvērt"
+
+# --- Failu dialoga filtri ---
+[filter]
+xml_profile = "XML profils (*.xml)"
+all_files = "Visi faili (*.*)"
+executable = "Izpildāmais fails (*.exe)"

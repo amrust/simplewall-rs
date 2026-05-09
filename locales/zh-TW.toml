@@ -1,0 +1,396 @@
+# amwall — 正體中文語言檔案。
+# 翻譯自 en.toml。保留所有 TOML 鍵名和 %{variable} 佔位符。
+
+# --- 選單列標題 ---
+[menu]
+file = "檔案"
+edit = "編輯"
+view = "檢視"
+settings = "設定"
+rules = "規則"
+blocklist = "封鎖清單"
+help = "說明"
+
+# --- 檔案選單項 ---
+[file]
+settings = "設定\tCtrl+P"
+add_app = "新增應用程式…\tCtrl+O"
+import = "匯入…"
+export = "匯出…"
+exit = "結束"
+
+# --- 編輯選單項 ---
+[edit]
+purge_unused = "清除未使用的應用程式"
+purge_timers = "清除計時器"
+clear_log = "清除記錄"
+refresh = "重新整理\tF5"
+
+# --- 檢視選單項 ---
+[view]
+always_on_top = "保持在最上層"
+dark_theme = "使用深色佈景主題"
+autosize_columns = "自動調整欄寬"
+filenames_only = "僅顯示檔案名稱"
+show_search = "顯示搜尋列"
+layout_details = "版面配置：詳細資料"
+layout_icons = "版面配置：圖示"
+layout_tiles = "版面配置：磚塊"
+icon_small = "圖示大小：小"
+icon_large = "圖示大小：大"
+icon_extralarge = "圖示大小：超大"
+font = "字型…"
+
+# --- 設定選單項 ---
+[settings]
+load_on_startup = "開機時載入"
+start_minimized = "啟動時最小化"
+skip_uac = "略過 UAC 警告"
+check_updates = "檢查更新"
+auto_allow_microsoft = "自動允許 Microsoft 簽署的程式"
+check_signatures = "檢查應用程式的數位簽章"
+check_hashes = "檢查應用程式的 SHA-256 雜湊值"
+
+# --- 規則子選單 ---
+[rules]
+block_outbound = "封鎖所有輸出連線"
+block_inbound = "封鎖所有輸入連線"
+allow_loopback = "允許 loopback"
+allow_6to4 = "允許 IPv6 (6to4)"
+allow_windows_update = "允許 Windows Update"
+
+# --- 封鎖清單子選單 ---
+[blocklist]
+disable = "停用"
+allow = "允許"
+block = "封鎖"
+spy_telemetry = "Microsoft 間諜軟體和遙測"
+ms_update = "Microsoft Update"
+ms_apps = "Microsoft 應用程式"
+
+# --- 說明選單項 ---
+[help]
+website = "網站"
+check_updates = "檢查更新"
+about = "關於"
+emergency_reset = "緊急 WFP 重設..."
+
+# --- 索引標籤標籤 ---
+[tab]
+apps = "應用程式"
+services = "服務"
+uwp = "UWP 應用程式"
+blocklist = "封鎖清單"
+system_rules = "系統規則"
+user_rules = "使用者規則"
+connections = "連線"
+packets_log = "封包記錄"
+
+# --- 欄位標題 ---
+[column]
+name = "名稱"
+added = "新增時間"
+path = "路徑"
+date = "日期"
+protocol = "通訊協定"
+direction = "方向"
+address_src = "位址（來源）"
+host_src = "主機（來源）"
+port_src = "連接埠（來源）"
+address_dst = "位址（目的地）"
+host_dst = "主機（目的地）"
+port_dst = "連接埠（目的地）"
+state = "狀態"
+filter = "篩選器"
+index = "#"
+
+# --- 群組標題 ---
+[group]
+blocked = "已封鎖"
+blocked_silent = "已封鎖（靜音）"
+timer = "計時器"
+special = "特殊應用程式"
+allowed = "已允許"
+enabled = "已啟用"
+disabled = "已停用"
+
+# --- 工具列提示 ---
+[tooltip]
+enable_filters = "啟用篩選器 (Ctrl+T)"
+new_rule = "建立新的使用者規則"
+enable_notifications = "啟用已封鎖流量的通知"
+enable_log = "將已封鎖的流量記錄到檔案"
+enable_ui_log = "在介面中顯示封包記錄"
+reload = "從磁碟重新載入設定檔 (F5)"
+open_settings = "開啟設定"
+open_log_file = "開啟封包記錄檔"
+clear_log = "清除封包記錄"
+open_releases = "開啟 GitHub 發佈頁面"
+
+# --- 工具列按鈕標籤 ---
+[toolbar]
+enable_filters = "啟用篩選器"
+disable_filters = "停用篩選器"
+
+# --- 狀態列訊息 ---
+[status]
+filters_enabled = "篩選器已啟用。"
+filters_disabled = "篩選器已停用。"
+imported_simplewall = "已匯入 simplewall 設定檔。"
+checking_updates = "正在檢查更新..."
+up_to_date = "已是最新版本。"
+update_check_failed = "更新檢查失敗。"
+nothing_to_remove = "設定檔中沒有可移除的內容。"
+engine_failed = "無法開啟 WFP 引擎。"
+uninstall_failed = "篩選器解除安裝失敗。"
+install_failed = "篩選器安裝失敗。"
+app_exists = "應用程式已存在於設定檔中。"
+app_added = "應用程式已新增。"
+rule_added = "規則已新增。"
+rule_updated = "規則已更新。"
+rule_deleted = "規則已刪除。"
+autosave_failed = "自動儲存失敗。"
+import_read_error = "匯入失敗：讀取錯誤。"
+import_parse_error = "匯入失敗：解析錯誤。"
+imported = "已匯入。"
+export_write_error = "匯出失敗：寫入錯誤。"
+exported = "已匯出。"
+refresh_read_error = "重新整理失敗：讀取錯誤。"
+refresh_parse_error = "重新整理失敗：解析錯誤。"
+profile_reloaded = "設定檔已重新載入。"
+no_unused = "沒有未使用的應用程式可清除。"
+no_timers = "沒有作用中的計時器。"
+log_cleared = "記錄已清除。"
+font_failed = "字型載入失敗；已還原。"
+font_updated = "字型已更新。"
+emergency_done = "緊急重設完成。"
+auto_allowed_one = "已自動允許 1 個 Microsoft 簽署的應用程式"
+auto_allowed_many = "已自動允許 %{count} 個 Microsoft 簽署的應用程式"
+silenced = "已靜音：%{name}"
+allowed_count = "已允許：%{name}"
+connecting = "正在連線至 %{remote}"
+removed_entries = "已從設定檔中移除 %{count} 個項目。"
+purged_apps = "已清除 %{count} 個未使用的應用程式。"
+cleared_timers = "已清除 %{count} 個應用程式計時器。"
+skip_uac_enabled = "略過 UAC：已啟用。未來管理員使用者啟動時將不會顯示 UAC。"
+skip_uac_disabled = "略過 UAC：已停用。未來執行管理員動作時將會顯示 UAC。"
+hash_drift_one = "雜湊值變更：%{name}"
+hash_drift_many = "%{count} 個應用程式的雜湊值已變更（請查看記錄）"
+filters_removed = "已移除 %{filters} 個篩選器，清除了 %{sublayers} 個子層。"
+filters_installed = "已安裝 %{added} 個篩選器，略過了 %{skipped} 個。"
+tray_blocked = "amwall - 已封鎖：%{name}"
+
+# --- 對話方塊標題 ---
+[dialog]
+update_available = "amwall - 有可用更新"
+check_updates = "amwall - 檢查更新"
+confirm_bulk_delete = "確認大量刪除"
+admin_required = "需要系統管理員權限"
+delete_rule = "刪除規則"
+exit = "結束 amwall？"
+clear_log = "清除記錄"
+allow_blocked = "允許先前被封鎖的流量？"
+emergency_reset = "緊急 WFP 重設"
+about_title = "關於 amwall"
+about_app = "amwall"
+settings_title = "設定"
+properties_signed = "amwall - 內容（由 %{signer} 簽署）"
+
+# --- 對話方塊正文訊息 ---
+[message]
+update_available_body = "amwall %{latest} 已可用（您目前執行的是 %{current}）。\n\n在瀏覽器中開啟發佈頁面？"
+update_uptodate_body = "目前版本：%{current}\n最新版本：%{latest}\n\n已是最新版本。"
+update_error_body = "無法連線至 GitHub 檢查更新。\n\n可能的原因：沒有網路連線、防火牆封鎖了 amwall 的輸出 HTTPS 連線，或者 GitHub API 速率限制（每小時 60 次匿名請求）。請稍後再試。"
+admin_required_body = "篩選器管理需要系統管理員權限。\n\n請關閉 amwall 並從提升權限的終端機重新啟動\n（按右鍵 → \"以系統管理員身分執行\"）。"
+delete_rule_confirm = "刪除規則 \"%{name}\"？"
+bulk_delete_confirm = "從設定檔中移除 %{count} 個項目？\n\n此動作無法復原。"
+exit_body = "篩選器目前已啟用。結束 amwall 後篩選器將保持生效（處理序結束後仍然有效）。是否繼續？"
+clear_log_body = "清除封包記錄？這會清空記憶體中的記錄索引標籤並截斷磁碟上的記錄檔。此動作無法復原。"
+emergency_reset_body = "緊急重設將：\n\n• 移除 amwall 已安裝的所有 WFP 篩選器\n• 清空應用程式設定檔和使用者規則清單\n• 關閉啟用篩選器\n\n當 amwall 封鎖了您無法辨識的內容，且需要還原作業系統預設網路行為時，請使用此功能。變更將立即生效。是否繼續？"
+allow_one_body = "%{name} 目前已被封鎖。允許後，它將在下次嘗試時可以存取網路。\n\n是否繼續？"
+allow_many_body = "%{count} 個先前被封鎖的應用程式將被設為允許。它們將在下次嘗試時可以存取網路。\n\n是否繼續？"
+blocked_notification = "已封鎖：%{app}"
+
+# --- 右鍵選單 ---
+[context]
+allow = "允許"
+block = "封鎖"
+copy_details = "複製詳細資料"
+properties = "內容\tEnter"
+remove_from_profile = "從設定檔中移除\tDel"
+explore = "開啟資料夾\tCtrl+E"
+copy = "複製名稱\tCtrl+C"
+
+# --- 系統匣選單 ---
+[tray]
+show = "顯示 amwall"
+enable_filters = "啟用篩選器"
+disable_filters = "停用篩選器"
+settings = "設定..."
+exit = "結束 amwall"
+
+# --- 首次執行精靈 ---
+[wizard]
+title = "歡迎使用 amwall"
+subtitle = "匯入 simplewall 設定？"
+import_btn = "匯入"
+start_fresh_btn = "全新開始"
+body = """amwall 發現了現有的 simplewall 設定：
+
+• 路徑：%{path}
+• %{apps} 個應用程式及其規則
+• %{rules} 條自訂規則
+
+匯入會將 simplewall 的 profile.xml 複製到 amwall 作為起始設定。simplewall 保持安裝狀態，其現有核心篩選器仍然有效——在 amwall 中按下「啟用篩選器」之前請先停用 simplewall，以避免兩個防火牆套用重疊的規則。
+
+如果現在略過，您可以稍後透過 檔案 → 匯入 來匯入。"""
+
+# --- 設定對話方塊索引標籤 ---
+[settings_tab]
+general = "一般"
+interface = "介面"
+highlighting = "醒目提示"
+rules = "規則"
+blocklist = "封鎖清單"
+notifications = "通知"
+logging = "記錄"
+exclude = "排除"
+
+# --- 規則編輯器索引標籤 ---
+[rule_editor]
+general = "一般"
+rule = "規則"
+apps = "應用程式"
+
+# --- 通訊協定標籤 ---
+[protocol]
+any = "任意"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- 位址族標籤 ---
+[version]
+any = "任意"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- 方向標籤 ---
+[direction]
+outbound = "輸出"
+inbound = "輸入"
+both = "雙向"
+other = "其他"
+
+# --- 動作標籤 ---
+[action]
+allow = "允許"
+block = "封鎖"
+permit = "放行"
+
+# --- 設定頁面：一般 ---
+[rc_general]
+group_config = "一般設定"
+always_on_top = "保持在最上層"
+load_on_startup = "開機時載入"
+start_minimized = "啟動時最小化"
+skip_uac = "略過「使用者帳戶控制」提示警告"
+check_updates = "定期檢查更新（建議）"
+group_language = "語言"
+select_language = "選擇語言："
+
+# --- 設定頁面：介面 ---
+[rc_interface]
+group_confirm = "確認"
+confirm_exit = "結束時顯示確認對話方塊"
+confirm_exit_timer = "計時器作用中時結束顯示確認對話方塊"
+confirm_log_clear = "清除記錄檔時確認"
+confirm_allow = "允許先前被封鎖的流量時確認"
+group_tray = "系統匣圖示"
+tray_single_click = "按一下系統匣圖示即可開啟"
+
+# --- 設定頁面：醒目提示 ---
+[rc_highlight]
+group = "醒目提示"
+hint = "按兩下項目以變更。"
+
+# --- 設定頁面：規則 ---
+[rc_rules]
+group_connections = "連線"
+block_outbound = "封鎖所有輸出連線"
+block_inbound = "封鎖所有輸入連線"
+allow_loopback = "允許所有 loopback 連線"
+allow_6to4 = "允許所有 IPv6 重新導向 (6to4)"
+group_security = "安全性"
+stealth_mode = "防止連接埠掃描（隱匿模式）"
+boottime_filters = "啟用開機時篩選器"
+group_advanced = "進階"
+check_signatures = "檢查應用程式的數位簽章"
+use_hashes = "使用檔案雜湊值識別應用程式"
+resolve_addresses = "解析網路位址"
+
+# --- 設定頁面：封鎖清單 ---
+[rc_blocklist]
+group_spy = "Microsoft 間諜軟體和遙測"
+group_update = "Microsoft Update"
+group_apps = "Microsoft 應用程式"
+
+# --- 設定頁面：通知 ---
+[rc_notifications]
+group = "通知"
+enable = "啟用封包通知"
+sound = "啟用通知音效"
+fullscreen = "全螢幕應用程式在前景時啟用靜音模式"
+on_tray = "在系統匣上顯示通知視窗"
+timeout = "相似通知之間的逾時時間（秒）："
+
+# --- 設定頁面：記錄 ---
+[rc_logging]
+group_log = "封包記錄"
+enable = "啟用封包記錄到檔案"
+max_size = "最大記錄大小 (kB)："
+group_viewer = "記錄檢視器"
+group_ui = "介面"
+enable_ui = "在介面中啟用封包記錄"
+
+# --- 設定頁面：排除 ---
+[rc_exclude]
+group_notif = "通知：不通知以下內容..."
+blocklist = "封鎖清單"
+user_rules = "使用者規則"
+group_log = "記錄：不記錄以下內容..."
+stealth = "連接埠掃描連線"
+allowed = "已允許的連線"
+
+# --- 應用程式內容對話方塊 ---
+[rc_properties]
+title = "應用程式內容"
+path = "路徑："
+comment = "註解："
+group_settings = "設定："
+enabled = "已啟用（允許此應用程式的流量）"
+silent = "靜音（不通知）"
+save = "儲存"
+close = "關閉"
+
+# --- 連線提示對話方塊 ---
+[rc_prompt]
+title = "amwall - 應用程式連線要求"
+header = "有一個應用程式正在嘗試連線："
+question = "允許此應用程式的流量，還是繼續封鎖？"
+allow = "允許"
+block = "封鎖"
+
+# --- 規則編輯器對話方塊 ---
+[rc_editor]
+add_rule_title = "規則項目"
+save = "儲存"
+close = "關閉"
+
+# --- 檔案對話方塊篩選器 ---
+[filter]
+xml_profile = "XML 設定檔 (*.xml)"
+all_files = "所有檔案 (*.*)"
+executable = "可執行檔 (*.exe)"

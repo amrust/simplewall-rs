@@ -1,0 +1,398 @@
+# amwall — Svensk översättning (Svenska).
+# Lägg till nya språk genom att kopiera den här filen till t.ex. locales/de.toml
+# och översätta värdena. rust-i18n bäddar in alla översättningar vid
+# kompilering; ställ in aktivt språk med rust_i18n::set_locale().
+
+# --- Menyrubrikerna ---
+[menu]
+file = "&Arkiv"
+edit = "&Redigera"
+view = "&Visa"
+settings = "&Inställningar"
+rules = "&Regler"
+blocklist = "&Blocklista"
+help = "&Hjälp"
+
+# --- Menyalternativ «Arkiv» ---
+[file]
+settings = "&Inställningar\tCtrl+P"
+add_app = "&Lägg till app…\tCtrl+O"
+import = "&Importera…"
+export = "&Exportera…"
+exit = "A&vsluta"
+
+# --- Menyalternativ «Redigera» ---
+[edit]
+purge_unused = "Rensa &oanvända appar"
+purge_timers = "Rensa &tidtagare"
+clear_log = "&Rensa logg"
+refresh = "&Uppdatera\tF5"
+
+# --- Menyalternativ «Visa» ---
+[view]
+always_on_top = "Alltid övers&t"
+dark_theme = "&Mörkt tema"
+autosize_columns = "&Anpassa kolumnbredder"
+filenames_only = "Visa bara &filnamn"
+show_search = "Visa &sökfält"
+layout_details = "Layout: &Detaljer"
+layout_icons = "Layout: &Ikoner"
+layout_tiles = "Layout: &Paneler"
+icon_small = "Ikonstorlek: &Liten"
+icon_large = "Ikonstorlek: S&tor"
+icon_extralarge = "Ikonstorlek: &Extra stor"
+font = "&Teckensnitt…"
+
+# --- Menyalternativ «Inställningar» ---
+[settings]
+load_on_startup = "&Starta vid systemstart"
+start_minimized = "Starta &minimerad"
+skip_uac = "Hoppa över UAC-varning"
+check_updates = "Sök efter &uppdateringar"
+auto_allow_microsoft = "Tillåt automatiskt &Microsoft-signerade program"
+check_signatures = "Kontrollera &digitala signaturer"
+check_hashes = "Kontrollera SHA-256-&hash"
+
+# --- Undermeny «Regler» ---
+[rules]
+block_outbound = "Blockera &utgående för alla"
+block_inbound = "Blockera &inkommande för alla"
+allow_loopback = "Tillåt &loopback"
+allow_6to4 = "Tillåt IPv6 (&6to4)"
+allow_windows_update = "Tillåt &Windows Update"
+
+# --- Undermeny «Blocklista» ---
+[blocklist]
+disable = "&Inaktivera"
+allow = "&Tillåt"
+block = "&Blockera"
+spy_telemetry = "Microsoft-&spionage och telemetri"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft-&program"
+
+# --- Menyalternativ «Hjälp» ---
+[help]
+website = "&Webbplats"
+check_updates = "&Sök efter uppdateringar"
+about = "&Om"
+emergency_reset = "&Nöd-återställning av WFP..."
+
+# --- Fliketiketter ---
+[tab]
+apps = "Appar"
+services = "Tjänster"
+uwp = "UWP-appar"
+blocklist = "Blocklista"
+system_rules = "Systemregler"
+user_rules = "Användarregler"
+connections = "Anslutningar"
+packets_log = "Paketlogg"
+
+# --- Kolumnrubriker ---
+[column]
+name = "Namn"
+added = "Tillagd"
+path = "Sökväg"
+date = "Datum"
+protocol = "Protokoll"
+direction = "Riktning"
+address_src = "Adress (källa)"
+host_src = "Värd (källa)"
+port_src = "Port (källa)"
+address_dst = "Adress (mål)"
+host_dst = "Värd (mål)"
+port_dst = "Port (mål)"
+state = "Status"
+filter = "Filter"
+index = "#"
+
+# --- Grupprubriker ---
+[group]
+blocked = "Blockerad"
+blocked_silent = "Blockerad (tyst)"
+timer = "Tidtagare"
+special = "Specialappar"
+allowed = "Tillåten"
+enabled = "Aktiverad"
+disabled = "Inaktiverad"
+
+# --- Verktygsfältstips ---
+[tooltip]
+enable_filters = "Aktivera filter (Ctrl+T)"
+new_rule = "Skapa en ny användarregel"
+enable_notifications = "Aktivera aviseringar för blockerad trafik"
+enable_log = "Logga blockerad trafik till en fil"
+enable_ui_log = "Visa paketlogg i gränssnittet"
+reload = "Ladda om profilen från disk (F5)"
+open_settings = "Öppna inställningar"
+open_log_file = "Öppna paketloggfilen"
+clear_log = "Rensa paketloggen"
+open_releases = "Öppna GitHub-releasesidan"
+
+# --- Verktygsfältsknappar ---
+[toolbar]
+enable_filters = "Aktivera filter"
+disable_filters = "Inaktivera filter"
+
+# --- Statusfältsmeddelanden ---
+[status]
+filters_enabled = "Filter är aktiverade."
+filters_disabled = "Filter är inaktiverade."
+imported_simplewall = "simplewall-profil importerad."
+checking_updates = "Söker efter uppdateringar..."
+up_to_date = "Uppdaterad."
+update_check_failed = "Uppdateringskontroll misslyckades."
+nothing_to_remove = "Inget att ta bort från profilen."
+engine_failed = "Kunde inte öppna WFP-motorn."
+uninstall_failed = "Avinstallation av filter misslyckades."
+install_failed = "Installation av filter misslyckades."
+app_exists = "Appen finns redan i profilen."
+app_added = "App tillagd."
+rule_added = "Regel tillagd."
+rule_updated = "Regel uppdaterad."
+rule_deleted = "Regel borttagen."
+autosave_failed = "Automatisk sparning misslyckades."
+import_read_error = "Import misslyckades: läsfel."
+import_parse_error = "Import misslyckades: tolkningsfel."
+imported = "Importerad."
+export_write_error = "Export misslyckades: skrivfel."
+exported = "Exporterad."
+refresh_read_error = "Uppdatering misslyckades: läsfel."
+refresh_parse_error = "Uppdatering misslyckades: tolkningsfel."
+profile_reloaded = "Profilen laddades om."
+no_unused = "Inga oanvända appar att rensa."
+no_timers = "Inga aktiva tidtagare."
+log_cleared = "Loggen rensad."
+font_failed = "Teckensnittsinläsning misslyckades; återställd."
+font_updated = "Teckensnitt uppdaterat."
+emergency_done = "Nöd-återställning slutförd."
+auto_allowed_one = "Tillät automatiskt 1 Microsoft-signerad app"
+auto_allowed_many = "Tillät automatiskt %{count} Microsoft-signerade appar"
+silenced = "Tystad: %{name}"
+allowed_count = "Tillåten: %{name}"
+connecting = "Ansluter till %{remote}"
+removed_entries = "Tog bort %{count} poster från profilen."
+purged_apps = "Rensade %{count} oanvända appar."
+cleared_timers = "Rensade %{count} app-tidtagare."
+skip_uac_enabled = "Hoppa över UAC: aktiverat. Framtida starter visar inte UAC för administratörer."
+skip_uac_disabled = "Hoppa över UAC: inaktiverat. Framtida starter visar UAC för administrativa åtgärder."
+hash_drift_one = "Hash-ändring: %{name}"
+hash_drift_many = "Hash-ändring för %{count} appar (se logg)"
+filters_removed = "%{filters} filter borttagna, %{sublayers} underlager rensade."
+filters_installed = "%{added} filter installerade, %{skipped} hoppades över."
+tray_blocked = "amwall - blockerad: %{name}"
+
+# --- Dialogrubriker ---
+[dialog]
+update_available = "amwall - uppdatering tillgänglig"
+check_updates = "amwall - Sök efter uppdateringar"
+confirm_bulk_delete = "Bekräfta massborttagning"
+admin_required = "Administratör krävs"
+delete_rule = "Ta bort regel"
+exit = "Avsluta amwall?"
+clear_log = "Rensa logg"
+allow_blocked = "Tillåt tidigare blockerad trafik?"
+emergency_reset = "Nöd-återställning av WFP"
+about_title = "Om amwall"
+about_app = "amwall"
+settings_title = "Inställningar"
+properties_signed = "amwall - Egenskaper (signerad av %{signer})"
+
+# --- Dialogmeddelandetexter ---
+[message]
+update_available_body = "amwall %{latest} är tillgänglig (du kör %{current}).\n\nÖppna releasesidan i din webbläsare?"
+update_uptodate_body = "Aktuell version: %{current}\nSenaste version: %{latest}\n\nAllt är uppdaterat."
+update_error_body = "Kunde inte nå GitHub för att söka efter uppdateringar.\n\nMöjliga orsaker: ingen internetanslutning, brandväggen blockerar amwall från utgående HTTPS, eller GitHubs API-gräns (60 anonyma förfrågningar per timme). Försök igen senare."
+admin_required_body = "Filterhantering kräver administratörsbehörighet.\n\nStäng amwall och starta om från en upphöjd kommandotolk\n(högerklicka → \"Kör som administratör\")."
+delete_rule_confirm = "Ta bort regeln \"%{name}\"?"
+bulk_delete_confirm = "Ta bort %{count} poster från profilen?\n\nDetta kan inte ångras."
+exit_body = "Filter är för närvarande aktiverade. Att avsluta amwall lämnar dem på plats (de överlever processavslut). Fortsätta?"
+clear_log_body = "Rensa paketloggen? Detta tömmer loggfliken i minnet och trunkerar loggfilen på disk. Åtgärden kan inte ångras."
+emergency_reset_body = "Nöd-återställning kommer att:\n\n• Ta bort alla WFP-filter som amwall har installerat\n• Tömma appprofilen och listan med användarregler\n• Stänga av \"Aktivera filter\"\n\nAnvänd detta om amwall blockerar något du inte kan identifiera och du behöver återställa operativsystemets standardnätverksbeteende. Ändringen sker omedelbart. Fortsätta?"
+allow_one_body = "%{name} är för närvarande blockerad. Att tillåta den ger nätverksåtkomst vid nästa försök.\n\nFortsätta?"
+allow_many_body = "%{count} tidigare blockerade appar kommer att ställas in på Tillåt. De får nätverksåtkomst vid nästa försök.\n\nFortsätta?"
+blocked_notification = "Blockerad: %{app}"
+
+# --- Kontextmeny ---
+[context]
+allow = "Tillåt"
+block = "Blockera"
+copy_details = "&Kopiera detaljer"
+properties = "Egenskaper\tEnter"
+remove_from_profile = "Ta bort från profil\tDel"
+explore = "Utforska (öppna mapp)\tCtrl+E"
+copy = "Kopiera namn\tCtrl+C"
+
+# --- Systemfältsmeny ---
+[tray]
+show = "Visa amwall"
+enable_filters = "Aktivera filter"
+disable_filters = "Inaktivera filter"
+settings = "Inställningar..."
+exit = "Avsluta amwall"
+
+# --- Guide vid första start ---
+[wizard]
+title = "Välkommen till amwall"
+subtitle = "Importera simplewall-konfiguration?"
+import_btn = "Importera"
+start_fresh_btn = "Börja från början"
+body = """amwall hittade en befintlig simplewall-konfiguration:
+
+• Sökväg: %{path}
+• %{apps} app(ar) med regler
+• %{rules} anpassade regler
+
+Import kopierar simplewall:s profile.xml till amwall och använder den som utgångspunkt. simplewall förblir installerat och dess kernelfilter förblir aktiva — inaktivera simplewall innan du klickar på "Aktivera filter" i amwall för att undvika att båda brandväggarna tillämpar överlappande regler.
+
+Du kan köra Arkiv → Importera senare om du hoppar över nu."""
+
+# --- Flikar i inställningsdialogrutan ---
+[settings_tab]
+general = "Allmänt"
+interface = "Gränssnitt"
+highlighting = "Markering"
+rules = "Regler"
+blocklist = "Blocklista"
+notifications = "Aviseringar"
+logging = "Loggning"
+exclude = "Undantag"
+
+# --- Flikar i regelredigeraren ---
+[rule_editor]
+general = "Allmänt"
+rule = "Regel"
+apps = "Appar"
+
+# --- Protokolletiketter ---
+[protocol]
+any = "Alla"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Adressfamiljetiketter ---
+[version]
+any = "Alla"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Riktningsetiketter ---
+[direction]
+outbound = "Utgående"
+inbound = "Inkommande"
+both = "Båda"
+other = "Övrig"
+
+# --- Åtgärdsetiketter ---
+[action]
+allow = "Tillåt"
+block = "Blockera"
+permit = "Tillåt"
+
+# --- Inställningssida: Allmänt ---
+[rc_general]
+group_config = "Allmän konfiguration"
+always_on_top = "Alltid överst"
+load_on_startup = "Starta vid systemstart"
+start_minimized = "Starta minimerad"
+skip_uac = "Hoppa över varningen \"Kontroll av användarkonto\""
+check_updates = "Sök regelbundet efter uppdateringar (rekommenderas)"
+group_language = "Språk"
+select_language = "Välj språk:"
+
+# --- Inställningssida: Gränssnitt ---
+[rc_interface]
+group_confirm = "Bekräftelser"
+confirm_exit = "Visa bekräftelsedialog vid avslut"
+confirm_exit_timer = "Visa bekräftelsedialog vid avslut med aktiva tidtagare"
+confirm_log_clear = "Bekräfta vid rensning av loggfilen"
+confirm_allow = "Bekräfta vid tillåtning av tidigare blockerad trafik"
+group_tray = "Systemfältsikon"
+tray_single_click = "Enkelklick på systemfältsikonen för att öppna"
+
+# --- Inställningssida: Markering ---
+[rc_highlight]
+group = "Markering"
+hint = "Dubbelklicka på ett objekt för att ändra det."
+
+# --- Inställningssida: Regler ---
+[rc_rules]
+group_connections = "Anslutningar"
+block_outbound = "Blockera utgående anslutningar för alla"
+block_inbound = "Blockera inkommande anslutningar för alla"
+allow_loopback = "Tillåt loopback-anslutningar för alla"
+allow_6to4 = "Tillåt IPv6-omdirigering (6to4) för alla"
+group_security = "Säkerhet"
+stealth_mode = "Förhindra portskanning (dolt läge)"
+boottime_filters = "Aktivera filter vid systemstart"
+group_advanced = "Avancerat"
+check_signatures = "Kontrollera digitala signaturer för appar"
+use_hashes = "Använd filhashar för appidentifiering"
+resolve_addresses = "Översätt nätverksadresser"
+
+# --- Inställningssida: Blocklista ---
+[rc_blocklist]
+group_spy = "Microsoft-spionage och telemetri"
+group_update = "Microsoft Update"
+group_apps = "Microsoft-program"
+
+# --- Inställningssida: Aviseringar ---
+[rc_notifications]
+group = "Aviseringar"
+enable = "Aktivera paketaviseringar"
+sound = "Aktivera aviseringsljud"
+fullscreen = "Aktivera tyst läge när helskärmsapp är i förgrunden"
+on_tray = "Visa aviseringsfönster vid systemfältet"
+timeout = "Tidsfördröjning mellan liknande aviseringar (sek.):"
+
+# --- Inställningssida: Loggning ---
+[rc_logging]
+group_log = "Paketlogg"
+enable = "Aktivera paketloggning till fil"
+max_size = "Maximal loggstorlek (kB):"
+group_viewer = "Loggvisare"
+group_ui = "Gränssnitt"
+enable_ui = "Aktivera paketloggning i gränssnittet"
+
+# --- Inställningssida: Undantag ---
+[rc_exclude]
+group_notif = "Aviseringar: avisera inte om ..."
+blocklist = "blocklista"
+user_rules = "användarregler"
+group_log = "Loggning: logga inte ..."
+stealth = "portskanneranslutningar"
+allowed = "tillåtna anslutningar"
+
+# --- Dialogrutan för appegenskaper ---
+[rc_properties]
+title = "Appegenskaper"
+path = "Sökväg:"
+comment = "Kommentar:"
+group_settings = "Inställningar:"
+enabled = "Aktiverad (tillåt denna apps trafik)"
+silent = "Tyst (inga aviseringar)"
+save = "Spara"
+close = "Stäng"
+
+# --- Dialogrutan för anslutningsförfrågan ---
+[rc_prompt]
+title = "amwall - appanslutningsförfrågan"
+header = "En app försöker ansluta:"
+question = "Tillåt denna apps trafik, eller behåll den blockerad?"
+allow = "Tillåt"
+block = "Blockera"
+
+# --- Dialogrutan för regelredigeraren ---
+[rc_editor]
+add_rule_title = "Regelpost"
+save = "Spara"
+close = "Stäng"
+
+# --- Fildialogsfilter ---
+[filter]
+xml_profile = "XML-profil (*.xml)"
+all_files = "Alla filer (*.*)"
+executable = "Körbar fil (*.exe)"

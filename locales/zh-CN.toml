@@ -1,0 +1,396 @@
+# amwall — 简体中文语言文件。
+# 翻译自 en.toml。保留所有 TOML 键名和 %{variable} 占位符。
+
+# --- 菜单栏标题 ---
+[menu]
+file = "文件"
+edit = "编辑"
+view = "视图"
+settings = "设置"
+rules = "规则"
+blocklist = "屏蔽列表"
+help = "帮助"
+
+# --- 文件菜单项 ---
+[file]
+settings = "设置\tCtrl+P"
+add_app = "添加应用…\tCtrl+O"
+import = "导入…"
+export = "导出…"
+exit = "退出"
+
+# --- 编辑菜单项 ---
+[edit]
+purge_unused = "清除未使用的应用"
+purge_timers = "清除计时器"
+clear_log = "清除日志"
+refresh = "刷新\tF5"
+
+# --- 视图菜单项 ---
+[view]
+always_on_top = "始终置顶"
+dark_theme = "使用深色主题"
+autosize_columns = "自动调整列宽"
+filenames_only = "仅显示文件名"
+show_search = "显示搜索栏"
+layout_details = "布局：详细信息"
+layout_icons = "布局：图标"
+layout_tiles = "布局：磁贴"
+icon_small = "图标大小：小"
+icon_large = "图标大小：大"
+icon_extralarge = "图标大小：超大"
+font = "字体…"
+
+# --- 设置菜单项 ---
+[settings]
+load_on_startup = "开机启动"
+start_minimized = "启动时最小化"
+skip_uac = "跳过 UAC 警告"
+check_updates = "检查更新"
+auto_allow_microsoft = "自动允许 Microsoft 签名的程序"
+check_signatures = "检查应用的数字签名"
+check_hashes = "检查应用的 SHA-256 哈希值"
+
+# --- 规则子菜单 ---
+[rules]
+block_outbound = "阻止所有出站连接"
+block_inbound = "阻止所有入站连接"
+allow_loopback = "允许 loopback"
+allow_6to4 = "允许 IPv6 (6to4)"
+allow_windows_update = "允许 Windows Update"
+
+# --- 屏蔽列表子菜单 ---
+[blocklist]
+disable = "禁用"
+allow = "允许"
+block = "阻止"
+spy_telemetry = "Microsoft 间谍软件和遥测"
+ms_update = "Microsoft Update"
+ms_apps = "Microsoft 应用程序"
+
+# --- 帮助菜单项 ---
+[help]
+website = "网站"
+check_updates = "检查更新"
+about = "关于"
+emergency_reset = "紧急 WFP 重置..."
+
+# --- 标签页标签 ---
+[tab]
+apps = "应用"
+services = "服务"
+uwp = "UWP 应用"
+blocklist = "屏蔽列表"
+system_rules = "系统规则"
+user_rules = "用户规则"
+connections = "连接"
+packets_log = "数据包日志"
+
+# --- 列标题 ---
+[column]
+name = "名称"
+added = "添加时间"
+path = "路径"
+date = "日期"
+protocol = "协议"
+direction = "方向"
+address_src = "地址（源）"
+host_src = "主机（源）"
+port_src = "端口（源）"
+address_dst = "地址（目标）"
+host_dst = "主机（目标）"
+port_dst = "端口（目标）"
+state = "状态"
+filter = "过滤器"
+index = "#"
+
+# --- 分组标题 ---
+[group]
+blocked = "已阻止"
+blocked_silent = "已阻止（静默）"
+timer = "计时器"
+special = "特殊应用"
+allowed = "已允许"
+enabled = "已启用"
+disabled = "已禁用"
+
+# --- 工具栏提示 ---
+[tooltip]
+enable_filters = "启用过滤器 (Ctrl+T)"
+new_rule = "创建新的用户规则"
+enable_notifications = "启用已阻止流量的通知"
+enable_log = "将已阻止的流量记录到文件"
+enable_ui_log = "在界面中显示数据包日志"
+reload = "从磁盘重新加载配置文件 (F5)"
+open_settings = "打开设置"
+open_log_file = "打开数据包日志文件"
+clear_log = "清除数据包日志"
+open_releases = "打开 GitHub 发布页面"
+
+# --- 工具栏按钮标签 ---
+[toolbar]
+enable_filters = "启用过滤器"
+disable_filters = "禁用过滤器"
+
+# --- 状态栏消息 ---
+[status]
+filters_enabled = "过滤器已启用。"
+filters_disabled = "过滤器已禁用。"
+imported_simplewall = "已导入 simplewall 配置文件。"
+checking_updates = "正在检查更新..."
+up_to_date = "已是最新版本。"
+update_check_failed = "更新检查失败。"
+nothing_to_remove = "配置文件中没有可移除的内容。"
+engine_failed = "无法打开 WFP 引擎。"
+uninstall_failed = "过滤器卸载失败。"
+install_failed = "过滤器安装失败。"
+app_exists = "应用已存在于配置文件中。"
+app_added = "应用已添加。"
+rule_added = "规则已添加。"
+rule_updated = "规则已更新。"
+rule_deleted = "规则已删除。"
+autosave_failed = "自动保存失败。"
+import_read_error = "导入失败：读取错误。"
+import_parse_error = "导入失败：解析错误。"
+imported = "已导入。"
+export_write_error = "导出失败：写入错误。"
+exported = "已导出。"
+refresh_read_error = "刷新失败：读取错误。"
+refresh_parse_error = "刷新失败：解析错误。"
+profile_reloaded = "配置文件已重新加载。"
+no_unused = "没有未使用的应用可清除。"
+no_timers = "没有活跃的计时器。"
+log_cleared = "日志已清除。"
+font_failed = "字体加载失败；已恢复。"
+font_updated = "字体已更新。"
+emergency_done = "紧急重置完成。"
+auto_allowed_one = "已自动允许 1 个 Microsoft 签名的应用"
+auto_allowed_many = "已自动允许 %{count} 个 Microsoft 签名的应用"
+silenced = "已静默：%{name}"
+allowed_count = "已允许：%{name}"
+connecting = "正在连接到 %{remote}"
+removed_entries = "已从配置文件中移除 %{count} 个条目。"
+purged_apps = "已清除 %{count} 个未使用的应用。"
+cleared_timers = "已清除 %{count} 个应用计时器。"
+skip_uac_enabled = "跳过 UAC：已启用。将来管理员用户启动时不会显示 UAC。"
+skip_uac_disabled = "跳过 UAC：已禁用。将来执行管理员操作时会显示 UAC。"
+hash_drift_one = "哈希值变更：%{name}"
+hash_drift_many = "%{count} 个应用的哈希值已变更（请查看日志）"
+filters_removed = "已移除 %{filters} 个过滤器，清除了 %{sublayers} 个子层。"
+filters_installed = "已安装 %{added} 个过滤器，跳过了 %{skipped} 个。"
+tray_blocked = "amwall - 已阻止：%{name}"
+
+# --- 对话框标题 ---
+[dialog]
+update_available = "amwall - 有可用更新"
+check_updates = "amwall - 检查更新"
+confirm_bulk_delete = "确认批量删除"
+admin_required = "需要管理员权限"
+delete_rule = "删除规则"
+exit = "退出 amwall？"
+clear_log = "清除日志"
+allow_blocked = "允许之前被阻止的流量？"
+emergency_reset = "紧急 WFP 重置"
+about_title = "关于 amwall"
+about_app = "amwall"
+settings_title = "设置"
+properties_signed = "amwall - 属性（由 %{signer} 签名）"
+
+# --- 对话框正文消息 ---
+[message]
+update_available_body = "amwall %{latest} 已可用（您当前运行的是 %{current}）。\n\n在浏览器中打开发布页面？"
+update_uptodate_body = "当前版本：%{current}\n最新版本：%{latest}\n\n已是最新版本。"
+update_error_body = "无法连接 GitHub 检查更新。\n\n可能的原因：没有网络连接、防火墙阻止了 amwall 的出站 HTTPS 连接，或者 GitHub API 速率限制（每小时 60 次匿名请求）。请稍后再试。"
+admin_required_body = "过滤器管理需要管理员权限。\n\n请关闭 amwall 并从提升权限的终端重新启动\n（右键点击 → \"以管理员身份运行\"）。"
+delete_rule_confirm = "删除规则 \"%{name}\"？"
+bulk_delete_confirm = "从配置文件中移除 %{count} 个条目？\n\n此操作无法撤销。"
+exit_body = "过滤器当前已启用。退出 amwall 后过滤器将保持生效（进程退出后仍然有效）。是否继续？"
+clear_log_body = "清除数据包日志？这将清空内存中的日志标签页并截断磁盘上的日志文件。此操作无法撤销。"
+emergency_reset_body = "紧急重置将：\n\n• 移除 amwall 已安装的所有 WFP 过滤器\n• 清空应用配置文件和用户规则列表\n• 关闭启用过滤器\n\n当 amwall 阻止了您无法识别的内容，且需要恢复操作系统默认网络行为时，请使用此功能。更改将立即生效。是否继续？"
+allow_one_body = "%{name} 当前已被阻止。允许后，它将在下次尝试时可以访问网络。\n\n是否继续？"
+allow_many_body = "%{count} 个之前被阻止的应用将被设置为允许。它们将在下次尝试时可以访问网络。\n\n是否继续？"
+blocked_notification = "已阻止：%{app}"
+
+# --- 右键菜单 ---
+[context]
+allow = "允许"
+block = "阻止"
+copy_details = "复制详情"
+properties = "属性\tEnter"
+remove_from_profile = "从配置文件中移除\tDel"
+explore = "打开文件夹\tCtrl+E"
+copy = "复制名称\tCtrl+C"
+
+# --- 托盘菜单 ---
+[tray]
+show = "显示 amwall"
+enable_filters = "启用过滤器"
+disable_filters = "禁用过滤器"
+settings = "设置..."
+exit = "退出 amwall"
+
+# --- 首次运行向导 ---
+[wizard]
+title = "欢迎使用 amwall"
+subtitle = "导入 simplewall 配置？"
+import_btn = "导入"
+start_fresh_btn = "全新开始"
+body = """amwall 发现了现有的 simplewall 配置：
+
+• 路径：%{path}
+• %{apps} 个应用及其规则
+• %{rules} 条自定义规则
+
+导入会将 simplewall 的 profile.xml 复制到 amwall 作为起始配置。simplewall 保持安装状态，其现有内核过滤器仍然有效——在 amwall 中点击"启用过滤器"之前请先禁用 simplewall，以避免两个防火墙应用重叠的规则。
+
+如果现在跳过，您可以稍后通过 文件 → 导入 来导入。"""
+
+# --- 设置对话框标签页 ---
+[settings_tab]
+general = "常规"
+interface = "界面"
+highlighting = "高亮显示"
+rules = "规则"
+blocklist = "屏蔽列表"
+notifications = "通知"
+logging = "日志记录"
+exclude = "排除"
+
+# --- 规则编辑器标签页 ---
+[rule_editor]
+general = "常规"
+rule = "规则"
+apps = "应用"
+
+# --- 协议标签 ---
+[protocol]
+any = "任意"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- 地址族标签 ---
+[version]
+any = "任意"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- 方向标签 ---
+[direction]
+outbound = "出站"
+inbound = "入站"
+both = "双向"
+other = "其他"
+
+# --- 操作标签 ---
+[action]
+allow = "允许"
+block = "阻止"
+permit = "放行"
+
+# --- 设置页面：常规 ---
+[rc_general]
+group_config = "常规配置"
+always_on_top = "始终置顶"
+load_on_startup = "开机启动"
+start_minimized = "启动时最小化"
+skip_uac = "跳过\"用户帐户控制\"提示警告"
+check_updates = "定期检查更新（推荐）"
+group_language = "语言"
+select_language = "选择语言："
+
+# --- 设置页面：界面 ---
+[rc_interface]
+group_confirm = "确认"
+confirm_exit = "退出时显示确认对话框"
+confirm_exit_timer = "计时器活跃时退出显示确认对话框"
+confirm_log_clear = "清除日志文件时确认"
+confirm_allow = "允许之前被阻止的流量时确认"
+group_tray = "托盘图标"
+tray_single_click = "单击托盘图标打开"
+
+# --- 设置页面：高亮显示 ---
+[rc_highlight]
+group = "高亮显示"
+hint = "双击项目以更改。"
+
+# --- 设置页面：规则 ---
+[rc_rules]
+group_connections = "连接"
+block_outbound = "阻止所有出站连接"
+block_inbound = "阻止所有入站连接"
+allow_loopback = "允许所有 loopback 连接"
+allow_6to4 = "允许所有 IPv6 重定向 (6to4)"
+group_security = "安全"
+stealth_mode = "防止端口扫描（隐身模式）"
+boottime_filters = "启用启动时过滤器"
+group_advanced = "高级"
+check_signatures = "检查应用的数字签名"
+use_hashes = "使用文件哈希值识别应用"
+resolve_addresses = "解析网络地址"
+
+# --- 设置页面：屏蔽列表 ---
+[rc_blocklist]
+group_spy = "Microsoft 间谍软件和遥测"
+group_update = "Microsoft Update"
+group_apps = "Microsoft 应用程序"
+
+# --- 设置页面：通知 ---
+[rc_notifications]
+group = "通知"
+enable = "启用数据包通知"
+sound = "启用通知声音"
+fullscreen = "全屏应用在前台时启用静默模式"
+on_tray = "在托盘上显示通知窗口"
+timeout = "相似通知之间的超时时间（秒）："
+
+# --- 设置页面：日志记录 ---
+[rc_logging]
+group_log = "数据包日志"
+enable = "启用数据包记录到文件"
+max_size = "最大日志大小 (kB)："
+group_viewer = "日志查看器"
+group_ui = "界面"
+enable_ui = "在界面中启用数据包记录"
+
+# --- 设置页面：排除 ---
+[rc_exclude]
+group_notif = "通知：不通知以下内容..."
+blocklist = "屏蔽列表"
+user_rules = "用户规则"
+group_log = "日志记录：不记录以下内容..."
+stealth = "端口扫描连接"
+allowed = "已允许的连接"
+
+# --- 应用属性对话框 ---
+[rc_properties]
+title = "应用属性"
+path = "路径："
+comment = "备注："
+group_settings = "设置："
+enabled = "已启用（允许此应用的流量）"
+silent = "静默（不通知）"
+save = "保存"
+close = "关闭"
+
+# --- 连接提示对话框 ---
+[rc_prompt]
+title = "amwall - 应用连接请求"
+header = "一个应用正在尝试连接："
+question = "允许此应用的流量，还是继续阻止？"
+allow = "允许"
+block = "阻止"
+
+# --- 规则编辑器对话框 ---
+[rc_editor]
+add_rule_title = "规则条目"
+save = "保存"
+close = "关闭"
+
+# --- 文件对话框过滤器 ---
+[filter]
+xml_profile = "XML 配置文件 (*.xml)"
+all_files = "所有文件 (*.*)"
+executable = "可执行文件 (*.exe)"

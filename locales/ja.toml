@@ -1,0 +1,396 @@
+# amwall — 日本語ロケールファイル。
+# en.toml から翻訳。すべての TOML キーと %{variable} プレースホルダーはそのまま保持。
+
+# --- メニューバータイトル ---
+[menu]
+file = "ファイル"
+edit = "編集"
+view = "表示"
+settings = "設定"
+rules = "ルール"
+blocklist = "ブロックリスト"
+help = "ヘルプ"
+
+# --- ファイルメニュー項目 ---
+[file]
+settings = "設定\tCtrl+P"
+add_app = "アプリを追加…\tCtrl+O"
+import = "インポート…"
+export = "エクスポート…"
+exit = "終了"
+
+# --- 編集メニュー項目 ---
+[edit]
+purge_unused = "未使用アプリを削除"
+purge_timers = "タイマーを削除"
+clear_log = "ログを消去"
+refresh = "更新\tF5"
+
+# --- 表示メニュー項目 ---
+[view]
+always_on_top = "常に手前に表示"
+dark_theme = "ダークテーマを使用"
+autosize_columns = "列幅を自動調整"
+filenames_only = "ファイル名のみ表示"
+show_search = "検索バーを表示"
+layout_details = "レイアウト：詳細"
+layout_icons = "レイアウト：アイコン"
+layout_tiles = "レイアウト：タイル"
+icon_small = "アイコンサイズ：小"
+icon_large = "アイコンサイズ：大"
+icon_extralarge = "アイコンサイズ：特大"
+font = "フォント…"
+
+# --- 設定メニュー項目 ---
+[settings]
+load_on_startup = "システム起動時に読み込む"
+start_minimized = "最小化で起動"
+skip_uac = "UAC 警告をスキップ"
+check_updates = "更新を確認"
+auto_allow_microsoft = "Microsoft 署名済みプログラムを自動許可"
+check_signatures = "アプリのデジタル署名を確認"
+check_hashes = "アプリの SHA-256 ハッシュを確認"
+
+# --- ルールサブメニュー ---
+[rules]
+block_outbound = "すべての送信をブロック"
+block_inbound = "すべての受信をブロック"
+allow_loopback = "loopback を許可"
+allow_6to4 = "IPv6 (6to4) を許可"
+allow_windows_update = "Windows Update を許可"
+
+# --- ブロックリストサブメニュー ---
+[blocklist]
+disable = "無効"
+allow = "許可"
+block = "ブロック"
+spy_telemetry = "Microsoft スパイウェアとテレメトリ"
+ms_update = "Microsoft Update"
+ms_apps = "Microsoft アプリケーション"
+
+# --- ヘルプメニュー項目 ---
+[help]
+website = "ウェブサイト"
+check_updates = "更新を確認"
+about = "バージョン情報"
+emergency_reset = "緊急 WFP リセット..."
+
+# --- タブラベル ---
+[tab]
+apps = "アプリ"
+services = "サービス"
+uwp = "UWP アプリ"
+blocklist = "ブロックリスト"
+system_rules = "システムルール"
+user_rules = "ユーザールール"
+connections = "接続"
+packets_log = "パケットログ"
+
+# --- 列ヘッダー ---
+[column]
+name = "名前"
+added = "追加日時"
+path = "パス"
+date = "日付"
+protocol = "プロトコル"
+direction = "方向"
+address_src = "アドレス（送信元）"
+host_src = "ホスト（送信元）"
+port_src = "ポート（送信元）"
+address_dst = "アドレス（宛先）"
+host_dst = "ホスト（宛先）"
+port_dst = "ポート（宛先）"
+state = "状態"
+filter = "フィルター"
+index = "#"
+
+# --- グループヘッダー ---
+[group]
+blocked = "ブロック済み"
+blocked_silent = "ブロック済み（サイレント）"
+timer = "タイマー"
+special = "特殊アプリ"
+allowed = "許可済み"
+enabled = "有効"
+disabled = "無効"
+
+# --- ツールバーツールチップ ---
+[tooltip]
+enable_filters = "フィルターを有効にする (Ctrl+T)"
+new_rule = "新しいユーザールールを作成"
+enable_notifications = "ブロックされた通信の通知を有効にする"
+enable_log = "ブロックされた通信をファイルに記録"
+enable_ui_log = "UI にパケットログを表示"
+reload = "ディスクからプロファイルを再読み込み (F5)"
+open_settings = "設定を開く"
+open_log_file = "パケットログファイルを開く"
+clear_log = "パケットログを消去"
+open_releases = "GitHub リリースページを開く"
+
+# --- ツールバーボタンラベル ---
+[toolbar]
+enable_filters = "フィルターを有効にする"
+disable_filters = "フィルターを無効にする"
+
+# --- ステータスバーメッセージ ---
+[status]
+filters_enabled = "フィルターが有効です。"
+filters_disabled = "フィルターが無効です。"
+imported_simplewall = "simplewall プロファイルをインポートしました。"
+checking_updates = "更新を確認中..."
+up_to_date = "最新です。"
+update_check_failed = "更新の確認に失敗しました。"
+nothing_to_remove = "プロファイルから削除するものがありません。"
+engine_failed = "WFP エンジンを開けませんでした。"
+uninstall_failed = "フィルターのアンインストールに失敗しました。"
+install_failed = "フィルターのインストールに失敗しました。"
+app_exists = "アプリはすでにプロファイルに存在します。"
+app_added = "アプリを追加しました。"
+rule_added = "ルールを追加しました。"
+rule_updated = "ルールを更新しました。"
+rule_deleted = "ルールを削除しました。"
+autosave_failed = "自動保存に失敗しました。"
+import_read_error = "インポート失敗：読み取りエラー。"
+import_parse_error = "インポート失敗：解析エラー。"
+imported = "インポートしました。"
+export_write_error = "エクスポート失敗：書き込みエラー。"
+exported = "エクスポートしました。"
+refresh_read_error = "更新失敗：読み取りエラー。"
+refresh_parse_error = "更新失敗：解析エラー。"
+profile_reloaded = "プロファイルを再読み込みしました。"
+no_unused = "削除する未使用アプリがありません。"
+no_timers = "アクティブなタイマーがありません。"
+log_cleared = "ログを消去しました。"
+font_failed = "フォントの読み込みに失敗しました。元に戻しました。"
+font_updated = "フォントを更新しました。"
+emergency_done = "緊急リセットが完了しました。"
+auto_allowed_one = "Microsoft 署名済みアプリ 1 件を自動許可しました"
+auto_allowed_many = "Microsoft 署名済みアプリ %{count} 件を自動許可しました"
+silenced = "サイレント設定：%{name}"
+allowed_count = "許可済み：%{name}"
+connecting = "%{remote} に接続中"
+removed_entries = "プロファイルから %{count} 件のエントリを削除しました。"
+purged_apps = "未使用アプリ %{count} 件を削除しました。"
+cleared_timers = "アプリタイマー %{count} 件をクリアしました。"
+skip_uac_enabled = "UAC スキップ：有効。今後、管理者ユーザーの起動時に UAC は表示されません。"
+skip_uac_disabled = "UAC スキップ：無効。今後、管理者操作時に UAC が表示されます。"
+hash_drift_one = "ハッシュ変更：%{name}"
+hash_drift_many = "%{count} 件のアプリでハッシュが変更されました（ログを参照）"
+filters_removed = "%{filters} 件のフィルターを削除し、%{sublayers} 件のサブレイヤーをクリアしました。"
+filters_installed = "%{added} 件のフィルターをインストールし、%{skipped} 件をスキップしました。"
+tray_blocked = "amwall - ブロック：%{name}"
+
+# --- ダイアログタイトル ---
+[dialog]
+update_available = "amwall - 更新があります"
+check_updates = "amwall - 更新の確認"
+confirm_bulk_delete = "一括削除の確認"
+admin_required = "管理者権限が必要です"
+delete_rule = "ルールの削除"
+exit = "amwall を終了しますか？"
+clear_log = "ログの消去"
+allow_blocked = "以前ブロックされた通信を許可しますか？"
+emergency_reset = "緊急 WFP リセット"
+about_title = "amwall について"
+about_app = "amwall"
+settings_title = "設定"
+properties_signed = "amwall - プロパティ（署名者：%{signer}）"
+
+# --- ダイアログ本文メッセージ ---
+[message]
+update_available_body = "amwall %{latest} が利用可能です（現在 %{current} を実行中）。\n\nブラウザでリリースページを開きますか？"
+update_uptodate_body = "現在のバージョン：%{current}\n最新バージョン：%{latest}\n\nすでに最新です。"
+update_error_body = "GitHub に接続して更新を確認できませんでした。\n\n考えられる原因：インターネット未接続、ファイアウォールが amwall の送信 HTTPS をブロック、または GitHub API レート制限（1 時間あたり匿名リクエスト 60 回）。後でもう一度お試しください。"
+admin_required_body = "フィルター管理には管理者権限が必要です。\n\namwall を閉じて、管理者権限のターミナルから再起動してください\n（右クリック → \"管理者として実行\"）。"
+delete_rule_confirm = "ルール \"%{name}\" を削除しますか？"
+bulk_delete_confirm = "プロファイルから %{count} 件のエントリを削除しますか？\n\nこの操作は元に戻せません。"
+exit_body = "フィルターは現在有効です。amwall を終了してもフィルターはそのまま残ります（プロセス終了後も有効）。続行しますか？"
+clear_log_body = "パケットログを消去しますか？メモリ内のログタブが空になり、ディスク上のログファイルが切り詰められます。この操作は元に戻せません。"
+emergency_reset_body = "緊急リセットは以下を実行します：\n\n• amwall がインストールしたすべての WFP フィルターを削除\n• アプリプロファイルとユーザールールリストを空にする\n• フィルター有効を解除\n\namwall が識別できないものをブロックしていて、OS デフォルトのネットワーク動作に戻す必要がある場合に使用してください。変更は即時に適用されます。続行しますか？"
+allow_one_body = "%{name} は現在ブロックされています。許可すると、次回のアクセス時にネットワークに接続できるようになります。\n\n続行しますか？"
+allow_many_body = "以前ブロックされた %{count} 件のアプリが許可に設定されます。次回のアクセス時にネットワークに接続できるようになります。\n\n続行しますか？"
+blocked_notification = "ブロック：%{app}"
+
+# --- コンテキストメニュー ---
+[context]
+allow = "許可"
+block = "ブロック"
+copy_details = "詳細をコピー"
+properties = "プロパティ\tEnter"
+remove_from_profile = "プロファイルから削除\tDel"
+explore = "フォルダーを開く\tCtrl+E"
+copy = "名前をコピー\tCtrl+C"
+
+# --- トレイメニュー ---
+[tray]
+show = "amwall を表示"
+enable_filters = "フィルターを有効にする"
+disable_filters = "フィルターを無効にする"
+settings = "設定..."
+exit = "amwall を終了"
+
+# --- 初回起動ウィザード ---
+[wizard]
+title = "amwall へようこそ"
+subtitle = "simplewall の設定をインポートしますか？"
+import_btn = "インポート"
+start_fresh_btn = "新規で開始"
+body = """amwall は既存の simplewall 設定を検出しました：
+
+• パス：%{path}
+• %{apps} 件のアプリとルール
+• %{rules} 件のカスタムルール
+
+インポートすると simplewall の profile.xml が amwall にコピーされ、初期設定として使用されます。simplewall はインストールされたままで、既存のカーネルフィルターも有効です。重複するルールの適用を避けるため、amwall で「フィルターを有効にする」をクリックする前に simplewall を無効にしてください。
+
+今スキップしても、後で ファイル → インポート から実行できます。"""
+
+# --- 設定ダイアログタブ ---
+[settings_tab]
+general = "全般"
+interface = "インターフェース"
+highlighting = "ハイライト"
+rules = "ルール"
+blocklist = "ブロックリスト"
+notifications = "通知"
+logging = "ログ記録"
+exclude = "除外"
+
+# --- ルールエディタータブ ---
+[rule_editor]
+general = "全般"
+rule = "ルール"
+apps = "アプリ"
+
+# --- プロトコルラベル ---
+[protocol]
+any = "すべて"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- アドレスファミリラベル ---
+[version]
+any = "すべて"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- 方向ラベル ---
+[direction]
+outbound = "送信"
+inbound = "受信"
+both = "双方向"
+other = "その他"
+
+# --- アクションラベル ---
+[action]
+allow = "許可"
+block = "ブロック"
+permit = "許可する"
+
+# --- 設定ページ：全般 ---
+[rc_general]
+group_config = "全般設定"
+always_on_top = "常に手前に表示"
+load_on_startup = "システム起動時に読み込む"
+start_minimized = "最小化で起動"
+skip_uac = "「ユーザーアカウント制御」プロンプト警告をスキップ"
+check_updates = "定期的に更新を確認する（推奨）"
+group_language = "言語"
+select_language = "言語を選択："
+
+# --- 設定ページ：インターフェース ---
+[rc_interface]
+group_confirm = "確認"
+confirm_exit = "終了時に確認ダイアログを表示"
+confirm_exit_timer = "タイマー動作中の終了時に確認ダイアログを表示"
+confirm_log_clear = "ログファイル消去時に確認"
+confirm_allow = "以前ブロックされた通信を許可する際に確認"
+group_tray = "トレイアイコン"
+tray_single_click = "トレイアイコンのシングルクリックで開く"
+
+# --- 設定ページ：ハイライト ---
+[rc_highlight]
+group = "ハイライト"
+hint = "項目をダブルクリックして変更します。"
+
+# --- 設定ページ：ルール ---
+[rc_rules]
+group_connections = "接続"
+block_outbound = "すべての送信接続をブロック"
+block_inbound = "すべての受信接続をブロック"
+allow_loopback = "すべての loopback 接続を許可"
+allow_6to4 = "すべての IPv6 リダイレクト (6to4) を許可"
+group_security = "セキュリティ"
+stealth_mode = "ポートスキャンを防止（ステルスモード）"
+boottime_filters = "ブートタイムフィルターを有効にする"
+group_advanced = "詳細"
+check_signatures = "アプリのデジタル署名を確認"
+use_hashes = "ファイルハッシュでアプリを識別"
+resolve_addresses = "ネットワークアドレスを解決"
+
+# --- 設定ページ：ブロックリスト ---
+[rc_blocklist]
+group_spy = "Microsoft スパイウェアとテレメトリ"
+group_update = "Microsoft Update"
+group_apps = "Microsoft アプリケーション"
+
+# --- 設定ページ：通知 ---
+[rc_notifications]
+group = "通知"
+enable = "パケット通知を有効にする"
+sound = "通知音を有効にする"
+fullscreen = "フルスクリーンアプリが前面にある場合、サイレントモードを有効にする"
+on_tray = "トレイに通知ウィンドウを表示"
+timeout = "類似通知間のタイムアウト（秒）："
+
+# --- 設定ページ：ログ記録 ---
+[rc_logging]
+group_log = "パケットログ"
+enable = "パケットのファイルへの記録を有効にする"
+max_size = "最大ログサイズ (kB)："
+group_viewer = "ログビューアー"
+group_ui = "インターフェース"
+enable_ui = "UI でのパケット記録を有効にする"
+
+# --- 設定ページ：除外 ---
+[rc_exclude]
+group_notif = "通知：以下について通知しない..."
+blocklist = "ブロックリスト"
+user_rules = "ユーザールール"
+group_log = "ログ記録：以下を記録しない..."
+stealth = "ポートスキャン接続"
+allowed = "許可された接続"
+
+# --- アプリプロパティダイアログ ---
+[rc_properties]
+title = "アプリのプロパティ"
+path = "パス："
+comment = "コメント："
+group_settings = "設定："
+enabled = "有効（このアプリの通信を許可）"
+silent = "サイレント（通知なし）"
+save = "保存"
+close = "閉じる"
+
+# --- 接続プロンプトダイアログ ---
+[rc_prompt]
+title = "amwall - アプリケーション接続要求"
+header = "アプリケーションが接続を試みています："
+question = "このアプリの通信を許可しますか、それともブロックしたままにしますか？"
+allow = "許可"
+block = "ブロック"
+
+# --- ルールエディターダイアログ ---
+[rc_editor]
+add_rule_title = "ルール入力"
+save = "保存"
+close = "閉じる"
+
+# --- ファイルダイアログフィルター ---
+[filter]
+xml_profile = "XML プロファイル (*.xml)"
+all_files = "すべてのファイル (*.*)"
+executable = "実行ファイル (*.exe)"

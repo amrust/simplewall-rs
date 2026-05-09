@@ -36,8 +36,31 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 use windows::core::PCWSTR;
 
+use rust_i18n::t;
+
 use super::settings::{BlocklistMode, Settings};
 use super::wide;
+
+fn set_text(hwnd: HWND, id: i32, key: &str) {
+    let s = t!(key);
+    let w = wide(&s);
+    unsafe {
+        let _ = windows::Win32::UI::WindowsAndMessaging::SetDlgItemTextW(
+            hwnd, id, PCWSTR(w.as_ptr()),
+        );
+    }
+}
+
+#[allow(dead_code)]
+fn set_caption(hwnd: HWND, key: &str) {
+    let s = t!(key);
+    let w = wide(&s);
+    unsafe {
+        let _ = windows::Win32::UI::WindowsAndMessaging::SetWindowTextW(
+            hwnd, PCWSTR(w.as_ptr()),
+        );
+    }
+}
 
 // ---- Resource IDs hand-synced with assets/amwall.rc ----
 
@@ -101,6 +124,29 @@ const IDC_EXCLUDECUSTOM_CHK: i32 = 811;
 const IDC_EXCLUDESTEALTH_CHK: i32 = 812;
 const IDC_EXCLUDECLASSIFYALLOW_CHK: i32 = 813;
 
+// Groupbox / label IDs added for localization (synced with amwall.rc 900+)
+const IDC_GRP_GENERAL_CONFIG: i32 = 726;
+const IDC_GRP_LANGUAGE: i32 = 727;
+const IDC_LBL_SELECT_LANGUAGE: i32 = 728;
+const IDC_GRP_CONFIRMATIONS: i32 = 735;
+const IDC_GRP_TRAYICON: i32 = 736;
+const IDC_GRP_HIGHLIGHTING: i32 = 741;
+const IDC_LBL_HIGHLIGHT_HINT: i32 = 742;
+const IDC_GRP_CONNECTIONS: i32 = 900;
+const IDC_GRP_SECURITY: i32 = 901;
+const IDC_GRP_ADVANCED: i32 = 902;
+const IDC_GRP_BLOCKLIST_SPY: i32 = 903;
+const IDC_GRP_BLOCKLIST_UPDATE: i32 = 904;
+const IDC_GRP_BLOCKLIST_EXTRA: i32 = 905;
+const IDC_GRP_NOTIFICATIONS: i32 = 906;
+const IDC_LBL_NOTIF_TIMEOUT: i32 = 907;
+const IDC_GRP_PACKETS_LOG: i32 = 908;
+const IDC_LBL_MAX_LOG_SIZE: i32 = 909;
+const IDC_GRP_LOG_VIEWER: i32 = 910;
+const IDC_GRP_LOG_UI: i32 = 911;
+const IDC_GRP_EXCLUDE_NOTIF: i32 = 912;
+const IDC_GRP_EXCLUDE_LOG: i32 = 913;
+
 fn make_int_resource(id: u16) -> PCWSTR {
     PCWSTR(id as usize as *const u16)
 }
@@ -112,6 +158,7 @@ fn make_int_resource(id: u16) -> PCWSTR {
 struct DialogState {
     initial: Settings,
     result: RefCell<Settings>,
+    language_codes: RefCell<Vec<String>>,
 }
 
 /// Open the modal Settings property sheet. Returns the modified
@@ -120,6 +167,7 @@ pub fn open(parent: HWND, initial: &Settings) -> Option<Settings> {
     let state = Box::new(DialogState {
         initial: initial.clone(),
         result: RefCell::new(initial.clone()),
+        language_codes: RefCell::new(Vec::new()),
     });
     let state_ptr = Box::into_raw(state);
     let raw = state_ptr as isize;
@@ -157,15 +205,15 @@ pub fn open(parent: HWND, initial: &Settings) -> Option<Settings> {
         Some(logging_proc),
         Some(exclude_proc),
     ];
-    let titles = [
-        "General",
-        "Interface",
-        "Highlighting",
-        "Rules",
-        "Blocklist",
-        "Notifications",
-        "Logging",
-        "Exclude",
+    let titles: [String; 8] = [
+        rust_i18n::t!("settings_tab.general").into(),
+        rust_i18n::t!("settings_tab.interface").into(),
+        rust_i18n::t!("settings_tab.highlighting").into(),
+        rust_i18n::t!("settings_tab.rules").into(),
+        rust_i18n::t!("settings_tab.blocklist").into(),
+        rust_i18n::t!("settings_tab.notifications").into(),
+        rust_i18n::t!("settings_tab.logging").into(),
+        rust_i18n::t!("settings_tab.exclude").into(),
     ];
     // Tab labels: PropertySheet reads `pszTitle` (when PSP_USETITLE
     // is set) for each tab. Our IDD_SETTINGS_* dialog templates have
@@ -188,7 +236,7 @@ pub fn open(parent: HWND, initial: &Settings) -> Option<Settings> {
         pages.push(psp);
     }
 
-    let caption = wide("Settings");
+    let caption = wide(&rust_i18n::t!("dialog.settings_title"));
 
     let mut header: PROPSHEETHEADERW_V2 = unsafe { std::mem::zeroed() };
     header.dwSize = size_of::<PROPSHEETHEADERW_V2>() as u32;
@@ -274,7 +322,16 @@ unsafe extern "system" fn general_proc(
                 set_check(hwnd, IDC_STARTMINIMIZED_CHK, s.start_minimized);
                 set_check(hwnd, IDC_SKIPUACWARNING_CHK, s.skip_uac_warning);
                 set_check(hwnd, IDC_CHECKUPDATES_CHK, s.check_updates);
-                populate_language_combo(hwnd, &s.language);
+                populate_language_combo(hwnd, &s.language, state);
+
+                set_text(hwnd, IDC_GRP_GENERAL_CONFIG, "rc_general.group_config");
+                set_text(hwnd, IDC_ALWAYSONTOP_CHK, "rc_general.always_on_top");
+                set_text(hwnd, IDC_LOADONSTARTUP_CHK, "rc_general.load_on_startup");
+                set_text(hwnd, IDC_STARTMINIMIZED_CHK, "rc_general.start_minimized");
+                set_text(hwnd, IDC_SKIPUACWARNING_CHK, "rc_general.skip_uac");
+                set_text(hwnd, IDC_CHECKUPDATES_CHK, "rc_general.check_updates");
+                set_text(hwnd, IDC_GRP_LANGUAGE, "rc_general.group_language");
+                set_text(hwnd, IDC_LBL_SELECT_LANGUAGE, "rc_general.select_language");
             }
             1
         }
@@ -286,7 +343,7 @@ unsafe extern "system" fn general_proc(
                 s.start_minimized = read_check(hwnd, IDC_STARTMINIMIZED_CHK);
                 s.skip_uac_warning = read_check(hwnd, IDC_SKIPUACWARNING_CHK);
                 s.check_updates = read_check(hwnd, IDC_CHECKUPDATES_CHK);
-                s.language = read_language_combo(hwnd);
+                s.language = read_language_combo(hwnd, state);
             }
             unsafe { accept_apply(hwnd) };
             1
@@ -295,12 +352,62 @@ unsafe extern "system" fn general_proc(
     }
 }
 
-/// Walk the same candidate paths `gui::load_locale` uses and feed
-/// every `[Section]` header into the IDC_LANGUAGE combobox. The
-/// first item is always "(System default)" mapping to the empty
-/// string — selected when `current` is empty so users can opt out
-/// of a localization.
-fn populate_language_combo(hwnd: HWND, current: &str) {
+fn locale_display_name(code: &str) -> String {
+    let name = match code {
+        "ar" => "العربية",
+        "az" => "Azərbaycanca",
+        "be" => "Беларуская",
+        "bg" => "Български",
+        "ca" => "Català",
+        "cs" => "Čeština",
+        "da" => "Dansk",
+        "de" => "Deutsch",
+        "el" => "Ελληνικά",
+        "en" => "English",
+        "es" => "Español",
+        "et" => "Eesti",
+        "fa" => "فارسی",
+        "fi" => "Suomi",
+        "fr" => "Français",
+        "he" => "עברית",
+        "hi" => "हिन्दी",
+        "hr" => "Hrvatski",
+        "hu" => "Magyar",
+        "hy" => "Հայերեն",
+        "id" => "Bahasa Indonesia",
+        "it" => "Italiano",
+        "ja" => "日本語",
+        "ka" => "ქართული",
+        "kk" => "Қазақша",
+        "ko" => "한국어",
+        "ky" => "Кыргызча",
+        "lt" => "Lietuvių",
+        "lv" => "Latviešu",
+        "nl" => "Nederlands",
+        "no" => "Norsk",
+        "pl" => "Polski",
+        "pt" => "Português",
+        "pt-BR" => "Português (Brasil)",
+        "ro" => "Română",
+        "ru" => "Русский",
+        "sk" => "Slovenčina",
+        "sl" => "Slovenščina",
+        "sr" => "Српски",
+        "sr-Latn" => "Srpski (latinica)",
+        "sv" => "Svenska",
+        "th" => "ไทย",
+        "tr" => "Türkçe",
+        "uk" => "Українська",
+        "vi" => "Tiếng Việt",
+        "zh" => "中文",
+        "zh-CN" => "简体中文",
+        "zh-TW" => "正體中文",
+        _ => code,
+    };
+    format!("{name} ({code})")
+}
+
+fn populate_language_combo(hwnd: HWND, current: &str, state: &DialogState) {
     use windows::Win32::UI::WindowsAndMessaging::{
         CB_ADDSTRING, CB_RESETCONTENT, CB_SETCURSEL,
     };
@@ -321,21 +428,26 @@ fn populate_language_combo(hwnd: HWND, current: &str) {
         );
     }
 
-    let mut items: Vec<String> = vec!["(System default)".to_string()];
-    for path in language_file_candidates() {
-        if !path.is_file() {
-            continue;
-        }
-        for lang in crate::locale::Locale::list_languages_in(&path) {
-            if !items.iter().any(|i| i.eq_ignore_ascii_case(&lang)) {
-                items.push(lang);
-            }
-        }
+    let mut codes: Vec<String> = rust_i18n::available_locales!()
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    codes.sort_by(|a, b| {
+        locale_display_name(a)
+            .to_lowercase()
+            .cmp(&locale_display_name(b).to_lowercase())
+    });
+
+    let mut labels: Vec<String> = vec!["(System default)".to_string()];
+    let mut code_list: Vec<String> = vec![String::new()];
+    for code in &codes {
+        labels.push(locale_display_name(code));
+        code_list.push(code.clone());
     }
 
     let mut sel: usize = 0;
-    for (idx, item) in items.iter().enumerate() {
-        let mut wbuf = wide(item);
+    for (idx, label) in labels.iter().enumerate() {
+        let mut wbuf = wide(label);
         unsafe {
             windows::Win32::UI::WindowsAndMessaging::SendMessageW(
                 combo,
@@ -344,7 +456,7 @@ fn populate_language_combo(hwnd: HWND, current: &str) {
                 LPARAM(wbuf.as_mut_ptr() as isize),
             );
         }
-        if idx > 0 && current.eq_ignore_ascii_case(item) {
+        if idx > 0 && current.eq_ignore_ascii_case(&code_list[idx]) {
             sel = idx;
         }
     }
@@ -357,15 +469,10 @@ fn populate_language_combo(hwnd: HWND, current: &str) {
             LPARAM(0),
         );
     }
+    *state.language_codes.borrow_mut() = code_list;
 }
 
-/// Read the IDC_LANGUAGE combobox selection. Returns the empty
-/// string when "(System default)" (index 0) is picked.
-fn read_language_combo(hwnd: HWND) -> String {
-    use windows::Win32::UI::WindowsAndMessaging::{
-        CB_GETCURSEL, CB_GETLBTEXT, CB_GETLBTEXTLEN,
-    };
-
+fn read_language_combo(hwnd: HWND, state: &DialogState) -> String {
     let combo = unsafe {
         windows::Win32::UI::WindowsAndMessaging::GetDlgItem(hwnd, IDC_LANGUAGE)
     };
@@ -376,7 +483,7 @@ fn read_language_combo(hwnd: HWND) -> String {
     let sel = unsafe {
         windows::Win32::UI::WindowsAndMessaging::SendMessageW(
             combo,
-            CB_GETCURSEL,
+            windows::Win32::UI::WindowsAndMessaging::CB_GETCURSEL,
             WPARAM(0),
             LPARAM(0),
         )
@@ -386,73 +493,8 @@ fn read_language_combo(hwnd: HWND) -> String {
         return String::new();
     }
 
-    let len = unsafe {
-        windows::Win32::UI::WindowsAndMessaging::SendMessageW(
-            combo,
-            CB_GETLBTEXTLEN,
-            WPARAM(sel as usize),
-            LPARAM(0),
-        )
-    }
-    .0;
-    if len <= 0 {
-        return String::new();
-    }
-    let mut buf = vec![0u16; len as usize + 1];
-    unsafe {
-        windows::Win32::UI::WindowsAndMessaging::SendMessageW(
-            combo,
-            CB_GETLBTEXT,
-            WPARAM(sel as usize),
-            LPARAM(buf.as_mut_ptr() as isize),
-        );
-    }
-    let s = String::from_utf16_lossy(&buf[..len as usize]);
-    s.trim_end_matches('\u{0}').to_string()
-}
-
-/// Same candidate paths `gui::run::load_locale` uses, kept in sync
-/// here so the language combo lists exactly the languages a future
-/// reload would actually find.
-fn language_file_candidates() -> Vec<std::path::PathBuf> {
-    let mut out = Vec::new();
-    if let Some(d) = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|p| p.to_path_buf()))
-    {
-        out.push(d.join("simplewall.lng"));
-        // Also any *.ini under <exe>/i18n/ — picked up by listing
-        // section headers per file (one section per file is the
-        // convention upstream uses for the source-language form).
-        let i18n = d.join("i18n");
-        if i18n.is_dir() {
-            if let Ok(rd) = std::fs::read_dir(&i18n) {
-                for entry in rd.flatten() {
-                    let p = entry.path();
-                    if p.extension().and_then(|e| e.to_str()) == Some("ini") {
-                        out.push(p);
-                    }
-                }
-            }
-        }
-    }
-    if let Some(d) = std::env::var_os("APPDATA")
-        .map(|p| std::path::PathBuf::from(p).join("amwall"))
-    {
-        out.push(d.join("simplewall.lng"));
-        let i18n = d.join("i18n");
-        if i18n.is_dir() {
-            if let Ok(rd) = std::fs::read_dir(&i18n) {
-                for entry in rd.flatten() {
-                    let p = entry.path();
-                    if p.extension().and_then(|e| e.to_str()) == Some("ini") {
-                        out.push(p);
-                    }
-                }
-            }
-        }
-    }
-    out
+    let codes = state.language_codes.borrow();
+    codes.get(sel as usize).cloned().unwrap_or_default()
 }
 
 unsafe extern "system" fn interface_proc(
@@ -470,6 +512,14 @@ unsafe extern "system" fn interface_proc(
                 set_check(hwnd, IDC_CONFIRMLOGCLEAR_CHK, s.confirm_log_clear);
                 set_check(hwnd, IDC_CONFIRMALLOW_CHK, s.confirm_allow);
                 set_check(hwnd, IDC_TRAYICONSINGLECLICK_CHK, s.tray_single_click);
+
+                set_text(hwnd, IDC_GRP_CONFIRMATIONS, "rc_interface.group_confirm");
+                set_text(hwnd, IDC_CONFIRMEXIT_CHK, "rc_interface.confirm_exit");
+                set_text(hwnd, IDC_CONFIRMEXITTIMER_CHK, "rc_interface.confirm_exit_timer");
+                set_text(hwnd, IDC_CONFIRMLOGCLEAR_CHK, "rc_interface.confirm_log_clear");
+                set_text(hwnd, IDC_CONFIRMALLOW_CHK, "rc_interface.confirm_allow");
+                set_text(hwnd, IDC_GRP_TRAYICON, "rc_interface.group_tray");
+                set_text(hwnd, IDC_TRAYICONSINGLECLICK_CHK, "rc_interface.tray_single_click");
             }
             1
         }
@@ -502,6 +552,9 @@ unsafe extern "system" fn highlighting_proc(
             // empty for now. Still install_state so PSN_APPLY (no-op
             // here) finds the pointer.
             let _ = unsafe { install_state(hwnd, lparam) };
+
+            set_text(hwnd, IDC_GRP_HIGHLIGHTING, "rc_highlight.group");
+            set_text(hwnd, IDC_LBL_HIGHLIGHT_HINT, "rc_highlight.hint");
             1
         }
         WM_NOTIFY if is_psn_apply(lparam) => {
@@ -531,6 +584,19 @@ unsafe extern "system" fn rules_proc(
                 set_check(hwnd, IDC_USECERTIFICATES_CHK, s.use_certificates);
                 set_check(hwnd, IDC_USEHASHES_CHK, s.use_hashes);
                 set_check(hwnd, IDC_USENETWORKRESOLUTION_CHK, s.use_network_resolution);
+
+                set_text(hwnd, IDC_GRP_CONNECTIONS, "rc_rules.group_connections");
+                set_text(hwnd, IDC_S_RULE_BLOCKOUTBOUND, "rc_rules.block_outbound");
+                set_text(hwnd, IDC_S_RULE_BLOCKINBOUND, "rc_rules.block_inbound");
+                set_text(hwnd, IDC_S_RULE_ALLOWLOOPBACK, "rc_rules.allow_loopback");
+                set_text(hwnd, IDC_S_RULE_ALLOW6TO4, "rc_rules.allow_6to4");
+                set_text(hwnd, IDC_GRP_SECURITY, "rc_rules.group_security");
+                set_text(hwnd, IDC_USESTEALTHMODE_CHK, "rc_rules.stealth_mode");
+                set_text(hwnd, IDC_INSTALLBOOTTIMEFILTERS_CHK, "rc_rules.boottime_filters");
+                set_text(hwnd, IDC_GRP_ADVANCED, "rc_rules.group_advanced");
+                set_text(hwnd, IDC_USECERTIFICATES_CHK, "rc_rules.check_signatures");
+                set_text(hwnd, IDC_USEHASHES_CHK, "rc_rules.use_hashes");
+                set_text(hwnd, IDC_USENETWORKRESOLUTION_CHK, "rc_rules.resolve_addresses");
             }
             1
         }
@@ -585,6 +651,19 @@ unsafe extern "system" fn blocklist_proc(
                     IDC_S_BLOCKLIST_EXTRA_ALLOW,
                     IDC_S_BLOCKLIST_EXTRA_BLOCK,
                 );
+
+                set_text(hwnd, IDC_GRP_BLOCKLIST_SPY, "rc_blocklist.group_spy");
+                set_text(hwnd, IDC_GRP_BLOCKLIST_UPDATE, "rc_blocklist.group_update");
+                set_text(hwnd, IDC_GRP_BLOCKLIST_EXTRA, "rc_blocklist.group_apps");
+                set_text(hwnd, IDC_S_BLOCKLIST_SPY_DISABLE, "blocklist.disable");
+                set_text(hwnd, IDC_S_BLOCKLIST_SPY_ALLOW, "blocklist.allow");
+                set_text(hwnd, IDC_S_BLOCKLIST_SPY_BLOCK, "blocklist.block");
+                set_text(hwnd, IDC_S_BLOCKLIST_UPDATE_DISABLE, "blocklist.disable");
+                set_text(hwnd, IDC_S_BLOCKLIST_UPDATE_ALLOW, "blocklist.allow");
+                set_text(hwnd, IDC_S_BLOCKLIST_UPDATE_BLOCK, "blocklist.block");
+                set_text(hwnd, IDC_S_BLOCKLIST_EXTRA_DISABLE, "blocklist.disable");
+                set_text(hwnd, IDC_S_BLOCKLIST_EXTRA_ALLOW, "blocklist.allow");
+                set_text(hwnd, IDC_S_BLOCKLIST_EXTRA_BLOCK, "blocklist.block");
             }
             1
         }
@@ -632,6 +711,13 @@ unsafe extern "system" fn notifications_proc(
                 set_check(hwnd, IDC_NOTIF_FULLSCREEN_CHK, s.notification_fullscreen_silent);
                 set_check(hwnd, IDC_NOTIFICATIONONTRAY_CHK, s.notification_on_tray);
                 set_edit(hwnd, IDC_NOTIFICATIONTIMEOUT_CTRL, &s.notification_timeout.to_string());
+
+                set_text(hwnd, IDC_GRP_NOTIFICATIONS, "rc_notifications.group");
+                set_text(hwnd, IDC_ENABLENOTIFICATIONS_CHK, "rc_notifications.enable");
+                set_text(hwnd, IDC_NOTIFICATIONSOUND_CHK, "rc_notifications.sound");
+                set_text(hwnd, IDC_NOTIF_FULLSCREEN_CHK, "rc_notifications.fullscreen");
+                set_text(hwnd, IDC_NOTIFICATIONONTRAY_CHK, "rc_notifications.on_tray");
+                set_text(hwnd, IDC_LBL_NOTIF_TIMEOUT, "rc_notifications.timeout");
             }
             1
         }
@@ -668,6 +754,13 @@ unsafe extern "system" fn logging_proc(
                 set_edit(hwnd, IDC_LOGSIZELIMIT_CTRL, &s.log_size_limit.to_string());
                 set_edit(hwnd, IDC_LOGVIEWER, &s.log_viewer);
                 set_check(hwnd, IDC_ENABLEUILOG_CHK, s.enable_ui_log);
+
+                set_text(hwnd, IDC_GRP_PACKETS_LOG, "rc_logging.group_log");
+                set_text(hwnd, IDC_ENABLELOG_CHK, "rc_logging.enable");
+                set_text(hwnd, IDC_LBL_MAX_LOG_SIZE, "rc_logging.max_size");
+                set_text(hwnd, IDC_GRP_LOG_VIEWER, "rc_logging.group_viewer");
+                set_text(hwnd, IDC_GRP_LOG_UI, "rc_logging.group_ui");
+                set_text(hwnd, IDC_ENABLEUILOG_CHK, "rc_logging.enable_ui");
             }
             1
         }
@@ -703,6 +796,13 @@ unsafe extern "system" fn exclude_proc(
                 set_check(hwnd, IDC_EXCLUDECUSTOM_CHK, s.exclude_custom);
                 set_check(hwnd, IDC_EXCLUDESTEALTH_CHK, s.exclude_stealth);
                 set_check(hwnd, IDC_EXCLUDECLASSIFYALLOW_CHK, s.exclude_classify_allow);
+
+                set_text(hwnd, IDC_GRP_EXCLUDE_NOTIF, "rc_exclude.group_notif");
+                set_text(hwnd, IDC_EXCLUDEBLOCKLIST_CHK, "rc_exclude.blocklist");
+                set_text(hwnd, IDC_EXCLUDECUSTOM_CHK, "rc_exclude.user_rules");
+                set_text(hwnd, IDC_GRP_EXCLUDE_LOG, "rc_exclude.group_log");
+                set_text(hwnd, IDC_EXCLUDESTEALTH_CHK, "rc_exclude.stealth");
+                set_text(hwnd, IDC_EXCLUDECLASSIFYALLOW_CHK, "rc_exclude.allowed");
             }
             1
         }

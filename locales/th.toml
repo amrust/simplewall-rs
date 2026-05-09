@@ -1,0 +1,396 @@
+# amwall — คำแปลภาษาไทย
+# คัดลอกจาก en.toml และแปลค่าทั้งหมดเป็นภาษาไทย
+
+# --- หัวข้อแถบเมนู ---
+[menu]
+file = "&ไฟล์"
+edit = "&แก้ไข"
+view = "&มุมมอง"
+settings = "&การตั้งค่า"
+rules = "&กฎ"
+blocklist = "&รายการบล็อก"
+help = "&ช่วยเหลือ"
+
+# --- รายการเมนูไฟล์ ---
+[file]
+settings = "&การตั้งค่า\tCtrl+P"
+add_app = "&เพิ่มแอป…\tCtrl+O"
+import = "&นำเข้า…"
+export = "&ส่งออก…"
+exit = "&ออก"
+
+# --- รายการเมนูแก้ไข ---
+[edit]
+purge_unused = "ลบแอปที่&ไม่ได้ใช้"
+purge_timers = "ลบตัว&ตั้งเวลา"
+clear_log = "&ล้างบันทึก"
+refresh = "&รีเฟรช\tF5"
+
+# --- รายการเมนูมุมมอง ---
+[view]
+always_on_top = "อยู่&ด้านบนเสมอ"
+dark_theme = "ใช้ธีม&มืด"
+autosize_columns = "&ปรับขนาดคอลัมน์อัตโนมัติ"
+filenames_only = "แสดงเฉพาะ&ชื่อไฟล์"
+show_search = "แสดงแถบ&ค้นหา"
+layout_details = "เลย์เอาต์: &รายละเอียด"
+layout_icons = "เลย์เอาต์: &ไอคอน"
+layout_tiles = "เลย์เอาต์: &ไทล์"
+icon_small = "ขนาดไอคอน: &เล็ก"
+icon_large = "ขนาดไอคอน: &ใหญ่"
+icon_extralarge = "ขนาดไอคอน: ใหญ่&พิเศษ"
+font = "&ฟอนต์…"
+
+# --- รายการเมนูการตั้งค่า ---
+[settings]
+load_on_startup = "&โหลดเมื่อเริ่มระบบ"
+start_minimized = "เริ่มแบบ&ย่อ"
+skip_uac = "ข้ามคำเตือน UAC"
+check_updates = "ตรวจสอบ&อัปเดต"
+auto_allow_microsoft = "อนุญาตโปรแกรมที่ลงนามโดย &Microsoft อัตโนมัติ"
+check_signatures = "ตรวจสอบลายเซ็น&ดิจิทัลของแอป"
+check_hashes = "ตรวจสอบ &hash SHA-256 ของแอป"
+
+# --- เมนูย่อยกฎ ---
+[rules]
+block_outbound = "บล็อกการเชื่อมต่อ&ขาออกทั้งหมด"
+block_inbound = "บล็อกการเชื่อมต่อ&ขาเข้าทั้งหมด"
+allow_loopback = "อนุญาต &loopback"
+allow_6to4 = "อนุญาต IPv6 (&6to4)"
+allow_windows_update = "อนุญาต &Windows Update"
+
+# --- เมนูย่อยรายการบล็อก ---
+[blocklist]
+disable = "&ปิดใช้งาน"
+allow = "&อนุญาต"
+block = "&บล็อก"
+spy_telemetry = "การ&สอดแนมและ telemetry ของ Microsoft"
+ms_update = "&อัปเดต Microsoft"
+ms_apps = "&แอปพลิเคชัน Microsoft"
+
+# --- รายการเมนูช่วยเหลือ ---
+[help]
+website = "&เว็บไซต์"
+check_updates = "&ตรวจสอบอัปเดต"
+about = "&เกี่ยวกับ"
+emergency_reset = "&รีเซ็ต WFP ฉุกเฉิน..."
+
+# --- ป้ายกำกับแท็บ ---
+[tab]
+apps = "แอป"
+services = "บริการ"
+uwp = "แอป UWP"
+blocklist = "รายการบล็อก"
+system_rules = "กฎระบบ"
+user_rules = "กฎผู้ใช้"
+connections = "การเชื่อมต่อ"
+packets_log = "บันทึกแพ็กเก็ต"
+
+# --- หัวข้อคอลัมน์ ---
+[column]
+name = "ชื่อ"
+added = "เพิ่มเมื่อ"
+path = "เส้นทาง"
+date = "วันที่"
+protocol = "โปรโตคอล"
+direction = "ทิศทาง"
+address_src = "ที่อยู่ (ต้นทาง)"
+host_src = "โฮสต์ (ต้นทาง)"
+port_src = "พอร์ต (ต้นทาง)"
+address_dst = "ที่อยู่ (ปลายทาง)"
+host_dst = "โฮสต์ (ปลายทาง)"
+port_dst = "พอร์ต (ปลายทาง)"
+state = "สถานะ"
+filter = "ตัวกรอง"
+index = "#"
+
+# --- หัวข้อกลุ่ม ---
+[group]
+blocked = "ถูกบล็อก"
+blocked_silent = "ถูกบล็อก (เงียบ)"
+timer = "ตัวตั้งเวลา"
+special = "แอปพิเศษ"
+allowed = "อนุญาต"
+enabled = "เปิดใช้งาน"
+disabled = "ปิดใช้งาน"
+
+# --- คำแนะนำแถบเครื่องมือ ---
+[tooltip]
+enable_filters = "เปิดใช้ตัวกรอง (Ctrl+T)"
+new_rule = "สร้างกฎผู้ใช้ใหม่"
+enable_notifications = "เปิดการแจ้งเตือนสำหรับทราฟฟิกที่ถูกบล็อก"
+enable_log = "บันทึกทราฟฟิกที่ถูกบล็อกลงไฟล์"
+enable_ui_log = "แสดงบันทึกแพ็กเก็ตในส่วนติดต่อผู้ใช้"
+reload = "โหลดโปรไฟล์จากดิสก์ใหม่ (F5)"
+open_settings = "เปิดการตั้งค่า"
+open_log_file = "เปิดไฟล์บันทึกแพ็กเก็ต"
+clear_log = "ล้างบันทึกแพ็กเก็ต"
+open_releases = "เปิดหน้ารุ่นบน GitHub"
+
+# --- ป้ายกำกับปุ่มแถบเครื่องมือ ---
+[toolbar]
+enable_filters = "เปิดใช้ตัวกรอง"
+disable_filters = "ปิดใช้ตัวกรอง"
+
+# --- ข้อความแถบสถานะ ---
+[status]
+filters_enabled = "ตัวกรองเปิดใช้งานแล้ว"
+filters_disabled = "ตัวกรองปิดใช้งานแล้ว"
+imported_simplewall = "นำเข้าโปรไฟล์ simplewall แล้ว"
+checking_updates = "กำลังตรวจสอบอัปเดต..."
+up_to_date = "เป็นเวอร์ชันล่าสุดแล้ว"
+update_check_failed = "การตรวจสอบอัปเดตล้มเหลว"
+nothing_to_remove = "ไม่มีอะไรจะลบออกจากโปรไฟล์"
+engine_failed = "ไม่สามารถเปิด WFP engine ได้"
+uninstall_failed = "การถอนตัวกรองล้มเหลว"
+install_failed = "การติดตั้งตัวกรองล้มเหลว"
+app_exists = "แอปมีอยู่ในโปรไฟล์แล้ว"
+app_added = "เพิ่มแอปแล้ว"
+rule_added = "เพิ่มกฎแล้ว"
+rule_updated = "อัปเดตกฎแล้ว"
+rule_deleted = "ลบกฎแล้ว"
+autosave_failed = "บันทึกอัตโนมัติล้มเหลว"
+import_read_error = "นำเข้าล้มเหลว: ข้อผิดพลาดในการอ่าน"
+import_parse_error = "นำเข้าล้มเหลว: ข้อผิดพลาดในการแยกวิเคราะห์"
+imported = "นำเข้าแล้ว"
+export_write_error = "ส่งออกล้มเหลว: ข้อผิดพลาดในการเขียน"
+exported = "ส่งออกแล้ว"
+refresh_read_error = "รีเฟรชล้มเหลว: ข้อผิดพลาดในการอ่าน"
+refresh_parse_error = "รีเฟรชล้มเหลว: ข้อผิดพลาดในการแยกวิเคราะห์"
+profile_reloaded = "โหลดโปรไฟล์ใหม่แล้ว"
+no_unused = "ไม่มีแอปที่ไม่ได้ใช้สำหรับลบ"
+no_timers = "ไม่มีตัวตั้งเวลาที่ใช้งานอยู่"
+log_cleared = "ล้างบันทึกแล้ว"
+font_failed = "โหลดฟอนต์ล้มเหลว; ย้อนกลับแล้ว"
+font_updated = "อัปเดตฟอนต์แล้ว"
+emergency_done = "รีเซ็ตฉุกเฉินเสร็จสมบูรณ์"
+auto_allowed_one = "อนุญาตอัตโนมัติ 1 แอปที่ลงนามโดย Microsoft"
+auto_allowed_many = "อนุญาตอัตโนมัติ %{count} แอปที่ลงนามโดย Microsoft"
+silenced = "ปิดเสียง: %{name}"
+allowed_count = "อนุญาต: %{name}"
+connecting = "กำลังเชื่อมต่อกับ %{remote}"
+removed_entries = "ลบ %{count} รายการออกจากโปรไฟล์แล้ว"
+purged_apps = "ลบ %{count} แอปที่ไม่ได้ใช้แล้ว"
+cleared_timers = "ล้าง %{count} ตัวตั้งเวลาแอปแล้ว"
+skip_uac_enabled = "ข้าม UAC: เปิดใช้งาน การเปิดครั้งต่อไปจะไม่แสดง UAC สำหรับผู้ใช้ที่เป็นแอดมิน"
+skip_uac_disabled = "ข้าม UAC: ปิดใช้งาน การเปิดครั้งต่อไปจะแสดง UAC สำหรับการดำเนินการแอดมิน"
+hash_drift_one = "การเปลี่ยนแปลง hash: %{name}"
+hash_drift_many = "การเปลี่ยนแปลง hash บน %{count} แอป (ดูบันทึก)"
+filters_removed = "ลบ %{filters} ตัวกรอง, ล้าง %{sublayers} sublayer แล้ว"
+filters_installed = "ติดตั้ง %{added} ตัวกรอง, ข้าม %{skipped}"
+tray_blocked = "amwall - ถูกบล็อก: %{name}"
+
+# --- หัวข้อกล่องโต้ตอบ ---
+[dialog]
+update_available = "amwall - มีอัปเดตใหม่"
+check_updates = "amwall - ตรวจสอบอัปเดต"
+confirm_bulk_delete = "ยืนยันการลบจำนวนมาก"
+admin_required = "ต้องการสิทธิ์ผู้ดูแลระบบ"
+delete_rule = "ลบกฎ"
+exit = "ออกจาก amwall?"
+clear_log = "ล้างบันทึก"
+allow_blocked = "อนุญาตทราฟฟิกที่เคยถูกบล็อก?"
+emergency_reset = "รีเซ็ต WFP ฉุกเฉิน"
+about_title = "เกี่ยวกับ amwall"
+about_app = "amwall"
+settings_title = "การตั้งค่า"
+properties_signed = "amwall - คุณสมบัติ (ลงนามโดย %{signer})"
+
+# --- เนื้อหาข้อความกล่องโต้ตอบ ---
+[message]
+update_available_body = "amwall %{latest} พร้อมใช้งาน (คุณใช้เวอร์ชัน %{current})\n\nเปิดหน้ารุ่นในเบราว์เซอร์?"
+update_uptodate_body = "เวอร์ชันปัจจุบัน: %{current}\nเวอร์ชันล่าสุด: %{latest}\n\nเป็นเวอร์ชันล่าสุดแล้ว"
+update_error_body = "ไม่สามารถเชื่อมต่อ GitHub เพื่อตรวจสอบอัปเดต\n\nสาเหตุที่เป็นไปได้: ไม่มีอินเทอร์เน็ต, ไฟร์วอลล์บล็อก amwall จาก HTTPS ขาออก, หรือขีดจำกัดอัตรา API ของ GitHub (60 คำขอแบบไม่ระบุตัวตนต่อชั่วโมง) ลองอีกครั้งในภายหลัง"
+admin_required_body = "การจัดการตัวกรองต้องการสิทธิ์ผู้ดูแลระบบ\n\nปิด amwall และเปิดใหม่จาก shell ที่ยกระดับสิทธิ์\n(คลิกขวา → \"เรียกใช้ในฐานะผู้ดูแลระบบ\")"
+delete_rule_confirm = "ลบกฎ \"%{name}\"?"
+bulk_delete_confirm = "ลบ %{count} รายการออกจากโปรไฟล์?\n\nการดำเนินการนี้ไม่สามารถยกเลิกได้"
+exit_body = "ตัวกรองเปิดใช้งานอยู่ การออกจาก amwall จะปล่อยให้ตัวกรองทำงานต่อ (ตัวกรองยังคงอยู่หลังจากโปรแกรมปิด) ดำเนินการต่อ?"
+clear_log_body = "ล้างบันทึกแพ็กเก็ต? การดำเนินการนี้จะล้างแท็บบันทึกในหน่วยความจำและตัดไฟล์บันทึกบนดิสก์ ไม่สามารถยกเลิกได้"
+emergency_reset_body = "การรีเซ็ตฉุกเฉินจะ:\n\n• ลบตัวกรอง WFP ทุกตัวที่ amwall ติดตั้ง\n• ล้างรายการโปรไฟล์แอปและกฎผู้ใช้\n• ปิดใช้งานตัวกรอง\n\nใช้ตัวเลือกนี้เมื่อ amwall บล็อกบางอย่างที่คุณระบุไม่ได้ และคุณต้องการกู้คืนพฤติกรรมเครือข่ายเริ่มต้นของระบบปฏิบัติการ การเปลี่ยนแปลงมีผลทันที ดำเนินการต่อ?"
+allow_one_body = "%{name} ถูกบล็อกอยู่ การอนุญาตจะให้แอปเข้าถึงเครือข่ายในครั้งถัดไป\n\nดำเนินการต่อ?"
+allow_many_body = "%{count} แอปที่เคยถูกบล็อกจะถูกตั้งค่าเป็นอนุญาต แอปเหล่านี้จะเข้าถึงเครือข่ายในครั้งถัดไป\n\nดำเนินการต่อ?"
+blocked_notification = "ถูกบล็อก: %{app}"
+
+# --- เมนูบริบท ---
+[context]
+allow = "อนุญาต"
+block = "บล็อก"
+copy_details = "&คัดลอกรายละเอียด"
+properties = "คุณสมบัติ\tEnter"
+remove_from_profile = "ลบออกจากโปรไฟล์\tDel"
+explore = "สำรวจ (เปิดโฟลเดอร์)\tCtrl+E"
+copy = "คัดลอกชื่อ\tCtrl+C"
+
+# --- เมนูถาด ---
+[tray]
+show = "แสดง amwall"
+enable_filters = "เปิดใช้ตัวกรอง"
+disable_filters = "ปิดใช้ตัวกรอง"
+settings = "การตั้งค่า..."
+exit = "ออกจาก amwall"
+
+# --- ตัวช่วยครั้งแรก ---
+[wizard]
+title = "ยินดีต้อนรับสู่ amwall"
+subtitle = "นำเข้าการกำหนดค่า simplewall?"
+import_btn = "นำเข้า"
+start_fresh_btn = "เริ่มใหม่"
+body = """amwall พบการกำหนดค่า simplewall ที่มีอยู่:
+
+• เส้นทาง: %{path}
+• %{apps} แอปที่มีกฎ
+• %{rules} กฎที่กำหนดเอง
+
+การนำเข้าจะคัดลอก profile.xml ของ simplewall ไปยัง amwall และใช้เป็นจุดเริ่มต้น simplewall ยังคงติดตั้งอยู่และตัวกรอง kernel ที่มีอยู่ยังคงทำงาน — ปิดใช้งาน simplewall ก่อนคลิก "เปิดใช้ตัวกรอง" ใน amwall เพื่อหลีกเลี่ยงไฟร์วอลล์ทั้งสองใช้กฎที่ซ้อนทับกัน
+
+คุณสามารถเรียกใช้ ไฟล์ → นำเข้า ในภายหลังหากข้ามตอนนี้"""
+
+# --- แท็บกล่องโต้ตอบการตั้งค่า ---
+[settings_tab]
+general = "ทั่วไป"
+interface = "ส่วนติดต่อ"
+highlighting = "การเน้นสี"
+rules = "กฎ"
+blocklist = "รายการบล็อก"
+notifications = "การแจ้งเตือน"
+logging = "การบันทึก"
+exclude = "ยกเว้น"
+
+# --- แท็บตัวแก้ไขกฎ ---
+[rule_editor]
+general = "ทั่วไป"
+rule = "กฎ"
+apps = "แอป"
+
+# --- ป้ายกำกับโปรโตคอล ---
+[protocol]
+any = "ทั้งหมด"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- ป้ายกำกับตระกูลที่อยู่ ---
+[version]
+any = "ทั้งหมด"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- ป้ายกำกับทิศทาง ---
+[direction]
+outbound = "ขาออก"
+inbound = "ขาเข้า"
+both = "ทั้งสอง"
+other = "อื่น ๆ"
+
+# --- ป้ายกำกับการกระทำ ---
+[action]
+allow = "อนุญาต"
+block = "บล็อก"
+permit = "อนุมัติ"
+
+# --- หน้าการตั้งค่า: ทั่วไป ---
+[rc_general]
+group_config = "การกำหนดค่าทั่วไป"
+always_on_top = "อยู่ด้านบนเสมอ"
+load_on_startup = "โหลดเมื่อเริ่มระบบ"
+start_minimized = "เริ่มแบบย่อ"
+skip_uac = "ข้ามคำเตือน \"User Account Control\""
+check_updates = "ตรวจสอบอัปเดตเป็นระยะ (แนะนำ)"
+group_language = "ภาษา"
+select_language = "เลือกภาษา:"
+
+# --- หน้าการตั้งค่า: ส่วนติดต่อ ---
+[rc_interface]
+group_confirm = "การยืนยัน"
+confirm_exit = "แสดงกล่องโต้ตอบยืนยันเมื่อออก"
+confirm_exit_timer = "แสดงกล่องโต้ตอบยืนยันเมื่อออกขณะมีตัวตั้งเวลา"
+confirm_log_clear = "ยืนยันเมื่อล้างไฟล์บันทึก"
+confirm_allow = "ยืนยันเมื่ออนุญาตทราฟฟิกที่เคยถูกบล็อก"
+group_tray = "ไอคอนถาด"
+tray_single_click = "คลิกครั้งเดียวที่ไอคอนถาดเพื่อเปิด"
+
+# --- หน้าการตั้งค่า: การเน้นสี ---
+[rc_highlight]
+group = "การเน้นสี"
+hint = "ดับเบิลคลิกที่รายการเพื่อเปลี่ยน"
+
+# --- หน้าการตั้งค่า: กฎ ---
+[rc_rules]
+group_connections = "การเชื่อมต่อ"
+block_outbound = "บล็อกการเชื่อมต่อขาออกทั้งหมด"
+block_inbound = "บล็อกการเชื่อมต่อขาเข้าทั้งหมด"
+allow_loopback = "อนุญาตการเชื่อมต่อ loopback ทั้งหมด"
+allow_6to4 = "อนุญาตการเปลี่ยนเส้นทาง IPv6 (6to4) ทั้งหมด"
+group_security = "ความปลอดภัย"
+stealth_mode = "ป้องกันการสแกนพอร์ต (โหมดซ่อน)"
+boottime_filters = "เปิดใช้ตัวกรองเมื่อบูต"
+group_advanced = "ขั้นสูง"
+check_signatures = "ตรวจสอบลายเซ็นดิจิทัลของแอป"
+use_hashes = "ใช้ hash ของไฟล์เพื่อระบุแอป"
+resolve_addresses = "แปลงที่อยู่เครือข่าย"
+
+# --- หน้าการตั้งค่า: รายการบล็อก ---
+[rc_blocklist]
+group_spy = "การสอดแนมและ telemetry ของ Microsoft"
+group_update = "อัปเดต Microsoft"
+group_apps = "แอปพลิเคชัน Microsoft"
+
+# --- หน้าการตั้งค่า: การแจ้งเตือน ---
+[rc_notifications]
+group = "การแจ้งเตือน"
+enable = "เปิดใช้การแจ้งเตือนแพ็กเก็ต"
+sound = "เปิดใช้เสียงแจ้งเตือน"
+fullscreen = "เปิดใช้โหมดเงียบเมื่อแอปเต็มหน้าจออยู่ด้านหน้า"
+on_tray = "แสดงหน้าต่างแจ้งเตือนที่ถาด"
+timeout = "เวลาหน่วงระหว่างการแจ้งเตือนที่คล้ายกัน (วินาที):"
+
+# --- หน้าการตั้งค่า: การบันทึก ---
+[rc_logging]
+group_log = "บันทึกแพ็กเก็ต"
+enable = "เปิดใช้การบันทึกแพ็กเก็ตลงไฟล์"
+max_size = "ขนาดบันทึกสูงสุด (kB):"
+group_viewer = "ตัวแสดงบันทึก"
+group_ui = "ส่วนติดต่อ"
+enable_ui = "เปิดใช้การบันทึกแพ็กเก็ตในส่วนติดต่อ"
+
+# --- หน้าการตั้งค่า: ยกเว้น ---
+[rc_exclude]
+group_notif = "การแจ้งเตือน: ไม่แจ้งเตือนเกี่ยวกับ ..."
+blocklist = "รายการบล็อก"
+user_rules = "กฎผู้ใช้"
+group_log = "การบันทึก: ไม่บันทึก ..."
+stealth = "การเชื่อมต่อจากการสแกนพอร์ต"
+allowed = "การเชื่อมต่อที่อนุญาต"
+
+# --- กล่องโต้ตอบคุณสมบัติแอป ---
+[rc_properties]
+title = "คุณสมบัติแอป"
+path = "เส้นทาง:"
+comment = "ความคิดเห็น:"
+group_settings = "การตั้งค่า:"
+enabled = "เปิดใช้งาน (อนุญาตทราฟฟิกของแอปนี้)"
+silent = "เงียบ (ไม่มีการแจ้งเตือน)"
+save = "บันทึก"
+close = "ปิด"
+
+# --- กล่องโต้ตอบคำขอเชื่อมต่อ ---
+[rc_prompt]
+title = "amwall - คำขอเชื่อมต่อแอปพลิเคชัน"
+header = "แอปพลิเคชันกำลังพยายามเชื่อมต่อ:"
+question = "อนุญาตทราฟฟิกของแอปนี้ หรือบล็อกต่อไป?"
+allow = "อนุญาต"
+block = "บล็อก"
+
+# --- กล่องโต้ตอบตัวแก้ไขกฎ ---
+[rc_editor]
+add_rule_title = "รายการกฎ"
+save = "บันทึก"
+close = "ปิด"
+
+# --- ตัวกรองกล่องโต้ตอบไฟล์ ---
+[filter]
+xml_profile = "โปรไฟล์ XML (*.xml)"
+all_files = "ไฟล์ทั้งหมด (*.*)"
+executable = "ไฟล์ปฏิบัติการ (*.exe)"

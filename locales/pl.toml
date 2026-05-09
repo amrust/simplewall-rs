@@ -1,0 +1,397 @@
+# amwall — Tłumaczenie na język polski.
+# Tłumaczenie pliku locales/en.toml. Klucze pozostają niezmienione,
+# tłumaczone są wyłącznie wartości. Symbole zastępcze %{…} muszą pozostać nienaruszone.
+
+# --- Tytuły paska menu ---
+[menu]
+file = "&Plik"
+edit = "&Edycja"
+view = "&Widok"
+settings = "&Ustawienia"
+rules = "&Reguły"
+blocklist = "Lista &blokad"
+help = "Pomo&c"
+
+# --- Elementy menu Plik ---
+[file]
+settings = "&Ustawienia\tCtrl+P"
+add_app = "&Dodaj aplikację…\tCtrl+O"
+import = "&Importuj…"
+export = "&Eksportuj…"
+exit = "&Zakończ"
+
+# --- Elementy menu Edycja ---
+[edit]
+purge_unused = "Usuń &nieużywane aplikacje"
+purge_timers = "Usuń &czasomierze"
+clear_log = "&Wyczyść dziennik"
+refresh = "&Odśwież\tF5"
+
+# --- Elementy menu Widok ---
+[view]
+always_on_top = "Zawsze na &wierzchu"
+dark_theme = "Użyj &ciemnego motywu"
+autosize_columns = "&Autodopasowanie kolumn"
+filenames_only = "Pokazuj tylko nazwy &plików"
+show_search = "Pokaż pasek &szukania"
+layout_details = "Układ: &Szczegóły"
+layout_icons = "Układ: &Ikony"
+layout_tiles = "Układ: &Kafelki"
+icon_small = "Rozmiar ikon: &Małe"
+icon_large = "Rozmiar ikon: &Duże"
+icon_extralarge = "Rozmiar ikon: &Bardzo duże"
+font = "&Czcionka…"
+
+# --- Elementy menu Ustawienia ---
+[settings]
+load_on_startup = "&Ładuj przy starcie systemu"
+start_minimized = "Uruchom &zminimalizowany"
+skip_uac = "Pomiń ostrzeżenie UAC"
+check_updates = "Sprawdzaj &aktualizacje"
+auto_allow_microsoft = "Automatycznie zezwalaj na programy podpisane przez &Microsoft"
+check_signatures = "Sprawdzaj &podpisy cyfrowe aplikacji"
+check_hashes = "Sprawdzaj &hash SHA-256 aplikacji"
+
+# --- Podmenu Reguły ---
+[rules]
+block_outbound = "Blokuj połączenia &wychodzące dla wszystkich"
+block_inbound = "Blokuj połączenia &przychodzące dla wszystkich"
+allow_loopback = "Zezwalaj na &loopback"
+allow_6to4 = "Zezwalaj na IPv6 (&6to4)"
+allow_windows_update = "Zezwalaj na &Windows Update"
+
+# --- Podmenu Lista blokad ---
+[blocklist]
+disable = "&Wyłącz"
+allow = "&Zezwalaj"
+block = "&Blokuj"
+spy_telemetry = "&Szpiegowanie i telemetria Microsoft"
+ms_update = "Microsoft &Update"
+ms_apps = "&Aplikacje Microsoft"
+
+# --- Elementy menu Pomoc ---
+[help]
+website = "&Strona internetowa"
+check_updates = "&Sprawdź aktualizacje"
+about = "&O programie"
+emergency_reset = "&Awaryjny reset WFP..."
+
+# --- Etykiety zakładek ---
+[tab]
+apps = "Aplikacje"
+services = "Usługi"
+uwp = "Aplikacje UWP"
+blocklist = "Lista blokad"
+system_rules = "Reguły systemowe"
+user_rules = "Reguły użytkownika"
+connections = "Połączenia"
+packets_log = "Dziennik pakietów"
+
+# --- Nagłówki kolumn ---
+[column]
+name = "Nazwa"
+added = "Dodano"
+path = "Ścieżka"
+date = "Data"
+protocol = "Protokół"
+direction = "Kierunek"
+address_src = "Adres (Źródło)"
+host_src = "Host (Źródło)"
+port_src = "Port (Źródło)"
+address_dst = "Adres (Cel)"
+host_dst = "Host (Cel)"
+port_dst = "Port (Cel)"
+state = "Stan"
+filter = "Filtr"
+index = "#"
+
+# --- Nagłówki grup ---
+[group]
+blocked = "Zablokowane"
+blocked_silent = "Zablokowane (cicho)"
+timer = "Czasomierz"
+special = "Aplikacje specjalne"
+allowed = "Dozwolone"
+enabled = "Włączone"
+disabled = "Wyłączone"
+
+# --- Podpowiedzi paska narzędzi ---
+[tooltip]
+enable_filters = "Włącz filtry (Ctrl+T)"
+new_rule = "Utwórz nową regułę użytkownika"
+enable_notifications = "Włącz powiadomienia o zablokowanym ruchu"
+enable_log = "Zapisuj zablokowany ruch do pliku"
+enable_ui_log = "Pokaż dziennik pakietów w interfejsie"
+reload = "Przeładuj profil z dysku (F5)"
+open_settings = "Otwórz Ustawienia"
+open_log_file = "Otwórz plik dziennika pakietów"
+clear_log = "Wyczyść dziennik pakietów"
+open_releases = "Otwórz stronę wydań na GitHub"
+
+# --- Etykiety przycisków paska narzędzi ---
+[toolbar]
+enable_filters = "Włącz filtry"
+disable_filters = "Wyłącz filtry"
+
+# --- Komunikaty paska stanu ---
+[status]
+filters_enabled = "Filtry są włączone."
+filters_disabled = "Filtry są wyłączone."
+imported_simplewall = "Zaimportowano profil simplewall."
+checking_updates = "Sprawdzanie aktualizacji..."
+up_to_date = "Aktualny."
+update_check_failed = "Sprawdzanie aktualizacji nie powiodło się."
+nothing_to_remove = "Brak elementów do usunięcia z profilu."
+engine_failed = "Nie udało się otworzyć silnika WFP."
+uninstall_failed = "Odinstalowanie filtrów nie powiodło się."
+install_failed = "Instalacja filtrów nie powiodła się."
+app_exists = "Aplikacja już istnieje w profilu."
+app_added = "Aplikacja dodana."
+rule_added = "Reguła dodana."
+rule_updated = "Reguła zaktualizowana."
+rule_deleted = "Reguła usunięta."
+autosave_failed = "Automatyczny zapis nie powiódł się."
+import_read_error = "Import nie powiódł się: błąd odczytu."
+import_parse_error = "Import nie powiódł się: błąd parsowania."
+imported = "Zaimportowano."
+export_write_error = "Eksport nie powiódł się: błąd zapisu."
+exported = "Wyeksportowano."
+refresh_read_error = "Odświeżenie nie powiodło się: błąd odczytu."
+refresh_parse_error = "Odświeżenie nie powiodło się: błąd parsowania."
+profile_reloaded = "Profil przeładowany."
+no_unused = "Brak nieużywanych aplikacji do usunięcia."
+no_timers = "Brak aktywnych czasomierzy."
+log_cleared = "Dziennik wyczyszczony."
+font_failed = "Ładowanie czcionki nie powiodło się; przywrócono poprzednią."
+font_updated = "Czcionka zaktualizowana."
+emergency_done = "Awaryjny reset zakończony."
+auto_allowed_one = "Automatycznie zezwolono na 1 aplikację podpisaną przez Microsoft"
+auto_allowed_many = "Automatycznie zezwolono na %{count} aplikacji podpisanych przez Microsoft"
+silenced = "Wyciszono: %{name}"
+allowed_count = "Dozwolono: %{name}"
+connecting = "Łączenie z %{remote}"
+removed_entries = "Usunięto %{count} wpisów z profilu."
+purged_apps = "Usunięto %{count} nieużywanych aplikacji."
+cleared_timers = "Wyczyszczono %{count} czasomierzy aplikacji."
+skip_uac_enabled = "Pomiń UAC: włączono. Przyszłe uruchomienia nie pokażą UAC dla administratorów."
+skip_uac_disabled = "Pomiń UAC: wyłączono. Przyszłe uruchomienia pokażą UAC dla działań administracyjnych."
+hash_drift_one = "Zmiana hashu: %{name}"
+hash_drift_many = "Zmiana hashu w %{count} aplikacjach (zobacz dziennik)"
+filters_removed = "Usunięto %{filters} filtrów, wyczyszczono %{sublayers} podwarstw."
+filters_installed = "Zainstalowano %{added} filtrów, pominięto %{skipped}."
+tray_blocked = "amwall - zablokowano: %{name}"
+
+# --- Tytuły okien dialogowych ---
+[dialog]
+update_available = "amwall - dostępna aktualizacja"
+check_updates = "amwall - Sprawdź aktualizacje"
+confirm_bulk_delete = "Potwierdź usuwanie zbiorcze"
+admin_required = "Wymagany administrator"
+delete_rule = "Usuń regułę"
+exit = "Zamknąć amwall?"
+clear_log = "Wyczyść dziennik"
+allow_blocked = "Zezwolić na wcześniej zablokowany ruch?"
+emergency_reset = "Awaryjny reset WFP"
+about_title = "O programie amwall"
+about_app = "amwall"
+settings_title = "Ustawienia"
+properties_signed = "amwall - Właściwości (podpisane przez %{signer})"
+
+# --- Treść komunikatów okien dialogowych ---
+[message]
+update_available_body = "amwall %{latest} jest dostępny (używasz wersji %{current}).\n\nOtworzyć stronę wydań w przeglądarce?"
+update_uptodate_body = "Bieżąca wersja: %{current}\nNajnowsza wersja: %{latest}\n\nJuż aktualny."
+update_error_body = "Nie można połączyć się z GitHub, aby sprawdzić aktualizacje.\n\nMożliwe przyczyny: brak internetu, zapora blokuje wychodzące połączenia HTTPS amwall lub limit API GitHub (60 anonimowych żądań na godzinę). Spróbuj ponownie później."
+admin_required_body = "Zarządzanie filtrami wymaga uprawnień administratora.\n\nZamknij amwall i uruchom ponownie z podwyższonymi uprawnieniami\n(kliknij prawym przyciskiem → \"Uruchom jako administrator\")."
+delete_rule_confirm = "Usunąć regułę \"%{name}\"?"
+bulk_delete_confirm = "Usunąć %{count} wpisów z profilu?\n\nTej operacji nie można cofnąć."
+exit_body = "Filtry są obecnie włączone. Zamknięcie amwall pozostawi je aktywne (przetrwają zakończenie procesu). Kontynuować?"
+clear_log_body = "Wyczyścić dziennik pakietów? Spowoduje to opróżnienie karty dziennika w pamięci i obcięcie pliku dziennika na dysku. Tej operacji nie można cofnąć."
+emergency_reset_body = "Awaryjny reset spowoduje:\n\n• Usunięcie wszystkich filtrów WFP zainstalowanych przez amwall\n• Opróżnienie profilu aplikacji i listy reguł użytkownika\n• Wyłączenie opcji Włącz filtry\n\nUżyj tego, jeśli amwall blokuje coś, czego nie możesz zidentyfikować i musisz przywrócić domyślne zachowanie sieciowe systemu. Zmiana jest natychmiastowa. Kontynuować?"
+allow_one_body = "%{name} jest obecnie zablokowane. Zezwolenie umożliwi dostęp do sieci przy następnej próbie.\n\nKontynuować?"
+allow_many_body = "%{count} wcześniej zablokowanych aplikacji zostanie ustawionych na Dozwolone. Uzyskają dostęp do sieci przy następnej próbie.\n\nKontynuować?"
+blocked_notification = "Zablokowano: %{app}"
+
+# --- Menu kontekstowe ---
+[context]
+allow = "Zezwalaj"
+block = "Blokuj"
+copy_details = "&Kopiuj szczegóły"
+properties = "Właściwości\tEnter"
+remove_from_profile = "Usuń z profilu\tDel"
+explore = "Eksploruj (otwórz folder)\tCtrl+E"
+copy = "Kopiuj nazwę\tCtrl+C"
+
+# --- Menu zasobnika ---
+[tray]
+show = "Pokaż amwall"
+enable_filters = "Włącz filtry"
+disable_filters = "Wyłącz filtry"
+settings = "Ustawienia..."
+exit = "Zamknij amwall"
+
+# --- Kreator pierwszego uruchomienia ---
+[wizard]
+title = "Witaj w amwall"
+subtitle = "Zaimportować konfigurację simplewall?"
+import_btn = "Importuj"
+start_fresh_btn = "Zacznij od nowa"
+body = """amwall znalazł istniejącą konfigurację simplewall:
+
+• Ścieżka: %{path}
+• %{apps} aplikacji z regułami
+• %{rules} niestandardowych reguł
+
+Importowanie kopiuje plik profile.xml z simplewall do amwall i używa go jako punktu wyjścia. simplewall pozostaje zainstalowany, a istniejące filtry jądra pozostają aktywne — wyłącz simplewall przed kliknięciem „Włącz filtry" w amwall, aby uniknąć nakładania się reguł obu zapór.
+
+Możesz użyć Plik → Importuj później, jeśli teraz pominiesz ten krok."""
+
+# --- Zakładki okna ustawień ---
+[settings_tab]
+general = "Ogólne"
+interface = "Interfejs"
+highlighting = "Podświetlanie"
+rules = "Reguły"
+blocklist = "Lista blokad"
+notifications = "Powiadomienia"
+logging = "Logowanie"
+exclude = "Wykluczenia"
+
+# --- Zakładki edytora reguł ---
+[rule_editor]
+general = "Ogólne"
+rule = "Reguła"
+apps = "Aplikacje"
+
+# --- Etykiety protokołów ---
+[protocol]
+any = "Dowolny"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Etykiety rodzin adresów ---
+[version]
+any = "Dowolny"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Etykiety kierunków ---
+[direction]
+outbound = "Wychodzący"
+inbound = "Przychodzący"
+both = "Oba"
+other = "Inne"
+
+# --- Etykiety akcji ---
+[action]
+allow = "Zezwalaj"
+block = "Blokuj"
+permit = "Dopuść"
+
+# --- Strona ustawień: Ogólne ---
+[rc_general]
+group_config = "Konfiguracja ogólna"
+always_on_top = "Zawsze na wierzchu"
+load_on_startup = "Ładuj przy starcie systemu"
+start_minimized = "Uruchom zminimalizowany"
+skip_uac = "Pomiń ostrzeżenie \"Kontroli konta użytkownika\""
+check_updates = "Okresowo sprawdzaj aktualizacje (zalecane)"
+group_language = "Język"
+select_language = "Wybierz język:"
+
+# --- Strona ustawień: Interfejs ---
+[rc_interface]
+group_confirm = "Potwierdzenia"
+confirm_exit = "Pokaż okno potwierdzenia przy wyjściu"
+confirm_exit_timer = "Pokaż okno potwierdzenia przy wyjściu gdy czasomierze aktywne"
+confirm_log_clear = "Potwierdzaj czyszczenie pliku dziennika"
+confirm_allow = "Potwierdzaj zezwalanie na wcześniej zablokowany ruch"
+group_tray = "Ikona zasobnika"
+tray_single_click = "Pojedyncze kliknięcie ikony zasobnika, aby otworzyć"
+
+# --- Strona ustawień: Podświetlanie ---
+[rc_highlight]
+group = "Podświetlanie"
+hint = "Kliknij dwukrotnie element, aby go zmienić."
+
+# --- Strona ustawień: Reguły ---
+[rc_rules]
+group_connections = "Połączenia"
+block_outbound = "Blokuj połączenia wychodzące dla wszystkich"
+block_inbound = "Blokuj połączenia przychodzące dla wszystkich"
+allow_loopback = "Zezwalaj na połączenia loopback dla wszystkich"
+allow_6to4 = "Zezwalaj na przekierowania IPv6 (6to4) dla wszystkich"
+group_security = "Bezpieczeństwo"
+stealth_mode = "Zapobiegaj skanowaniu portów (tryb ukryty)"
+boottime_filters = "Włącz filtry podczas uruchamiania systemu"
+group_advanced = "Zaawansowane"
+check_signatures = "Sprawdzaj podpisy cyfrowe aplikacji"
+use_hashes = "Używaj hashy plików do identyfikacji aplikacji"
+resolve_addresses = "Rozwiązuj adresy sieciowe"
+
+# --- Strona ustawień: Lista blokad ---
+[rc_blocklist]
+group_spy = "Szpiegowanie i telemetria Microsoft"
+group_update = "Microsoft Update"
+group_apps = "Aplikacje Microsoft"
+
+# --- Strona ustawień: Powiadomienia ---
+[rc_notifications]
+group = "Powiadomienia"
+enable = "Włącz powiadomienia o pakietach"
+sound = "Włącz dźwięk powiadomień"
+fullscreen = "Włącz tryb cichy przy aplikacji pełnoekranowej"
+on_tray = "Pokaż okno powiadomień przy zasobniku"
+timeout = "Czas między podobnymi powiadomieniami (sek.):"
+
+# --- Strona ustawień: Logowanie ---
+[rc_logging]
+group_log = "Dziennik pakietów"
+enable = "Włącz logowanie pakietów do pliku"
+max_size = "Maksymalny rozmiar dziennika (kB):"
+group_viewer = "Przeglądarka dziennika"
+group_ui = "Interfejs"
+enable_ui = "Włącz logowanie pakietów w interfejsie"
+
+# --- Strona ustawień: Wykluczenia ---
+[rc_exclude]
+group_notif = "Powiadomienia: nie powiadamiaj o ..."
+blocklist = "liście blokad"
+user_rules = "regułach użytkownika"
+group_log = "Logowanie: nie loguj ..."
+stealth = "połączeń skanerów portów"
+allowed = "dozwolonych połączeń"
+
+# --- Okno właściwości aplikacji ---
+[rc_properties]
+title = "Właściwości aplikacji"
+path = "Ścieżka:"
+comment = "Komentarz:"
+group_settings = "Ustawienia:"
+enabled = "Włączone (zezwalaj na ruch tej aplikacji)"
+silent = "Ciche (bez powiadomień)"
+save = "Zapisz"
+close = "Zamknij"
+
+# --- Okno żądania połączenia ---
+[rc_prompt]
+title = "amwall - żądanie połączenia aplikacji"
+header = "Aplikacja próbuje się połączyć:"
+question = "Zezwolić na ruch tej aplikacji, czy utrzymać blokadę?"
+allow = "Zezwalaj"
+block = "Blokuj"
+
+# --- Okno edytora reguł ---
+[rc_editor]
+add_rule_title = "Wpis reguły"
+save = "Zapisz"
+close = "Zamknij"
+
+# --- Filtry okna plików ---
+[filter]
+xml_profile = "Profil XML (*.xml)"
+all_files = "Wszystkie pliki (*.*)"
+executable = "Plik wykonywalny (*.exe)"

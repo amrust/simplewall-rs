@@ -1,0 +1,396 @@
+# amwall — Srpski (latinica).
+# Datoteka lokalizacije za srpski jezik (latinično pismo).
+
+# --- Naslovi trake menija ---
+[menu]
+file = "&Datoteka"
+edit = "&Uredi"
+view = "&Prikaz"
+settings = "&Podešavanja"
+rules = "&Pravila"
+blocklist = "&Lista blokiranih"
+help = "&Pomoć"
+
+# --- Stavke menija Datoteka ---
+[file]
+settings = "&Podešavanja\tCtrl+P"
+add_app = "&Dodaj aplikaciju…\tCtrl+O"
+import = "&Uvezi…"
+export = "&Izvezi…"
+exit = "I&zlaz"
+
+# --- Stavke menija Uredi ---
+[edit]
+purge_unused = "Ukloni &nekorišćene aplikacije"
+purge_timers = "Ukloni &tajmere"
+clear_log = "&Obriši evidenciju"
+refresh = "&Osveži\tF5"
+
+# --- Stavke menija Prikaz ---
+[view]
+always_on_top = "Uvek &iznad"
+dark_theme = "Koristi &tamnu temu"
+autosize_columns = "&Automatska veličina kolona"
+filenames_only = "Prikaži samo imena &datoteka"
+show_search = "Prikaži traku za &pretragu"
+layout_details = "Raspored: &Detalji"
+layout_icons = "Raspored: &Ikone"
+layout_tiles = "Raspored: &Pločice"
+icon_small = "Veličina ikone: &Mala"
+icon_large = "Veličina ikone: &Velika"
+icon_extralarge = "Veličina ikone: &Ekstra-velika"
+font = "&Font…"
+
+# --- Stavke menija Podešavanja ---
+[settings]
+load_on_startup = "&Pokreni sa sistemom"
+start_minimized = "Pokreni &minimizovano"
+skip_uac = "Preskoči UAC upozorenje"
+check_updates = "Provera &ažuriranja"
+auto_allow_microsoft = "Automatski dozvoli &Microsoft potpisane programe"
+check_signatures = "Proveri digitalne &potpise aplikacija"
+check_hashes = "Proveri SHA-256 &heš aplikacija"
+
+# --- Podmeni Pravila ---
+[rules]
+block_outbound = "Blokiraj &odlazni saobraćaj za sve"
+block_inbound = "Blokiraj &dolazni saobraćaj za sve"
+allow_loopback = "Dozvoli &loopback"
+allow_6to4 = "Dozvoli IPv6 (&6to4)"
+allow_windows_update = "Dozvoli &Windows Update"
+
+# --- Podmeni Lista blokiranih ---
+[blocklist]
+disable = "&Onemogući"
+allow = "&Dozvoli"
+block = "&Blokiraj"
+spy_telemetry = "Microsoft &špijunaža i telemetrija"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft &aplikacije"
+
+# --- Stavke menija Pomoć ---
+[help]
+website = "&Veb-sajt"
+check_updates = "&Proveri ažuriranja"
+about = "&O programu"
+emergency_reset = "&Hitno resetovanje WFP-a..."
+
+# --- Oznake kartica ---
+[tab]
+apps = "Aplikacije"
+services = "Servisi"
+uwp = "UWP aplikacije"
+blocklist = "Lista blokiranih"
+system_rules = "Sistemska pravila"
+user_rules = "Korisnička pravila"
+connections = "Veze"
+packets_log = "Evidencija paketa"
+
+# --- Zaglavlja kolona ---
+[column]
+name = "Naziv"
+added = "Dodato"
+path = "Putanja"
+date = "Datum"
+protocol = "Protokol"
+direction = "Smer"
+address_src = "Adresa (izvor)"
+host_src = "Host (izvor)"
+port_src = "Port (izvor)"
+address_dst = "Adresa (odredište)"
+host_dst = "Host (odredište)"
+port_dst = "Port (odredište)"
+state = "Stanje"
+filter = "Filter"
+index = "#"
+
+# --- Zaglavlja grupa ---
+[group]
+blocked = "Blokirano"
+blocked_silent = "Blokirano (tiho)"
+timer = "Tajmer"
+special = "Posebne aplikacije"
+allowed = "Dozvoljeno"
+enabled = "Omogućeno"
+disabled = "Onemogućeno"
+
+# --- Opisi na alatnoj traci ---
+[tooltip]
+enable_filters = "Omogući filtere (Ctrl+T)"
+new_rule = "Napravi novo korisničko pravilo"
+enable_notifications = "Omogući obaveštenja za blokirani saobraćaj"
+enable_log = "Evidentiraj blokirani saobraćaj u datoteku"
+enable_ui_log = "Prikaži evidenciju paketa u korisničkom interfejsu"
+reload = "Ponovo učitaj profil sa diska (F5)"
+open_settings = "Otvori podešavanja"
+open_log_file = "Otvori datoteku evidencije paketa"
+clear_log = "Obriši evidenciju paketa"
+open_releases = "Otvori GitHub stranicu izdanja"
+
+# --- Oznake dugmadi na alatnoj traci ---
+[toolbar]
+enable_filters = "Omogući filtere"
+disable_filters = "Onemogući filtere"
+
+# --- Poruke statusne trake ---
+[status]
+filters_enabled = "Filteri su omogućeni."
+filters_disabled = "Filteri su onemogućeni."
+imported_simplewall = "Uvezen simplewall profil."
+checking_updates = "Provera ažuriranja..."
+up_to_date = "Ažurno."
+update_check_failed = "Provera ažuriranja nije uspela."
+nothing_to_remove = "Nema šta da se ukloni iz profila."
+engine_failed = "Otvaranje WFP motora nije uspelo."
+uninstall_failed = "Deinstalacija filtera nije uspela."
+install_failed = "Instalacija filtera nije uspela."
+app_exists = "Aplikacija već postoji u profilu."
+app_added = "Aplikacija dodata."
+rule_added = "Pravilo dodato."
+rule_updated = "Pravilo ažurirano."
+rule_deleted = "Pravilo obrisano."
+autosave_failed = "Automatsko čuvanje nije uspelo."
+import_read_error = "Uvoz nije uspeo: greška čitanja."
+import_parse_error = "Uvoz nije uspeo: greška raščlanjavanja."
+imported = "Uvezeno."
+export_write_error = "Izvoz nije uspeo: greška pisanja."
+exported = "Izvezeno."
+refresh_read_error = "Osvežavanje nije uspelo: greška čitanja."
+refresh_parse_error = "Osvežavanje nije uspelo: greška raščlanjavanja."
+profile_reloaded = "Profil ponovo učitan."
+no_unused = "Nema nekorišćenih aplikacija za uklanjanje."
+no_timers = "Nema aktivnih tajmera."
+log_cleared = "Evidencija obrisana."
+font_failed = "Učitavanje fonta nije uspelo; vraćeno na prethodno."
+font_updated = "Font ažuriran."
+emergency_done = "Hitno resetovanje završeno."
+auto_allowed_one = "Automatski dozvoljena 1 Microsoft potpisana aplikacija"
+auto_allowed_many = "Automatski dozvoljeno %{count} Microsoft potpisanih aplikacija"
+silenced = "Utišano: %{name}"
+allowed_count = "Dozvoljeno: %{name}"
+connecting = "Povezivanje na %{remote}"
+removed_entries = "Uklonjeno %{count} stavki iz profila."
+purged_apps = "Uklonjeno %{count} nekorišćenih aplikacija."
+cleared_timers = "Obrisano %{count} tajmera aplikacija."
+skip_uac_enabled = "Preskakanje UAC-a: omogućeno. Buduća pokretanja neće prikazivati UAC za administratore."
+skip_uac_disabled = "Preskakanje UAC-a: onemogućeno. Buduća pokretanja će prikazivati UAC za administratorske radnje."
+hash_drift_one = "Promena heša: %{name}"
+hash_drift_many = "Promena heša na %{count} aplikacija (pogledajte evidenciju)"
+filters_removed = "%{filters} filter(a) uklonjeno, %{sublayers} podsloj(eva) očišćeno."
+filters_installed = "%{added} filter(a) instalirano, %{skipped} preskočeno."
+tray_blocked = "amwall - blokirano: %{name}"
+
+# --- Naslovi dijaloga ---
+[dialog]
+update_available = "amwall - dostupno ažuriranje"
+check_updates = "amwall - Provera ažuriranja"
+confirm_bulk_delete = "Potvrda grupnog brisanja"
+admin_required = "Potreban administrator"
+delete_rule = "Obriši pravilo"
+exit = "Izaći iz amwall-a?"
+clear_log = "Obriši evidenciju"
+allow_blocked = "Dozvoliti prethodno blokirani saobraćaj?"
+emergency_reset = "Hitno resetovanje WFP-a"
+about_title = "O programu amwall"
+about_app = "amwall"
+settings_title = "Podešavanja"
+properties_signed = "amwall - Svojstva (potpisao %{signer})"
+
+# --- Tekstovi poruka dijaloga ---
+[message]
+update_available_body = "amwall %{latest} je dostupan (pokrećete %{current}).\n\nOtvoriti stranicu izdanja u pregledaču?"
+update_uptodate_body = "Trenutna verzija: %{current}\nPoslednja verzija: %{latest}\n\nVeć je ažurno."
+update_error_body = "Nije moguće povezati se sa GitHub-om radi provere ažuriranja.\n\nMogući uzroci: nema interneta, zaštitni zid blokira amwall od odlaznog HTTPS saobraćaja, ili ograničenje GitHub API-ja (60 anonimnih zahteva na sat). Pokušajte kasnije."
+admin_required_body = "Upravljanje filterima zahteva administratorske privilegije.\n\nZatvorite amwall i ponovo pokrenite iz povišene komandne linije\n(desni klik → \"Pokreni kao administrator\")."
+delete_rule_confirm = "Obrisati pravilo \"%{name}\"?"
+bulk_delete_confirm = "Ukloniti %{count} stavki iz profila?\n\nOvo se ne može poništiti."
+exit_body = "Filteri su trenutno omogućeni. Zatvaranje amwall-a će ih ostaviti na mestu (preživljavaju zatvaranje procesa). Nastaviti?"
+clear_log_body = "Obrisati evidenciju paketa? Ovo će isprazniti evidenciju u memoriji i skratiti datoteku evidencije na disku. Radnja se ne može poništiti."
+emergency_reset_body = "Hitno resetovanje će:\n\n• Ukloniti svaki WFP filter koji je amwall instalirao\n• Isprazniti profil aplikacija i listu korisničkih pravila\n• Isključiti Omogući filtere\n\nKoristite ovo ako amwall blokira nešto što ne možete da identifikujete i potrebno vam je da vratite podrazumevano mrežno ponašanje OS-a. Promena je trenutna. Nastaviti?"
+allow_one_body = "%{name} je trenutno blokiran. Dozvoljavanje će mu omogućiti pristup mreži sledeći put kada pokuša.\n\nNastaviti?"
+allow_many_body = "%{count} prethodno blokiranih aplikacija će biti postavljeno na Dozvoli. Imaće pristup mreži sledeći put kada pokušaju.\n\nNastaviti?"
+blocked_notification = "Blokirano: %{app}"
+
+# --- Kontekstni meni ---
+[context]
+allow = "Dozvoli"
+block = "Blokiraj"
+copy_details = "&Kopiraj detalje"
+properties = "Svojstva\tEnter"
+remove_from_profile = "Ukloni iz profila\tDel"
+explore = "Istraži (otvori fasciklu)\tCtrl+E"
+copy = "Kopiraj naziv\tCtrl+C"
+
+# --- Meni sistemske trake ---
+[tray]
+show = "Prikaži amwall"
+enable_filters = "Omogući filtere"
+disable_filters = "Onemogući filtere"
+settings = "Podešavanja..."
+exit = "Izađi iz amwall-a"
+
+# --- Čarobnjak za prvo pokretanje ---
+[wizard]
+title = "Dobrodošli u amwall"
+subtitle = "Uvesti simplewall konfiguraciju?"
+import_btn = "Uvezi"
+start_fresh_btn = "Počni ispočetka"
+body = """amwall je pronašao postojeću simplewall konfiguraciju:
+
+• Putanja: %{path}
+• %{apps} aplikacija sa pravilima
+• %{rules} korisničkih pravila
+
+Uvoz kopira simplewall-ov profile.xml u amwall i koristi ga kao polaznu tačku. simplewall ostaje instaliran i njegovi postojeći filteri u kernelu ostaju aktivni — onemogućite simplewall pre nego što kliknete \"Omogući filtere\" u amwall-u da biste izbegli preklapanje pravila oba zaštitna zida.
+
+Možete pokrenuti Datoteka → Uvezi kasnije ako sada preskočite."""
+
+# --- Kartice dijaloga podešavanja ---
+[settings_tab]
+general = "Opšte"
+interface = "Interfejs"
+highlighting = "Isticanje"
+rules = "Pravila"
+blocklist = "Lista blokiranih"
+notifications = "Obaveštenja"
+logging = "Evidencija"
+exclude = "Izuzimanja"
+
+# --- Kartice uređivača pravila ---
+[rule_editor]
+general = "Opšte"
+rule = "Pravilo"
+apps = "Aplikacije"
+
+# --- Oznake protokola ---
+[protocol]
+any = "Bilo koji"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Oznake familije adresa ---
+[version]
+any = "Bilo koja"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Oznake smera ---
+[direction]
+outbound = "Odlazni"
+inbound = "Dolazni"
+both = "Oba"
+other = "Ostalo"
+
+# --- Oznake radnje ---
+[action]
+allow = "Dozvoli"
+block = "Blokiraj"
+permit = "Dopusti"
+
+# --- Podešavanja: Opšte ---
+[rc_general]
+group_config = "Opšta konfiguracija"
+always_on_top = "Uvek iznad"
+load_on_startup = "Pokreni sa sistemom"
+start_minimized = "Pokreni minimizovano"
+skip_uac = "Preskoči upozorenje \"User Account Control\""
+check_updates = "Periodično proveravaj ažuriranja (preporučeno)"
+group_language = "Jezik"
+select_language = "Izaberite jezik:"
+
+# --- Podešavanja: Interfejs ---
+[rc_interface]
+group_confirm = "Potvrde"
+confirm_exit = "Prikaži dijalog za potvrdu pri izlazu"
+confirm_exit_timer = "Prikaži dijalog za potvrdu pri izlazu kada su tajmeri aktivni"
+confirm_log_clear = "Potvrdi pri brisanju datoteke evidencije"
+confirm_allow = "Potvrdi dozvoljavanje prethodno blokiranog saobraćaja"
+group_tray = "Ikona sistemske trake"
+tray_single_click = "Jedan klik na ikonu sistemske trake za otvaranje"
+
+# --- Podešavanja: Isticanje ---
+[rc_highlight]
+group = "Isticanje"
+hint = "Dvostruki klik na stavku za promenu."
+
+# --- Podešavanja: Pravila ---
+[rc_rules]
+group_connections = "Veze"
+block_outbound = "Blokiraj odlazne veze za sve"
+block_inbound = "Blokiraj dolazne veze za sve"
+allow_loopback = "Dozvoli loopback veze za sve"
+allow_6to4 = "Dozvoli IPv6 preusmeravanja (6to4) za sve"
+group_security = "Bezbednost"
+stealth_mode = "Spreči skeniranje portova (tajni režim)"
+boottime_filters = "Omogući filtere pri pokretanju"
+group_advanced = "Napredno"
+check_signatures = "Proveri digitalne potpise aplikacija"
+use_hashes = "Koristi heševe datoteka za identifikaciju aplikacija"
+resolve_addresses = "Razreši mrežne adrese"
+
+# --- Podešavanja: Lista blokiranih ---
+[rc_blocklist]
+group_spy = "Microsoft špijunaža i telemetrija"
+group_update = "Microsoft Update"
+group_apps = "Microsoft aplikacije"
+
+# --- Podešavanja: Obaveštenja ---
+[rc_notifications]
+group = "Obaveštenja"
+enable = "Omogući obaveštenja o paketima"
+sound = "Omogući zvuk obaveštenja"
+fullscreen = "Omogući tihi režim kada je aplikacija preko celog ekrana u prvom planu"
+on_tray = "Prikaži prozor obaveštenja na sistemskoj traci"
+timeout = "Vremenski razmak između sličnih obaveštenja (sek.):"
+
+# --- Podešavanja: Evidencija ---
+[rc_logging]
+group_log = "Evidencija paketa"
+enable = "Omogući evidentiranje paketa u datoteku"
+max_size = "Maksimalna veličina evidencije (kB):"
+group_viewer = "Pregledač evidencije"
+group_ui = "Interfejs"
+enable_ui = "Omogući evidentiranje paketa u korisničkom interfejsu"
+
+# --- Podešavanja: Izuzimanja ---
+[rc_exclude]
+group_notif = "Obaveštenja: ne obaveštavaj o ..."
+blocklist = "lista blokiranih"
+user_rules = "korisnička pravila"
+group_log = "Evidencija: ne evidentiraj ..."
+stealth = "veze skenera portova"
+allowed = "dozvoljene veze"
+
+# --- Dijalog svojstava aplikacije ---
+[rc_properties]
+title = "Svojstva aplikacije"
+path = "Putanja:"
+comment = "Komentar:"
+group_settings = "Podešavanja:"
+enabled = "Omogućeno (dozvoli saobraćaj ove aplikacije)"
+silent = "Tiho (bez obaveštenja)"
+save = "Sačuvaj"
+close = "Zatvori"
+
+# --- Dijalog zahteva za povezivanje ---
+[rc_prompt]
+title = "amwall - zahtev za povezivanje aplikacije"
+header = "Aplikacija pokušava da se poveže:"
+question = "Dozvoliti saobraćaj ove aplikacije ili zadržati blokiranim?"
+allow = "Dozvoli"
+block = "Blokiraj"
+
+# --- Dijalog uređivača pravila ---
+[rc_editor]
+add_rule_title = "Unos pravila"
+save = "Sačuvaj"
+close = "Zatvori"
+
+# --- Filteri dijaloga za datoteke ---
+[filter]
+xml_profile = "XML profil (*.xml)"
+all_files = "Sve datoteke (*.*)"
+executable = "Izvršna datoteka (*.exe)"

@@ -1,0 +1,398 @@
+# amwall — Český překlad (Čeština).
+# Nové jazyky přidáte zkopírováním tohoto souboru, např. locales/de.toml,
+# a překladem hodnot. rust-i18n vloží všechny překlady při
+# kompilaci; aktivní jazyk nastavíte pomocí rust_i18n::set_locale().
+
+# --- Názvy v menu ---
+[menu]
+file = "&Soubor"
+edit = "Ú&pravy"
+view = "&Zobrazení"
+settings = "&Nastavení"
+rules = "&Pravidla"
+blocklist = "Č&erná listina"
+help = "&Nápověda"
+
+# --- Položky menu «Soubor» ---
+[file]
+settings = "&Nastavení\tCtrl+P"
+add_app = "&Přidat aplikaci…\tCtrl+O"
+import = "&Importovat…"
+export = "&Exportovat…"
+exit = "U&končit"
+
+# --- Položky menu «Úpravy» ---
+[edit]
+purge_unused = "Vyčistit &nepoužívané aplikace"
+purge_timers = "Vyčistit &časovače"
+clear_log = "&Vymazat protokol"
+refresh = "&Obnovit\tF5"
+
+# --- Položky menu «Zobrazení» ---
+[view]
+always_on_top = "Vždy na&hoře"
+dark_theme = "&Tmavý motiv"
+autosize_columns = "&Automatická šířka sloupců"
+filenames_only = "Zobrazit pouze &názvy souborů"
+show_search = "Zobrazit &vyhledávací panel"
+layout_details = "Rozložení: &Podrobnosti"
+layout_icons = "Rozložení: &Ikony"
+layout_tiles = "Rozložení: &Dlaždice"
+icon_small = "Velikost ikon: &Malé"
+icon_large = "Velikost ikon: &Velké"
+icon_extralarge = "Velikost ikon: &Extra velké"
+font = "&Písmo…"
+
+# --- Položky menu «Nastavení» ---
+[settings]
+load_on_startup = "&Spouštět při startu systému"
+start_minimized = "Spustit &minimalizovaně"
+skip_uac = "Přeskočit upozornění UAC"
+check_updates = "Kontrolovat &aktualizace"
+auto_allow_microsoft = "Automaticky povolit programy podepsané &Microsoftem"
+check_signatures = "Kontrolovat &digitální podpisy aplikací"
+check_hashes = "Kontrolovat SHA-256 &hash aplikací"
+
+# --- Podmenu «Pravidla» ---
+[rules]
+block_outbound = "Blokovat &odchozí pro všechny"
+block_inbound = "Blokovat &příchozí pro všechny"
+allow_loopback = "Povolit &loopback"
+allow_6to4 = "Povolit IPv6 (&6to4)"
+allow_windows_update = "Povolit &Windows Update"
+
+# --- Podmenu «Černá listina» ---
+[blocklist]
+disable = "&Vypnout"
+allow = "&Povolit"
+block = "&Blokovat"
+spy_telemetry = "&Špionáž a telemetrie Microsoftu"
+ms_update = "Microsoft &Update"
+ms_apps = "&Aplikace Microsoftu"
+
+# --- Položky menu «Nápověda» ---
+[help]
+website = "&Webové stránky"
+check_updates = "&Zkontrolovat aktualizace"
+about = "&O programu"
+emergency_reset = "&Nouzový reset WFP..."
+
+# --- Popisky záložek ---
+[tab]
+apps = "Aplikace"
+services = "Služby"
+uwp = "Aplikace UWP"
+blocklist = "Černá listina"
+system_rules = "Systémová pravidla"
+user_rules = "Uživatelská pravidla"
+connections = "Připojení"
+packets_log = "Protokol paketů"
+
+# --- Záhlaví sloupců ---
+[column]
+name = "Název"
+added = "Přidáno"
+path = "Cesta"
+date = "Datum"
+protocol = "Protokol"
+direction = "Směr"
+address_src = "Adresa (zdroj)"
+host_src = "Hostitel (zdroj)"
+port_src = "Port (zdroj)"
+address_dst = "Adresa (cíl)"
+host_dst = "Hostitel (cíl)"
+port_dst = "Port (cíl)"
+state = "Stav"
+filter = "Filtr"
+index = "#"
+
+# --- Záhlaví skupin ---
+[group]
+blocked = "Blokováno"
+blocked_silent = "Blokováno (tiše)"
+timer = "Časovač"
+special = "Speciální aplikace"
+allowed = "Povoleno"
+enabled = "Povoleno"
+disabled = "Zakázáno"
+
+# --- Popisky panelu nástrojů ---
+[tooltip]
+enable_filters = "Zapnout filtry (Ctrl+T)"
+new_rule = "Vytvořit nové uživatelské pravidlo"
+enable_notifications = "Zapnout oznámení o blokovaném provozu"
+enable_log = "Zaznamenávat blokovaný provoz do souboru"
+enable_ui_log = "Zobrazit protokol paketů v rozhraní"
+reload = "Znovu načíst profil z disku (F5)"
+open_settings = "Otevřít nastavení"
+open_log_file = "Otevřít soubor protokolu paketů"
+clear_log = "Vymazat protokol paketů"
+open_releases = "Otevřít stránku vydání na GitHub"
+
+# --- Popisky tlačítek panelu nástrojů ---
+[toolbar]
+enable_filters = "Zapnout filtry"
+disable_filters = "Vypnout filtry"
+
+# --- Zprávy stavového řádku ---
+[status]
+filters_enabled = "Filtry jsou zapnuty."
+filters_disabled = "Filtry jsou vypnuty."
+imported_simplewall = "Profil simplewall importován."
+checking_updates = "Kontrola aktualizací..."
+up_to_date = "Aktuální verze."
+update_check_failed = "Kontrola aktualizací selhala."
+nothing_to_remove = "V profilu není co odebrat."
+engine_failed = "Nepodařilo se otevřít modul WFP."
+uninstall_failed = "Odinstalace filtrů selhala."
+install_failed = "Instalace filtrů selhala."
+app_exists = "Aplikace je již v profilu."
+app_added = "Aplikace přidána."
+rule_added = "Pravidlo přidáno."
+rule_updated = "Pravidlo aktualizováno."
+rule_deleted = "Pravidlo smazáno."
+autosave_failed = "Automatické uložení selhalo."
+import_read_error = "Import selhal: chyba čtení."
+import_parse_error = "Import selhal: chyba zpracování."
+imported = "Importováno."
+export_write_error = "Export selhal: chyba zápisu."
+exported = "Exportováno."
+refresh_read_error = "Obnovení selhalo: chyba čtení."
+refresh_parse_error = "Obnovení selhalo: chyba zpracování."
+profile_reloaded = "Profil znovu načten."
+no_unused = "Žádné nepoužívané aplikace k vyčištění."
+no_timers = "Žádné aktivní časovače."
+log_cleared = "Protokol vymazán."
+font_failed = "Načtení písma selhalo; vráceno zpět."
+font_updated = "Písmo aktualizováno."
+emergency_done = "Nouzový reset dokončen."
+auto_allowed_one = "Automaticky povolena 1 aplikace podepsaná Microsoftem"
+auto_allowed_many = "Automaticky povoleno %{count} aplikací podepsaných Microsoftem"
+silenced = "Ztlumeno: %{name}"
+allowed_count = "Povoleno: %{name}"
+connecting = "Připojování k %{remote}"
+removed_entries = "Odebráno %{count} záznamů z profilu."
+purged_apps = "Vyčištěno %{count} nepoužívaných aplikací."
+cleared_timers = "Vymazáno %{count} časovačů aplikací."
+skip_uac_enabled = "Přeskočení UAC: zapnuto. Budoucí spuštění nebudou zobrazovat UAC pro administrátory."
+skip_uac_disabled = "Přeskočení UAC: vypnuto. Budoucí spuštění budou zobrazovat UAC pro administrativní akce."
+hash_drift_one = "Změna hashe: %{name}"
+hash_drift_many = "Změna hashe u %{count} aplikací (viz protokol)"
+filters_removed = "%{filters} filtrů odebráno, %{sublayers} podvrstev vyčištěno."
+filters_installed = "%{added} filtrů nainstalováno, %{skipped} přeskočeno."
+tray_blocked = "amwall - blokováno: %{name}"
+
+# --- Názvy dialogů ---
+[dialog]
+update_available = "amwall - dostupná aktualizace"
+check_updates = "amwall - Kontrola aktualizací"
+confirm_bulk_delete = "Potvrdit hromadné smazání"
+admin_required = "Vyžadován administrátor"
+delete_rule = "Smazat pravidlo"
+exit = "Ukončit amwall?"
+clear_log = "Vymazat protokol"
+allow_blocked = "Povolit dříve blokovaný provoz?"
+emergency_reset = "Nouzový reset WFP"
+about_title = "O aplikaci amwall"
+about_app = "amwall"
+settings_title = "Nastavení"
+properties_signed = "amwall - Vlastnosti (podepsáno %{signer})"
+
+# --- Texty dialogových zpráv ---
+[message]
+update_available_body = "amwall %{latest} je k dispozici (používáte %{current}).\n\nOtevřít stránku vydání v prohlížeči?"
+update_uptodate_body = "Aktuální verze: %{current}\nNejnovější verze: %{latest}\n\nJiž máte nejnovější verzi."
+update_error_body = "Nepodařilo se kontaktovat GitHub pro kontrolu aktualizací.\n\nMožné příčiny: žádné připojení k internetu, firewall blokuje amwall pro odchozí HTTPS, nebo limit API GitHubu (60 anonymních požadavků za hodinu). Zkuste to později."
+admin_required_body = "Správa filtrů vyžaduje oprávnění správce.\n\nZavřete amwall a znovu jej spusťte z příkazového řádku se zvýšenými oprávněními\n(pravý klik → \"Spustit jako správce\")."
+delete_rule_confirm = "Smazat pravidlo \"%{name}\"?"
+bulk_delete_confirm = "Odebrat %{count} záznamů z profilu?\n\nTuto akci nelze vrátit zpět."
+exit_body = "Filtry jsou nyní zapnuty. Ukončení amwall je ponechá na místě (přetrvají po ukončení procesu). Pokračovat?"
+clear_log_body = "Vymazat protokol paketů? Tím se vyprázdní záložka protokolu v paměti a zkrátí se soubor protokolu na disku. Tuto akci nelze vrátit zpět."
+emergency_reset_body = "Nouzový reset provede:\n\n• Odebere všechny filtry WFP nainstalované amwall\n• Vyprázdní profil aplikací a seznam uživatelských pravidel\n• Vypne „Zapnout filtry”\n\nPoužijte toto, pokud amwall blokuje něco, co nemůžete identifikovat, a potřebujete obnovit výchozí síťové chování OS. Změna je okamžitá. Pokračovat?"
+allow_one_body = "%{name} je nyní blokováno. Povolení umožní přístup k síti při dalším pokusu.\n\nPokračovat?"
+allow_many_body = "%{count} dříve blokovaných aplikací bude nastaveno na Povolit. Získají přístup k síti při dalším pokusu.\n\nPokračovat?"
+blocked_notification = "Blokováno: %{app}"
+
+# --- Kontextové menu ---
+[context]
+allow = "Povolit"
+block = "Blokovat"
+copy_details = "&Kopírovat podrobnosti"
+properties = "Vlastnosti\tEnter"
+remove_from_profile = "Odebrat z profilu\tDel"
+explore = "Prozkoumat (otevřít složku)\tCtrl+E"
+copy = "Kopírovat název\tCtrl+C"
+
+# --- Menu v systémové liště ---
+[tray]
+show = "Zobrazit amwall"
+enable_filters = "Zapnout filtry"
+disable_filters = "Vypnout filtry"
+settings = "Nastavení..."
+exit = "Ukončit amwall"
+
+# --- Průvodce prvním spuštěním ---
+[wizard]
+title = "Vítejte v amwall"
+subtitle = "Importovat konfiguraci simplewall?"
+import_btn = "Importovat"
+start_fresh_btn = "Začít od nuly"
+body = """amwall nalezl existující konfiguraci simplewall:
+
+• Cesta: %{path}
+• %{apps} aplikací s pravidly
+• %{rules} vlastních pravidel
+
+Import zkopíruje profile.xml simplewall do amwall a použije jej jako výchozí bod. simplewall zůstane nainstalován a jeho filtry jádra zůstanou aktivní — deaktivujte simplewall před kliknutím na „Zapnout filtry" v amwall, aby se předešlo překrývání pravidel obou firewallů.
+
+Import můžete provést později přes Soubor → Importovat, pokud nyní přeskočíte."""
+
+# --- Záložky dialogu nastavení ---
+[settings_tab]
+general = "Obecné"
+interface = "Rozhraní"
+highlighting = "Zvýrazňování"
+rules = "Pravidla"
+blocklist = "Černá listina"
+notifications = "Oznámení"
+logging = "Protokolování"
+exclude = "Výjimky"
+
+# --- Záložky editoru pravidel ---
+[rule_editor]
+general = "Obecné"
+rule = "Pravidlo"
+apps = "Aplikace"
+
+# --- Popisky protokolů ---
+[protocol]
+any = "Libovolný"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Popisky verzí adres ---
+[version]
+any = "Libovolná"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Popisky směru ---
+[direction]
+outbound = "Odchozí"
+inbound = "Příchozí"
+both = "Oba"
+other = "Jiný"
+
+# --- Popisky akcí ---
+[action]
+allow = "Povolit"
+block = "Blokovat"
+permit = "Povolit"
+
+# --- Stránka nastavení: Obecné ---
+[rc_general]
+group_config = "Obecná konfigurace"
+always_on_top = "Vždy nahoře"
+load_on_startup = "Spouštět při startu systému"
+start_minimized = "Spustit minimalizovaně"
+skip_uac = "Přeskočit upozornění „Řízení uživatelských účtů”"
+check_updates = "Pravidelně kontrolovat aktualizace (doporučeno)"
+group_language = "Jazyk"
+select_language = "Vyberte jazyk:"
+
+# --- Stránka nastavení: Rozhraní ---
+[rc_interface]
+group_confirm = "Potvrzení"
+confirm_exit = "Zobrazit potvrzovací dialog při ukončení"
+confirm_exit_timer = "Zobrazit potvrzovací dialog při ukončení s aktivními časovači"
+confirm_log_clear = "Potvrdit vymazání souboru protokolu"
+confirm_allow = "Potvrdit povolení dříve blokovaného provozu"
+group_tray = "Ikona v systémové liště"
+tray_single_click = "Jedním kliknutím na ikonu v liště otevřít"
+
+# --- Stránka nastavení: Zvýrazňování ---
+[rc_highlight]
+group = "Zvýrazňování"
+hint = "Poklepáním na položku ji změníte."
+
+# --- Stránka nastavení: Pravidla ---
+[rc_rules]
+group_connections = "Připojení"
+block_outbound = "Blokovat odchozí připojení pro všechny"
+block_inbound = "Blokovat příchozí připojení pro všechny"
+allow_loopback = "Povolit loopback připojení pro všechny"
+allow_6to4 = "Povolit přesměrování IPv6 (6to4) pro všechny"
+group_security = "Zabezpečení"
+stealth_mode = "Zabránit skenování portů (režim utajení)"
+boottime_filters = "Zapnout filtry při startu systému"
+group_advanced = "Pokročilé"
+check_signatures = "Kontrolovat digitální podpisy aplikací"
+use_hashes = "Používat hash souborů pro identifikaci aplikací"
+resolve_addresses = "Překládat síťové adresy"
+
+# --- Stránka nastavení: Černá listina ---
+[rc_blocklist]
+group_spy = "Špionáž a telemetrie Microsoftu"
+group_update = "Microsoft Update"
+group_apps = "Aplikace Microsoftu"
+
+# --- Stránka nastavení: Oznámení ---
+[rc_notifications]
+group = "Oznámení"
+enable = "Zapnout oznámení o paketech"
+sound = "Zapnout zvuk oznámení"
+fullscreen = "Zapnout tichý režim při celoobrazovkové aplikaci v popředí"
+on_tray = "Zobrazit okno oznámení v systémové liště"
+timeout = "Prodleva mezi podobnými oznámeními (sek.):"
+
+# --- Stránka nastavení: Protokolování ---
+[rc_logging]
+group_log = "Protokol paketů"
+enable = "Zapnout protokolování paketů do souboru"
+max_size = "Maximální velikost protokolu (kB):"
+group_viewer = "Prohlížeč protokolu"
+group_ui = "Rozhraní"
+enable_ui = "Zapnout protokolování paketů v rozhraní"
+
+# --- Stránka nastavení: Výjimky ---
+[rc_exclude]
+group_notif = "Oznámení: neoznamovat ..."
+blocklist = "černá listina"
+user_rules = "uživatelská pravidla"
+group_log = "Protokolování: nezaznamenávat ..."
+stealth = "připojení skeneru portů"
+allowed = "povolená připojení"
+
+# --- Dialog vlastností aplikace ---
+[rc_properties]
+title = "Vlastnosti aplikace"
+path = "Cesta:"
+comment = "Komentář:"
+group_settings = "Nastavení:"
+enabled = "Povoleno (povolit provoz této aplikace)"
+silent = "Tiše (bez oznámení)"
+save = "Uložit"
+close = "Zavřít"
+
+# --- Dialog požadavku na připojení ---
+[rc_prompt]
+title = "amwall - požadavek aplikace na připojení"
+header = "Aplikace se pokouší připojit:"
+question = "Povolit provoz této aplikace, nebo ponechat blokovaný?"
+allow = "Povolit"
+block = "Blokovat"
+
+# --- Dialog editoru pravidel ---
+[rc_editor]
+add_rule_title = "Záznam pravidla"
+save = "Uložit"
+close = "Zavřít"
+
+# --- Filtry dialogu souborů ---
+[filter]
+xml_profile = "Profil XML (*.xml)"
+all_files = "Všechny soubory (*.*)"
+executable = "Spustitelný soubor (*.exe)"

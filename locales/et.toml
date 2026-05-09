@@ -1,0 +1,396 @@
+# amwall — Eesti keel (Estonian).
+# Tõlkefail, loodud en.toml struktuuri alusel.
+
+# --- Menüüriba pealkirjad ---
+[menu]
+file = "&Fail"
+edit = "&Redigeeri"
+view = "&Vaade"
+settings = "&Seaded"
+rules = "&Reeglid"
+blocklist = "&Blokeerimisloend"
+help = "&Abi"
+
+# --- Faili menüü elemendid ---
+[file]
+settings = "&Seaded\tCtrl+P"
+add_app = "&Lisa rakendus…\tCtrl+O"
+import = "&Impordi…"
+export = "&Ekspordi…"
+exit = "&Välju"
+
+# --- Redigeerimise menüü elemendid ---
+[edit]
+purge_unused = "Eemalda &kasutamata rakendused"
+purge_timers = "Eemalda &taimerid"
+clear_log = "&Tühjenda logi"
+refresh = "&Värskenda\tF5"
+
+# --- Vaate menüü elemendid ---
+[view]
+always_on_top = "Alati &pealmine"
+dark_theme = "Kasuta &tumedat teemat"
+autosize_columns = "&Automaatne veergude suurus"
+filenames_only = "Näita ainult &failinimesid"
+show_search = "Näita &otsinguriba"
+layout_details = "Paigutus: &Üksikasjad"
+layout_icons = "Paigutus: &Ikoonid"
+layout_tiles = "Paigutus: &Paanid"
+icon_small = "Ikooni suurus: &Väike"
+icon_large = "Ikooni suurus: &Suur"
+icon_extralarge = "Ikooni suurus: Ü&lisuur"
+font = "&Font…"
+
+# --- Seadete menüü elemendid ---
+[settings]
+load_on_startup = "&Laadi süsteemi käivitusel"
+start_minimized = "Käivita &minimeerituna"
+skip_uac = "Jäta UAC hoiatus vahele"
+check_updates = "Kontrolli &värskendusi"
+auto_allow_microsoft = "Luba automaatselt &Microsoft-allkirjastatud programmid"
+check_signatures = "Kontrolli rakenduste digitaalseid &allkirju"
+check_hashes = "Kontrolli rakenduste SHA-256 &räsi"
+
+# --- Reeglite alammenüü ---
+[rules]
+block_outbound = "Blokeeri &väljuvad ühendused kõigile"
+block_inbound = "Blokeeri &sissetulevad ühendused kõigile"
+allow_loopback = "Luba &loopback"
+allow_6to4 = "Luba IPv6 (&6to4)"
+allow_windows_update = "Luba &Windows Update"
+
+# --- Blokeerimisloendi alammenüü ---
+[blocklist]
+disable = "&Keela"
+allow = "&Luba"
+block = "&Blokeeri"
+spy_telemetry = "Microsoft &nuhkimine ja telemeetria"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft &rakendused"
+
+# --- Abi menüü elemendid ---
+[help]
+website = "&Veebileht"
+check_updates = "&Kontrolli värskendusi"
+about = "&Teave"
+emergency_reset = "&Hädaolukorra WFP lähtestamine..."
+
+# --- Vahekaartide sildid ---
+[tab]
+apps = "Rakendused"
+services = "Teenused"
+uwp = "UWP rakendused"
+blocklist = "Blokeerimisloend"
+system_rules = "Süsteemireeglid"
+user_rules = "Kasutaja reeglid"
+connections = "Ühendused"
+packets_log = "Pakettide logi"
+
+# --- Veergude päised ---
+[column]
+name = "Nimi"
+added = "Lisatud"
+path = "Asukoht"
+date = "Kuupäev"
+protocol = "Protokoll"
+direction = "Suund"
+address_src = "Aadress (allikas)"
+host_src = "Host (allikas)"
+port_src = "Port (allikas)"
+address_dst = "Aadress (sihtkoht)"
+host_dst = "Host (sihtkoht)"
+port_dst = "Port (sihtkoht)"
+state = "Olek"
+filter = "Filter"
+index = "#"
+
+# --- Rühma päised ---
+[group]
+blocked = "Blokeeritud"
+blocked_silent = "Blokeeritud (vaikne)"
+timer = "Taimer"
+special = "Erirakendused"
+allowed = "Lubatud"
+enabled = "Lubatud"
+disabled = "Keelatud"
+
+# --- Tööriistariba vihjed ---
+[tooltip]
+enable_filters = "Luba filtrid (Ctrl+T)"
+new_rule = "Loo uus kasutaja reegel"
+enable_notifications = "Luba teavitused blokeeritud liikluse kohta"
+enable_log = "Logi blokeeritud liiklus faili"
+enable_ui_log = "Näita pakettide logi kasutajaliideses"
+reload = "Laadi profiil kettalt uuesti (F5)"
+open_settings = "Ava seaded"
+open_log_file = "Ava pakettide logifail"
+clear_log = "Tühjenda pakettide logi"
+open_releases = "Ava GitHub väljaannete leht"
+
+# --- Tööriistariba nupude sildid ---
+[toolbar]
+enable_filters = "Luba filtrid"
+disable_filters = "Keela filtrid"
+
+# --- Olekuriba teated ---
+[status]
+filters_enabled = "Filtrid on lubatud."
+filters_disabled = "Filtrid on keelatud."
+imported_simplewall = "simplewall profiil imporditud."
+checking_updates = "Kontrollin värskendusi..."
+up_to_date = "Uusim versioon."
+update_check_failed = "Värskenduste kontroll ebaõnnestus."
+nothing_to_remove = "Profiilis pole midagi eemaldada."
+engine_failed = "WFP mootori avamine ebaõnnestus."
+uninstall_failed = "Filtrite eemaldamine ebaõnnestus."
+install_failed = "Filtrite paigaldamine ebaõnnestus."
+app_exists = "Rakendus on juba profiilis."
+app_added = "Rakendus lisatud."
+rule_added = "Reegel lisatud."
+rule_updated = "Reegel värskendatud."
+rule_deleted = "Reegel kustutatud."
+autosave_failed = "Automaatne salvestamine ebaõnnestus."
+import_read_error = "Import ebaõnnestus: lugemise viga."
+import_parse_error = "Import ebaõnnestus: sõelumise viga."
+imported = "Imporditud."
+export_write_error = "Eksport ebaõnnestus: kirjutamise viga."
+exported = "Eksporditud."
+refresh_read_error = "Värskendamine ebaõnnestus: lugemise viga."
+refresh_parse_error = "Värskendamine ebaõnnestus: sõelumise viga."
+profile_reloaded = "Profiil laaditud uuesti."
+no_unused = "Kasutamata rakendusi pole eemaldamiseks."
+no_timers = "Aktiivseid taimereid pole."
+log_cleared = "Logi tühjendatud."
+font_failed = "Fondi laadimine ebaõnnestus; taastatud."
+font_updated = "Font värskendatud."
+emergency_done = "Hädaolukorra lähtestamine lõpetatud."
+auto_allowed_one = "Automaatselt lubatud 1 Microsoft-allkirjastatud rakendus"
+auto_allowed_many = "Automaatselt lubatud %{count} Microsoft-allkirjastatud rakendust"
+silenced = "Vaigistatud: %{name}"
+allowed_count = "Lubatud: %{name}"
+connecting = "Ühendumine %{remote}"
+removed_entries = "Eemaldatud %{count} kirjet profiilist."
+purged_apps = "Eemaldatud %{count} kasutamata rakendust."
+cleared_timers = "Tühjendatud %{count} rakenduse taimerit."
+skip_uac_enabled = "UAC vahelejätmine: lubatud. Edaspidi ei kuvata UAC-d administraatoritele."
+skip_uac_disabled = "UAC vahelejätmine: keelatud. Edaspidi kuvatakse UAC-d administraatoritele."
+hash_drift_one = "Räsi muutus: %{name}"
+hash_drift_many = "Räsi muutus %{count} rakendusel (vt logi)"
+filters_removed = "%{filters} filtrit eemaldatud, %{sublayers} alamkihti tühjendatud."
+filters_installed = "%{added} filtrit paigaldatud, %{skipped} vahele jäetud."
+tray_blocked = "amwall - blokeeritud: %{name}"
+
+# --- Dialoogide pealkirjad ---
+[dialog]
+update_available = "amwall - värskendus saadaval"
+check_updates = "amwall - Kontrolli värskendusi"
+confirm_bulk_delete = "Kinnita hulgi kustutamine"
+admin_required = "Vajalikud administraatori õigused"
+delete_rule = "Kustuta reegel"
+exit = "Väljuda amwall-ist?"
+clear_log = "Tühjenda logi"
+allow_blocked = "Lubada varem blokeeritud liiklus?"
+emergency_reset = "Hädaolukorra WFP lähtestamine"
+about_title = "Teave amwall kohta"
+about_app = "amwall"
+settings_title = "Seaded"
+properties_signed = "amwall - Omadused (allkirjastanud %{signer})"
+
+# --- Dialoogide tekstid ---
+[message]
+update_available_body = "amwall %{latest} on saadaval (teil on %{current}).\n\nKas avada väljaannete leht brauseris?"
+update_uptodate_body = "Praegune versioon: %{current}\nViimane versioon: %{latest}\n\nJuba uusim versioon."
+update_error_body = "GitHub-iga ei õnnestunud värskenduste kontrollimiseks ühendust saada.\n\nVõimalikud põhjused: internet puudub, tulemüür blokeerib amwall-i väljuvat HTTPS-i või GitHub API piirang (60 anonüümset päringut tunnis). Proovige hiljem uuesti."
+admin_required_body = "Filtrite haldamiseks on vaja administraatori õigusi.\n\nSulgege amwall ja käivitage uuesti kõrgendatud õigustega\n(paremklõps → \"Käivita administraatorina\")."
+delete_rule_confirm = "Kustutada reegel \"%{name}\"?"
+bulk_delete_confirm = "Eemaldada %{count} kirjet profiilist?\n\nSeda ei saa tagasi võtta."
+exit_body = "Filtrid on praegu lubatud. amwall-ist väljumine jätab need paika (need jäävad pärast protsessi lõppemist). Jätkata?"
+clear_log_body = "Tühjendada pakettide logi? See tühjendab mälus oleva logi vahekaardi ja kärpib logifaili kettal. Seda ei saa tagasi võtta."
+emergency_reset_body = "Hädaolukorra lähtestamine:\n\n• Eemaldab kõik WFP filtrid, mille amwall on paigaldanud\n• Tühjendab rakenduste profiili ja kasutaja reeglite loendid\n• Lülitab filtrid välja\n\nKasutage seda, kui amwall blokeerib midagi, mida te ei suuda tuvastada, ja teil on vaja taastada OS vaikimisi võrgukäitumine. Muudatus jõustub kohe. Jätkata?"
+allow_one_body = "%{name} on praegu blokeeritud. Lubamine võimaldab sellel järgmisel korral võrku pääseda.\n\nJätkata?"
+allow_many_body = "%{count} varem blokeeritud rakendust seatakse lubatuks. Nad pääsevad võrku järgmisel korral, kui proovivad.\n\nJätkata?"
+blocked_notification = "Blokeeritud: %{app}"
+
+# --- Kontekstimenüü ---
+[context]
+allow = "Luba"
+block = "Blokeeri"
+copy_details = "&Kopeeri üksikasjad"
+properties = "Omadused\tEnter"
+remove_from_profile = "Eemalda profiilist\tDel"
+explore = "Ava kaust\tCtrl+E"
+copy = "Kopeeri nimi\tCtrl+C"
+
+# --- Süsteemisalve menüü ---
+[tray]
+show = "Näita amwall"
+enable_filters = "Luba filtrid"
+disable_filters = "Keela filtrid"
+settings = "Seaded..."
+exit = "Välju amwall-ist"
+
+# --- Esimese käivituse viisard ---
+[wizard]
+title = "Tere tulemast amwall-i"
+subtitle = "Importida simplewall-i seadistus?"
+import_btn = "Impordi"
+start_fresh_btn = "Alusta nullist"
+body = """amwall leidis olemasoleva simplewall-i seadistuse:
+
+• Asukoht: %{path}
+• %{apps} rakendust reeglitega
+• %{rules} kohandatud reeglit
+
+Importimine kopeerib simplewall-i profile.xml amwall-i ja kasutab seda lähtepunktina. simplewall jääb paigaldatuks ja selle olemasolevad tuumafiltrid jäävad aktiivseks — keelake simplewall enne amwall-is \"Luba filtrid\" vajutamist, et vältida kattuvaid reegleid.
+
+Saate hiljem kasutada Fail → Impordi, kui jätate praegu vahele."""
+
+# --- Seadete dialoogivahekaardid ---
+[settings_tab]
+general = "Üldine"
+interface = "Kasutajaliides"
+highlighting = "Esiletõstmine"
+rules = "Reeglid"
+blocklist = "Blokeerimisloend"
+notifications = "Teavitused"
+logging = "Logimine"
+exclude = "Erandid"
+
+# --- Reegliredaktori vahekaardid ---
+[rule_editor]
+general = "Üldine"
+rule = "Reegel"
+apps = "Rakendused"
+
+# --- Protokollide sildid ---
+[protocol]
+any = "Ükskõik"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Aadressiperekonna sildid ---
+[version]
+any = "Ükskõik"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Suuna sildid ---
+[direction]
+outbound = "Väljuv"
+inbound = "Sissetulev"
+both = "Mõlemad"
+other = "Muu"
+
+# --- Toimingute sildid ---
+[action]
+allow = "Luba"
+block = "Blokeeri"
+permit = "Luba"
+
+# --- Seadete leht: Üldine ---
+[rc_general]
+group_config = "Üldised seaded"
+always_on_top = "Alati pealmine"
+load_on_startup = "Laadi süsteemi käivitusel"
+start_minimized = "Käivita minimeerituna"
+skip_uac = "Jäta \"User Account Control\" hoiatus vahele"
+check_updates = "Kontrolli perioodiliselt värskendusi (soovitatav)"
+group_language = "Keel"
+select_language = "Valige keel:"
+
+# --- Seadete leht: Kasutajaliides ---
+[rc_interface]
+group_confirm = "Kinnitused"
+confirm_exit = "Näita väljumisel kinnitusdialoog"
+confirm_exit_timer = "Näita väljumisel kinnitusdialoog kui taimerid on aktiivsed"
+confirm_log_clear = "Kinnita logifaili tühjendamine"
+confirm_allow = "Kinnita varem blokeeritud liikluse lubamine"
+group_tray = "Süsteemisalve ikoon"
+tray_single_click = "Üks klõps süsteemisalve ikoonil avamiseks"
+
+# --- Seadete leht: Esiletõstmine ---
+[rc_highlight]
+group = "Esiletõstmine"
+hint = "Topeltklõpsake elemendil selle muutmiseks."
+
+# --- Seadete leht: Reeglid ---
+[rc_rules]
+group_connections = "Ühendused"
+block_outbound = "Blokeeri väljuvad ühendused kõigile"
+block_inbound = "Blokeeri sissetulevad ühendused kõigile"
+allow_loopback = "Luba loopback ühendused kõigile"
+allow_6to4 = "Luba IPv6 ümbersuunamised (6to4) kõigile"
+group_security = "Turvalisus"
+stealth_mode = "Takista portide skannimist (varjatud režiim)"
+boottime_filters = "Luba alglaadimisaegsed filtrid"
+group_advanced = "Täpsemad"
+check_signatures = "Kontrolli rakenduste digitaalseid allkirju"
+use_hashes = "Kasuta failide räse rakenduste tuvastamiseks"
+resolve_addresses = "Lahenda võrguaadressid"
+
+# --- Seadete leht: Blokeerimisloend ---
+[rc_blocklist]
+group_spy = "Microsoft nuhkimine ja telemeetria"
+group_update = "Microsoft Update"
+group_apps = "Microsoft rakendused"
+
+# --- Seadete leht: Teavitused ---
+[rc_notifications]
+group = "Teavitused"
+enable = "Luba pakettide teavitused"
+sound = "Luba teavituste heli"
+fullscreen = "Luba vaikne režiim täisekraani rakenduse korral"
+on_tray = "Näita teavituste aken süsteemisalves"
+timeout = "Sarnaste teavituste vahe (sek.):"
+
+# --- Seadete leht: Logimine ---
+[rc_logging]
+group_log = "Pakettide logi"
+enable = "Luba pakettide logimine faili"
+max_size = "Maksimaalne logifaili suurus (kB):"
+group_viewer = "Logivaatur"
+group_ui = "Kasutajaliides"
+enable_ui = "Luba pakettide logimine kasutajaliideses"
+
+# --- Seadete leht: Erandid ---
+[rc_exclude]
+group_notif = "Teavitused: ära teavita ..."
+blocklist = "blokeerimisloend"
+user_rules = "kasutaja reeglid"
+group_log = "Logimine: ära logi ..."
+stealth = "portide skannimise ühendused"
+allowed = "lubatud ühendused"
+
+# --- Rakenduse omaduste dialoog ---
+[rc_properties]
+title = "Rakenduse omadused"
+path = "Asukoht:"
+comment = "Kommentaar:"
+group_settings = "Seaded:"
+enabled = "Lubatud (luba selle rakenduse liiklus)"
+silent = "Vaikne (ilma teavitusteta)"
+save = "Salvesta"
+close = "Sulge"
+
+# --- Ühenduse päringu dialoog ---
+[rc_prompt]
+title = "amwall - rakenduse ühenduse päring"
+header = "Rakendus proovib ühenduda:"
+question = "Lubada selle rakenduse liiklus või jätta blokeerituks?"
+allow = "Luba"
+block = "Blokeeri"
+
+# --- Reegliredaktori dialoog ---
+[rc_editor]
+add_rule_title = "Reegli kirje"
+save = "Salvesta"
+close = "Sulge"
+
+# --- Failidialoogi filtrid ---
+[filter]
+xml_profile = "XML profiil (*.xml)"
+all_files = "Kõik failid (*.*)"
+executable = "Käivitatav fail (*.exe)"

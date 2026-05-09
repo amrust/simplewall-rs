@@ -1,0 +1,398 @@
+# amwall — Dansk lokalisation.
+# Tilføj nye sprog ved at kopiere denne fil til f.eks. locales/de.toml
+# og oversætte værdierne. rust-i18n indlejrer alle lokaler ved
+# kompilering; sæt det aktive lokal med rust_i18n::set_locale().
+
+# --- Menulinjens titler ---
+[menu]
+file = "&Fil"
+edit = "&Rediger"
+view = "&Vis"
+settings = "&Indstillinger"
+rules = "&Regler"
+blocklist = "&Blokeringsliste"
+help = "&Hjælp"
+
+# --- Fil-menupunkter ---
+[file]
+settings = "&Indstillinger\tCtrl+P"
+add_app = "&Tilføj program…\tCtrl+O"
+import = "&Importér…"
+export = "&Eksportér…"
+exit = "A&fslut"
+
+# --- Rediger-menupunkter ---
+[edit]
+purge_unused = "Rens &ubrugte programmer"
+purge_timers = "Rens &timere"
+clear_log = "&Ryd log"
+refresh = "&Opdatér\tF5"
+
+# --- Vis-menupunkter ---
+[view]
+always_on_top = "Altid &øverst"
+dark_theme = "Brug &mørkt tema"
+autosize_columns = "&Tilpas kolonnebredde"
+filenames_only = "Vis kun &filnavne"
+show_search = "Vis &søgelinje"
+layout_details = "Layout: &Detaljer"
+layout_icons = "Layout: &Ikoner"
+layout_tiles = "Layout: &Fliser"
+icon_small = "Ikonstørrelse: &Lille"
+icon_large = "Ikonstørrelse: S&tor"
+icon_extralarge = "Ikonstørrelse: &Ekstra stor"
+font = "&Skrifttype…"
+
+# --- Indstillinger-menupunkter ---
+[settings]
+load_on_startup = "&Indlæs ved systemopstart"
+start_minimized = "Start &minimeret"
+skip_uac = "Spring UAC-advarsel over"
+check_updates = "Tjek for &opdateringer"
+auto_allow_microsoft = "Tillad automatisk &Microsoft-signerede programmer"
+check_signatures = "Tjek programmer for digitale &signaturer"
+check_hashes = "Tjek programmer for SHA-256-&hash"
+
+# --- Regler-undermenu ---
+[rules]
+block_outbound = "Blokér &udgående for alle"
+block_inbound = "Blokér &indgående for alle"
+allow_loopback = "Tillad &loopback"
+allow_6to4 = "Tillad IPv6 (&6to4)"
+allow_windows_update = "Tillad &Windows Update"
+
+# --- Blokeringsliste-undermenu ---
+[blocklist]
+disable = "&Deaktivér"
+allow = "&Tillad"
+block = "&Blokér"
+spy_telemetry = "Microsoft-&spionage og telemetri"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft-&programmer"
+
+# --- Hjælp-menupunkter ---
+[help]
+website = "&Hjemmeside"
+check_updates = "&Tjek for opdateringer"
+about = "&Om"
+emergency_reset = "&Nødnulstilling af WFP..."
+
+# --- Faneblade ---
+[tab]
+apps = "Programmer"
+services = "Tjenester"
+uwp = "UWP-apps"
+blocklist = "Blokeringsliste"
+system_rules = "Systemregler"
+user_rules = "Brugerregler"
+connections = "Forbindelser"
+packets_log = "Pakkelog"
+
+# --- Kolonneoverskrifter ---
+[column]
+name = "Navn"
+added = "Tilføjet"
+path = "Sti"
+date = "Dato"
+protocol = "Protokol"
+direction = "Retning"
+address_src = "Adresse (Kilde)"
+host_src = "Vært (Kilde)"
+port_src = "Port (Kilde)"
+address_dst = "Adresse (Destination)"
+host_dst = "Vært (Destination)"
+port_dst = "Port (Destination)"
+state = "Tilstand"
+filter = "Filter"
+index = "#"
+
+# --- Gruppeoverskrifter ---
+[group]
+blocked = "Blokeret"
+blocked_silent = "Blokeret (stille)"
+timer = "Timer"
+special = "Specielle programmer"
+allowed = "Tilladt"
+enabled = "Aktiveret"
+disabled = "Deaktiveret"
+
+# --- Værktøjslinje-tooltips ---
+[tooltip]
+enable_filters = "Aktivér filtre (Ctrl+T)"
+new_rule = "Opret en ny brugerregel"
+enable_notifications = "Aktivér notifikationer for blokeret trafik"
+enable_log = "Log blokeret trafik til en fil"
+enable_ui_log = "Vis pakkelog i brugerfladen"
+reload = "Genindlæs profilen fra disk (F5)"
+open_settings = "Åbn indstillinger"
+open_log_file = "Åbn pakkelogfilen"
+clear_log = "Ryd pakkeloggen"
+open_releases = "Åbn GitHub-udgivelsessiden"
+
+# --- Værktøjslinje-knaptekster ---
+[toolbar]
+enable_filters = "Aktivér filtre"
+disable_filters = "Deaktivér filtre"
+
+# --- Statuslinjebeskeder ---
+[status]
+filters_enabled = "Filtre er aktiveret."
+filters_disabled = "Filtre er deaktiveret."
+imported_simplewall = "simplewall-profil importeret."
+checking_updates = "Tjekker for opdateringer..."
+up_to_date = "Opdateret."
+update_check_failed = "Opdateringstjek mislykkedes."
+nothing_to_remove = "Intet at fjerne fra profilen."
+engine_failed = "Kunne ikke åbne WFP-motor."
+uninstall_failed = "Filterafinstallation mislykkedes."
+install_failed = "Filterinstallation mislykkedes."
+app_exists = "Programmet findes allerede i profilen."
+app_added = "Program tilføjet."
+rule_added = "Regel tilføjet."
+rule_updated = "Regel opdateret."
+rule_deleted = "Regel slettet."
+autosave_failed = "Automatisk lagring mislykkedes."
+import_read_error = "Import mislykkedes: læsefejl."
+import_parse_error = "Import mislykkedes: fortolkningsfejl."
+imported = "Importeret."
+export_write_error = "Eksport mislykkedes: skrivefejl."
+exported = "Eksporteret."
+refresh_read_error = "Opdatering mislykkedes: læsefejl."
+refresh_parse_error = "Opdatering mislykkedes: fortolkningsfejl."
+profile_reloaded = "Profil genindlæst."
+no_unused = "Ingen ubrugte programmer at rense."
+no_timers = "Ingen aktive timere."
+log_cleared = "Log ryddet."
+font_failed = "Indlæsning af skrifttype mislykkedes; nulstillet."
+font_updated = "Skrifttype opdateret."
+emergency_done = "Nødnulstilling fuldført."
+auto_allowed_one = "Automatisk tilladt 1 Microsoft-signeret program"
+auto_allowed_many = "Automatisk tilladt %{count} Microsoft-signerede programmer"
+silenced = "Lydløs: %{name}"
+allowed_count = "Tilladt: %{name}"
+connecting = "Forbinder til %{remote}"
+removed_entries = "%{count} poster fjernet fra profilen."
+purged_apps = "%{count} ubrugte programmer renset."
+cleared_timers = "%{count} programtimere ryddet."
+skip_uac_enabled = "Spring UAC over: aktiveret. Fremtidige opstartsanmodninger viser ikke UAC for administratorer."
+skip_uac_disabled = "Spring UAC over: deaktiveret. Fremtidige opstartsanmodninger viser UAC for administratorhandlinger."
+hash_drift_one = "Hash-afvigelse: %{name}"
+hash_drift_many = "Hash-afvigelse på %{count} programmer (se log)"
+filters_removed = "%{filters} filter(e) fjernet, %{sublayers} underlag ryddet."
+filters_installed = "%{added} filter(e) installeret, %{skipped} sprunget over."
+tray_blocked = "amwall - blokeret: %{name}"
+
+# --- Dialogtitler ---
+[dialog]
+update_available = "amwall - opdatering tilgængelig"
+check_updates = "amwall - Tjek for opdateringer"
+confirm_bulk_delete = "Bekræft massesletning"
+admin_required = "Administrator påkrævet"
+delete_rule = "Slet regel"
+exit = "Afslut amwall?"
+clear_log = "Ryd log"
+allow_blocked = "Tillad tidligere blokeret trafik?"
+emergency_reset = "Nødnulstilling af WFP"
+about_title = "Om amwall"
+about_app = "amwall"
+settings_title = "Indstillinger"
+properties_signed = "amwall - Egenskaber (signeret af %{signer})"
+
+# --- Dialogbeskeder ---
+[message]
+update_available_body = "amwall %{latest} er tilgængelig (du kører %{current}).\n\nÅbn udgivelsessiden i din browser?"
+update_uptodate_body = "Nuværende version: %{current}\nSeneste version: %{latest}\n\nAllerede opdateret."
+update_error_body = "Kunne ikke nå GitHub for at tjekke for opdateringer.\n\nMulige årsager: ingen internet, firewallen blokerer amwall fra udgående HTTPS, eller GitHubs API-begrænsning (60 anonyme forespørgsler pr. time). Prøv igen senere."
+admin_required_body = "Filterhåndtering kræver administratorrettigheder.\n\nLuk amwall og genstart fra en forhøjet kommandoprompt\n(højreklik → \"Kør som administrator\")."
+delete_rule_confirm = "Slet reglen \"%{name}\"?"
+bulk_delete_confirm = "Fjern %{count} poster fra profilen?\n\nDette kan ikke fortrydes."
+exit_body = "Filtre er i øjeblikket aktiveret. Afslutning af amwall vil efterlade dem på plads (de overlever programafslutning). Fortsæt?"
+clear_log_body = "Ryd pakkeloggen? Dette tømmer logfanen i hukommelsen og afkorter logfilen på disken. Handlingen kan ikke fortrydes."
+emergency_reset_body = "Nødnulstilling vil:\n\n• Fjerne alle WFP-filtre som amwall har installeret\n• Tømme programprofilen og brugerreglerne\n• Slå Aktivér filtre fra\n\nBrug dette hvis amwall blokerer noget du ikke kan identificere, og du har brug for at gendanne operativsystemets standardnetværksadfærd. Ændringen er øjeblikkelig. Fortsæt?"
+allow_one_body = "%{name} er i øjeblikket blokeret. Hvis du tillader det, vil det kunne nå netværket næste gang det prøver.\n\nFortsæt?"
+allow_many_body = "%{count} tidligere blokerede programmer vil blive sat til Tillad. De vil kunne nå netværket næste gang de prøver.\n\nFortsæt?"
+blocked_notification = "Blokeret: %{app}"
+
+# --- Kontekstmenu ---
+[context]
+allow = "Tillad"
+block = "Blokér"
+copy_details = "&Kopiér detaljer"
+properties = "Egenskaber\tEnter"
+remove_from_profile = "Fjern fra profil\tDel"
+explore = "Udforsk (åbn mappe)\tCtrl+E"
+copy = "Kopiér navn\tCtrl+C"
+
+# --- Bakke-menu ---
+[tray]
+show = "Vis amwall"
+enable_filters = "Aktivér filtre"
+disable_filters = "Deaktivér filtre"
+settings = "Indstillinger..."
+exit = "Afslut amwall"
+
+# --- Førstekørselsguide ---
+[wizard]
+title = "Velkommen til amwall"
+subtitle = "Importér simplewall-konfiguration?"
+import_btn = "Importér"
+start_fresh_btn = "Start forfra"
+body = """amwall fandt en eksisterende simplewall-konfiguration:
+
+• Sti: %{path}
+• %{apps} program(mer) med regler
+• %{rules} brugerdefinerede regel/regler
+
+Import kopierer simplewall's profile.xml over til amwall og bruger den som udgangspunkt. simplewall forbliver installeret, og dens eksisterende kernefiltre forbliver aktive — deaktivér simplewall, før du klikker "Aktivér filtre" i amwall, for at undgå at begge firewalls anvender overlappende regler.
+
+Du kan køre Fil → Importér senere, hvis du springer over nu."""
+
+# --- Indstillingsdialog-faneblade ---
+[settings_tab]
+general = "Generelt"
+interface = "Brugerflade"
+highlighting = "Fremhævning"
+rules = "Regler"
+blocklist = "Blokeringsliste"
+notifications = "Notifikationer"
+logging = "Logning"
+exclude = "Undtag"
+
+# --- Regelredigering-faneblade ---
+[rule_editor]
+general = "Generelt"
+rule = "Regel"
+apps = "Programmer"
+
+# --- Protokollabels ---
+[protocol]
+any = "Alle"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Adressefamilielabels ---
+[version]
+any = "Alle"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Retningslabels ---
+[direction]
+outbound = "Udgående"
+inbound = "Indgående"
+both = "Begge"
+other = "Anden"
+
+# --- Handlingslabels ---
+[action]
+allow = "Tillad"
+block = "Blokér"
+permit = "Tillad"
+
+# --- Indstillingsside: Generelt ---
+[rc_general]
+group_config = "Generel konfiguration"
+always_on_top = "Altid øverst"
+load_on_startup = "Indlæs ved systemopstart"
+start_minimized = "Start minimeret"
+skip_uac = "Spring \"Brugerkontokontrol\"-advarslen over"
+check_updates = "Tjek jævnligt for opdateringer (anbefalet)"
+group_language = "Sprog"
+select_language = "Vælg sprog:"
+
+# --- Indstillingsside: Brugerflade ---
+[rc_interface]
+group_confirm = "Bekræftelser"
+confirm_exit = "Vis bekræftelsesdialog ved afslutning"
+confirm_exit_timer = "Vis bekræftelsesdialog ved afslutning, når timere er aktive"
+confirm_log_clear = "Bekræft ved rydning af logfilen"
+confirm_allow = "Bekræft tilladelse af tidligere blokeret trafik"
+group_tray = "Bakkeikon"
+tray_single_click = "Enkelt klik på bakkeikonet for at åbne"
+
+# --- Indstillingsside: Fremhævning ---
+[rc_highlight]
+group = "Fremhævning"
+hint = "Dobbeltklik på et element for at ændre det."
+
+# --- Indstillingsside: Regler ---
+[rc_rules]
+group_connections = "Forbindelser"
+block_outbound = "Blokér udgående forbindelser for alle"
+block_inbound = "Blokér indgående forbindelser for alle"
+allow_loopback = "Tillad loopback-forbindelser for alle"
+allow_6to4 = "Tillad IPv6-omdirigeringer (6to4) for alle"
+group_security = "Sikkerhed"
+stealth_mode = "Forhindre portscanning (stealth-tilstand)"
+boottime_filters = "Aktivér opstartsfiltre"
+group_advanced = "Avanceret"
+check_signatures = "Tjek programmer for digitale signaturer"
+use_hashes = "Brug filhashes til programidentifikation"
+resolve_addresses = "Opløs netværksadresser"
+
+# --- Indstillingsside: Blokeringsliste ---
+[rc_blocklist]
+group_spy = "Microsoft-spionage og telemetri"
+group_update = "Microsoft Update"
+group_apps = "Microsoft-programmer"
+
+# --- Indstillingsside: Notifikationer ---
+[rc_notifications]
+group = "Notifikationer"
+enable = "Aktivér pakkenotifikationer"
+sound = "Aktivér notifikationslyd"
+fullscreen = "Aktivér lydløs tilstand, når fuldskærmsprogram er i forgrunden"
+on_tray = "Vis notifikationsvindue ved bakke"
+timeout = "Timeout mellem ens notifikationer (sek.):"
+
+# --- Indstillingsside: Logning ---
+[rc_logging]
+group_log = "Pakkelog"
+enable = "Aktivér pakkelogning til fil"
+max_size = "Maksimal logstørrelse (kB):"
+group_viewer = "Logviser"
+group_ui = "Brugerflade"
+enable_ui = "Aktivér pakkelogning i brugerfladen"
+
+# --- Indstillingsside: Undtag ---
+[rc_exclude]
+group_notif = "Notifikationer: underret ikke om …"
+blocklist = "blokeringsliste"
+user_rules = "brugerregler"
+group_log = "Logning: log ikke …"
+stealth = "portscanningsforbindelser"
+allowed = "tilladte forbindelser"
+
+# --- Programegenskabsdialog ---
+[rc_properties]
+title = "Programegenskaber"
+path = "Sti:"
+comment = "Kommentar:"
+group_settings = "Indstillinger:"
+enabled = "Aktiveret (tillad dette programs trafik)"
+silent = "Lydløs (ingen notifikationer)"
+save = "Gem"
+close = "Luk"
+
+# --- Forbindelsesanmodningsdialog ---
+[rc_prompt]
+title = "amwall - programforbindelsesanmodning"
+header = "Et program forsøger at oprette forbindelse:"
+question = "Tillad dette programs trafik, eller behold det blokeret?"
+allow = "Tillad"
+block = "Blokér"
+
+# --- Regelredigeringsdialog ---
+[rc_editor]
+add_rule_title = "Regelindtastning"
+save = "Gem"
+close = "Luk"
+
+# --- Fildialogfiltre ---
+[filter]
+xml_profile = "XML-profil (*.xml)"
+all_files = "Alle filer (*.*)"
+executable = "Program (*.exe)"

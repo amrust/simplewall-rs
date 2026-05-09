@@ -1,0 +1,398 @@
+# amwall — English locale (default fallback).
+# Add new languages by copying this file to e.g. locales/de.toml
+# and translating the values. rust-i18n embeds all locales at
+# compile time; set the active locale with rust_i18n::set_locale().
+
+# --- Menu bar titles ---
+[menu]
+file = "&File"
+edit = "&Edit"
+view = "&View"
+settings = "&Settings"
+rules = "&Rules"
+blocklist = "&Blocklist"
+help = "&Help"
+
+# --- File menu items ---
+[file]
+settings = "&Settings\tCtrl+P"
+add_app = "&Add app…\tCtrl+O"
+import = "&Import…"
+export = "&Export…"
+exit = "E&xit"
+
+# --- Edit menu items ---
+[edit]
+purge_unused = "Remove &unused apps"
+purge_timers = "Clear &timers"
+clear_log = "&Clear log"
+refresh = "&Refresh\tF5"
+
+# --- View menu items ---
+[view]
+always_on_top = "Always on &top"
+dark_theme = "Use &dark theme"
+autosize_columns = "&Autosize columns"
+filenames_only = "Show &filenames only"
+show_search = "Show &search bar"
+layout_details = "Layout: &Details"
+layout_icons = "Layout: &Icons"
+layout_tiles = "Layout: &Tiles"
+icon_small = "Icon size: S&mall"
+icon_large = "Icon size: &Large"
+icon_extralarge = "Icon size: &Extra-large"
+font = "&Font…"
+
+# --- Settings menu items ---
+[settings]
+load_on_startup = "&Load on system startup"
+start_minimized = "Start &minimized"
+skip_uac = "Skip UAC warning"
+check_updates = "Check for &updates"
+auto_allow_microsoft = "Auto-allow &Microsoft-signed programs"
+check_signatures = "Check apps for digital &signatures"
+check_hashes = "Check apps for SHA-256 &hash"
+
+# --- Rules submenu ---
+[rules]
+block_outbound = "Block &outbound for all"
+block_inbound = "Block &inbound for all"
+allow_loopback = "Allow &loopback"
+allow_6to4 = "Allow IPv6 (&6to4)"
+allow_windows_update = "Allow &Windows Update"
+
+# --- Blocklist submenu ---
+[blocklist]
+disable = "&Disable"
+allow = "&Allow"
+block = "&Block"
+spy_telemetry = "Microsoft &tracking and telemetry"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft &applications"
+
+# --- Help menu items ---
+[help]
+website = "&Website"
+check_updates = "&Check for updates"
+about = "&About"
+emergency_reset = "&Emergency WFP reset..."
+
+# --- Tab labels ---
+[tab]
+apps = "Apps"
+services = "Services"
+uwp = "UWP apps"
+blocklist = "Blocklist"
+system_rules = "System rules"
+user_rules = "User rules"
+connections = "Connections"
+packets_log = "Packets log"
+
+# --- Column headers ---
+[column]
+name = "Name"
+added = "Added"
+path = "Path"
+date = "Date"
+protocol = "Protocol"
+direction = "Direction"
+address_src = "Address (Source)"
+host_src = "Host (Source)"
+port_src = "Port (Source)"
+address_dst = "Address (Destination)"
+host_dst = "Host (Destination)"
+port_dst = "Port (Destination)"
+state = "State"
+filter = "Filter"
+index = "#"
+
+# --- Group headers ---
+[group]
+blocked = "Blocked"
+blocked_silent = "Blocked (silent)"
+timer = "Timer"
+special = "Special apps"
+allowed = "Allowed"
+enabled = "Enabled"
+disabled = "Disabled"
+
+# --- Toolbar tooltips ---
+[tooltip]
+enable_filters = "Enable filters (Ctrl+T)"
+new_rule = "Create a new user rule"
+enable_notifications = "Enable notifications for blocked traffic"
+enable_log = "Log blocked traffic to a file"
+enable_ui_log = "Show packets log in the UI"
+reload = "Reload the profile from disk (F5)"
+open_settings = "Open Settings"
+open_log_file = "Open the packets log file"
+clear_log = "Clear the packets log"
+open_releases = "Open the GitHub releases page"
+
+# --- Toolbar button labels ---
+[toolbar]
+enable_filters = "Enable filters"
+disable_filters = "Disable filters"
+
+# --- Status bar messages ---
+[status]
+filters_enabled = "Filters are enabled."
+filters_disabled = "Filters are disabled."
+imported_simplewall = "Imported simplewall profile."
+checking_updates = "Checking for updates..."
+up_to_date = "Up to date."
+update_check_failed = "Update check failed."
+nothing_to_remove = "Nothing to remove from profile."
+engine_failed = "Failed to open WFP engine."
+uninstall_failed = "Filter uninstall failed."
+install_failed = "Filter install failed."
+app_exists = "App already in profile."
+app_added = "App added."
+rule_added = "Rule added."
+rule_updated = "Rule updated."
+rule_deleted = "Rule deleted."
+autosave_failed = "Auto-save failed."
+import_read_error = "Import failed: read error."
+import_parse_error = "Import failed: parse error."
+imported = "Imported."
+export_write_error = "Export failed: write error."
+exported = "Exported."
+refresh_read_error = "Refresh failed: read error."
+refresh_parse_error = "Refresh failed: parse error."
+profile_reloaded = "Profile reloaded."
+no_unused = "No unused apps to purge."
+no_timers = "No active timers."
+log_cleared = "Log cleared."
+font_failed = "Font load failed; reverted."
+font_updated = "Font updated."
+emergency_done = "Emergency reset complete."
+auto_allowed_one = "Auto-allowed 1 Microsoft-signed app"
+auto_allowed_many = "Auto-allowed %{count} Microsoft-signed apps"
+silenced = "Silenced: %{name}"
+allowed_count = "Allowed: %{name}"
+connecting = "Connecting to %{remote}"
+removed_entries = "Removed %{count} entries from profile."
+purged_apps = "Removed %{count} unused app(s)."
+cleared_timers = "Cleared %{count} app timer(s)."
+skip_uac_enabled = "Skip UAC: enabled. Future launches won't show UAC for admin users."
+skip_uac_disabled = "Skip UAC: disabled. Future launches will show UAC for admin actions."
+hash_drift_one = "Hash changed: %{name}"
+hash_drift_many = "Hash changed on %{count} apps (see log)"
+filters_removed = "%{filters} filter(s) removed, %{sublayers} sublayer(s) cleared."
+filters_installed = "%{added} filter(s) installed, %{skipped} skipped."
+tray_blocked = "amwall - blocked: %{name}"
+
+# --- Dialog titles ---
+[dialog]
+update_available = "amwall - update available"
+check_updates = "amwall - Check for updates"
+confirm_bulk_delete = "Confirm bulk delete"
+admin_required = "Administrator required"
+delete_rule = "Delete rule"
+exit = "Exit amwall?"
+clear_log = "Clear log"
+allow_blocked = "Allow previously-blocked traffic?"
+emergency_reset = "Emergency WFP reset"
+about_title = "About amwall"
+about_app = "amwall"
+settings_title = "Settings"
+properties_signed = "amwall - Properties (signed by %{signer})"
+
+# --- Dialog body messages ---
+[message]
+update_available_body = "amwall %{latest} is available (you're running %{current}).\n\nOpen the releases page in your browser?"
+update_uptodate_body = "Current version: %{current}\nLatest version: %{latest}\n\nAlready up to date."
+update_error_body = "Could not reach GitHub to check for updates.\n\nPossible causes: no internet, the firewall blocking amwall from outbound HTTPS, or GitHub's API rate limit (60 anonymous requests per hour). Try again later."
+admin_required_body = "Filter management requires Administrator privileges.\n\nClose amwall and re-launch from an elevated shell\n(right-click → \"Run as administrator\")."
+delete_rule_confirm = "Delete the rule \"%{name}\"?"
+bulk_delete_confirm = "Remove %{count} entries from the profile?\n\nThis can't be undone."
+exit_body = "Filters are currently enabled. Quitting amwall will leave them in place (they survive process exit). Continue?"
+clear_log_body = "Clear the packets log? This empties the in-memory log tab and truncates the on-disk log file. The action can't be undone."
+emergency_reset_body = "Emergency reset will:\n\n• Remove every WFP filter amwall has installed\n• Empty the Apps Profile and User rules lists\n• Turn off Enable filters\n\nUse this if amwall is blocking something you can't identify and you need to restore the OS-default networking behavior. The change is immediate. Continue?"
+allow_one_body = "%{name} is currently blocked. Allowing it will let it reach the network the next time it tries.\n\nContinue?"
+allow_many_body = "%{count} previously-blocked apps will be set to Allow. They will reach the network the next time they try.\n\nContinue?"
+blocked_notification = "Blocked: %{app}"
+
+# --- Context menu ---
+[context]
+allow = "Allow"
+block = "Block"
+copy_details = "&Copy details"
+properties = "Properties\tEnter"
+remove_from_profile = "Remove from profile\tDel"
+explore = "Explore (open folder)\tCtrl+E"
+copy = "Copy name\tCtrl+C"
+
+# --- Tray menu ---
+[tray]
+show = "Show amwall"
+enable_filters = "Enable filters"
+disable_filters = "Disable filters"
+settings = "Settings..."
+exit = "Exit amwall"
+
+# --- First-run wizard ---
+[wizard]
+title = "Welcome to amwall"
+subtitle = "Import simplewall configuration?"
+import_btn = "Import"
+start_fresh_btn = "Start fresh"
+body = """amwall found an existing simplewall configuration:
+
+• Path: %{path}
+• %{apps} app(s) with rules
+• %{rules} custom rule(s)
+
+Importing copies simplewall's profile.xml over to amwall and uses it as your starting point. simplewall stays installed and its existing kernel filters remain active — disable simplewall before clicking "Enable filters" in amwall to avoid both firewalls applying overlapping rules.
+
+You can run File → Import later if you skip now."""
+
+# --- Settings dialog tabs ---
+[settings_tab]
+general = "General"
+interface = "Interface"
+highlighting = "Highlighting"
+rules = "Rules"
+blocklist = "Blocklist"
+notifications = "Notifications"
+logging = "Logging"
+exclude = "Exclude"
+
+# --- Rule editor tabs ---
+[rule_editor]
+general = "General"
+rule = "Rule"
+apps = "Apps"
+
+# --- Protocol labels ---
+[protocol]
+any = "Any"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Address family labels ---
+[version]
+any = "Any"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Direction labels ---
+[direction]
+outbound = "Outbound"
+inbound = "Inbound"
+both = "Both"
+other = "Other"
+
+# --- Action labels ---
+[action]
+allow = "Allow"
+block = "Block"
+permit = "Permit"
+
+# --- Settings page: General ---
+[rc_general]
+group_config = "General configuration"
+always_on_top = "Always on top"
+load_on_startup = "Load on system startup"
+start_minimized = "Start minimized"
+skip_uac = "Skip \"User Account Control\" prompt warning"
+check_updates = "Periodically check for updates (recommended)"
+group_language = "Language"
+select_language = "Select language:"
+
+# --- Settings page: Interface ---
+[rc_interface]
+group_confirm = "Confirmations"
+confirm_exit = "Show confirmation dialog on exit"
+confirm_exit_timer = "Show confirmation dialog on exit when timers active"
+confirm_log_clear = "Confirm when clearing the log file"
+confirm_allow = "Confirm allowing previously-blocked traffic"
+group_tray = "Tray icon"
+tray_single_click = "Single click on tray icon to open"
+
+# --- Settings page: Highlighting ---
+[rc_highlight]
+group = "Highlighting"
+hint = "Double-click an item to change it."
+
+# --- Settings page: Rules ---
+[rc_rules]
+group_connections = "Connections"
+block_outbound = "Block outbound connections for all"
+block_inbound = "Block inbound connections for all"
+allow_loopback = "Allow loopback connections for all"
+allow_6to4 = "Allow IPv6 redirections (6to4) for all"
+group_security = "Security"
+stealth_mode = "Prevent port scanning (stealth mode)"
+boottime_filters = "Enable boot-time filters"
+group_advanced = "Advanced"
+check_signatures = "Check apps for digital signatures"
+use_hashes = "Use file hashes for app identification"
+resolve_addresses = "Resolve network addresses"
+
+# --- Settings page: Blocklist ---
+[rc_blocklist]
+group_spy = "Microsoft tracking and telemetry"
+group_update = "Microsoft Update"
+group_apps = "Microsoft applications"
+
+# --- Settings page: Notifications ---
+[rc_notifications]
+group = "Notifications"
+enable = "Enable packets notifications"
+sound = "Enable notifications sound"
+fullscreen = "Enable silent-mode when full-screen app in foreground"
+on_tray = "Show notification window on tray"
+timeout = "Timeout between similar notifications (sec.):"
+
+# --- Settings page: Logging ---
+[rc_logging]
+group_log = "Packets log"
+enable = "Enable packets logging to a file"
+max_size = "Maximum log size (kB):"
+group_viewer = "Log viewer"
+group_ui = "Interface"
+enable_ui = "Enable packets logging in the UI"
+
+# --- Settings page: Exclude ---
+[rc_exclude]
+group_notif = "Notifications: do not notify about ..."
+blocklist = "blocklist"
+user_rules = "user rules"
+group_log = "Logging: do not log ..."
+stealth = "port scanner connections"
+allowed = "allowed connections"
+
+# --- App properties dialog ---
+[rc_properties]
+title = "App properties"
+path = "Path:"
+comment = "Comment:"
+group_settings = "Settings:"
+enabled = "Enabled (allow this app's traffic)"
+silent = "Silent (no notifications)"
+save = "Save"
+close = "Close"
+
+# --- Connect prompt dialog ---
+[rc_prompt]
+title = "amwall - application connection request"
+header = "An application is trying to connect:"
+question = "Allow this app's traffic, or keep it blocked?"
+allow = "Allow"
+block = "Block"
+
+# --- Rule editor dialog ---
+[rc_editor]
+add_rule_title = "Rule entry"
+save = "Save"
+close = "Close"
+
+# --- File dialog filters ---
+[filter]
+xml_profile = "XML profile (*.xml)"
+all_files = "All files (*.*)"
+executable = "Executable (*.exe)"

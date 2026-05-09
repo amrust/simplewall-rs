@@ -51,9 +51,9 @@ pub fn open_profile(parent: HWND) -> Option<PathBuf> {
         // *.xml profiles only by default. Two filter rows so users
         // can fall back to All files when they want to inspect a
         // weirdly-named profile.
-        let xml_name = wide_static("XML profile (*.xml)");
+        let xml_name = wide_static(&rust_i18n::t!("filter.xml_profile"));
         let xml_spec = wide_static("*.xml");
-        let any_name = wide_static("All files (*.*)");
+        let any_name = wide_static(&rust_i18n::t!("filter.all_files"));
         let any_spec = wide_static("*.*");
         let filters = [
             COMDLG_FILTERSPEC {
@@ -93,9 +93,9 @@ pub fn save_profile(parent: HWND, default_name: Option<&str>) -> Option<PathBuf>
         let opts = dialog.GetOptions().ok()?;
         let _ = dialog.SetOptions(opts | FOS_FORCEFILESYSTEM | FOS_OVERWRITEPROMPT);
 
-        let xml_name = wide_static("XML profile (*.xml)");
+        let xml_name = wide_static(&rust_i18n::t!("filter.xml_profile"));
         let xml_spec = wide_static("*.xml");
-        let any_name = wide_static("All files (*.*)");
+        let any_name = wide_static(&rust_i18n::t!("filter.all_files"));
         let any_spec = wide_static("*.*");
         let filters = [
             COMDLG_FILTERSPEC {
@@ -171,9 +171,9 @@ pub fn open_executable(parent: HWND) -> Option<PathBuf> {
         let opts = dialog.GetOptions().ok()?;
         let _ = dialog.SetOptions(opts | FOS_FORCEFILESYSTEM);
 
-        let exe_name = wide_static("Executable (*.exe)");
+        let exe_name = wide_static(&rust_i18n::t!("filter.executable"));
         let exe_spec = wide_static("*.exe");
-        let any_name = wide_static("All files (*.*)");
+        let any_name = wide_static(&rust_i18n::t!("filter.all_files"));
         let any_spec = wide_static("*.*");
         let filters = [
             COMDLG_FILTERSPEC {

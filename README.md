@@ -151,8 +151,58 @@ Tracked in GitHub issues. The high-level milestones are:
 5. GUI — equivalent of the Win32 main window, rules editor, log viewer
 6. Notifications — packet-drop notifications and logging
 7. Internal blocklist — load `profile_internal.sp`
-8. Localization — load `simplewall.lng`
+8. Localization — 42 languages via `rust-i18n` with auto-detect
 9. Installer + portable mode parity
+
+## Localization
+
+amwall ships with **42 languages** embedded at compile time via [`rust-i18n`](https://crates.io/crates/rust-i18n). The app auto-detects the Windows user locale on first launch and persists the choice to `settings.txt`.
+
+### Supported languages
+
+Arabic, Armenian, Azerbaijani, Belarusian, Bulgarian *(planned)*, Catalan, Chinese (Simplified), Chinese (Traditional), Czech, Danish, Dutch, English, Estonian, Finnish, French, Georgian, German, Greek, Hungarian, Indonesian, Italian, Japanese, Kazakh, Korean, Kyrgyz, Latvian, Lithuanian, Norwegian *(planned)*, Persian, Polish, Portuguese, Portuguese (Brazil), Romanian, Russian, Serbian (Cyrillic), Serbian (Latin), Slovak, Slovenian, Spanish, Swedish, Thai, Turkish, Ukrainian, Vietnamese.
+
+### Adding a new language
+
+1. **Copy** `locales/en.toml` to `locales/<code>.toml` (use [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) codes, e.g. `bg.toml`; for regional variants use `<lang>-<REGION>.toml`, e.g. `pt-BR.toml`).
+2. **Translate** all values. Rules:
+   - Keys stay exactly the same (only translate values)
+   - Keep `%{variable}` placeholders verbatim (`%{count}`, `%{name}`, `%{signer}`, etc.)
+   - Keep keyboard shortcuts as-is (`\tCtrl+P`, `\tF5`, `\tEnter`, `\tDel`)
+   - Keep technical terms in English: TCP, UDP, ICMP, IPv4, IPv6, SHA-256, WFP, UAC, XML, UWP, loopback, amwall, simplewall, GitHub
+   - Place `&` accelerator on an appropriate character for menu mnemonics (CJK languages: remove `&`)
+   - Use `\"` for embedded quotes — do **not** use typographic quotes (`"` `"` `„`) inside TOML basic strings, as they break the parser
+   - Multi-line strings (`"""..."""`) for `wizard.body` must have the closing `"""` on its own line
+3. **Add a display name** in `src/gui/settings_dialog.rs` → `locale_display_name()` so the Settings dropdown shows the native name (e.g. `"bg" => "Български"`).
+4. **Rebuild** — `cargo build` picks up new `.toml` files automatically (the `build.rs` watches the `locales/` directory).
+5. **Verify** — `cargo build` will fail at compile time if the TOML is malformed. If it builds, the strings are embedded.
+
+### How it works
+
+- `rust_i18n::i18n!("locales", fallback = "en")` in `src/lib.rs` embeds all `locales/*.toml` at compile time
+- `t!("key")` / `t!("key", var = val)` anywhere in GUI code returns the localized string
+- `build.rs` declares `cargo:rerun-if-changed=locales` so adding/editing any `.toml` triggers recompilation
+- On first launch, `GetUserDefaultLocaleName()` detects the Windows locale, maps it to the best available locale (exact match > base language > regional variant), and persists the choice
+- Language can be changed at runtime via Settings > Language; the app restarts automatically to apply
+
+### Testing locale files
+
+```
+# Build catches malformed TOML at compile time:
+cargo build
+
+# Run the test suite (localization is compile-time, no runtime test needed):
+cargo test
+
+# Validate a single file without a full build (requires Python 3.11+):
+python -c "import tomllib; tomllib.load(open('locales/bg.toml', 'rb')); print('OK')"
+```
+
+Common TOML pitfalls that cause `"Parse file failed"`:
+- Unescaped `"` inside a basic string (use `\"`)
+- Typographic quotes (`"` U+201C, `"` U+201D, `„` U+201E) that look like ASCII `"` to the parser
+- Backslash not followed by a valid escape (`\n`, `\t`, `\\`, `\"`)
+- `"""` inside a multi-line string without escaping
 
 ## Contributing
 

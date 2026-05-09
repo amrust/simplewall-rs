@@ -107,24 +107,12 @@ pub fn maybe_run(parent: HWND, amwall_profile_path: &Path) -> Choice {
 
     let app_n = detected.profile.apps.len();
     let rule_n = detected.profile.custom_rules.len();
-    let body = format!(
-        "amwall found an existing simplewall configuration:\n\
-         \n\
-         \u{2022} Path: {}\n\
-         \u{2022} {} app(s) with rules\n\
-         \u{2022} {} custom rule(s)\n\
-         \n\
-         Importing copies simplewall's profile.xml over to amwall \
-         and uses it as your starting point. simplewall stays \
-         installed and its existing kernel filters remain active — \
-         disable simplewall before clicking \"Enable filters\" in \
-         amwall to avoid both firewalls applying overlapping rules.\n\
-         \n\
-         You can run File \u{2192} Import later if you skip now.",
-        detected.path.display(),
-        app_n,
-        rule_n,
-    );
+    let body = rust_i18n::t!(
+        "wizard.body",
+        path = detected.path.display().to_string(),
+        apps = app_n,
+        rules = rule_n,
+    ).into_owned();
 
     let choice = match show_dialog(parent, &body) {
         Some(c) => c,
@@ -161,8 +149,8 @@ const ID_IMPORT: i32 = 1001;
 const ID_START_FRESH: i32 = 1002;
 
 fn show_dialog(parent: HWND, body: &str) -> Option<ChoiceRaw> {
-    let title = wide("Welcome to amwall");
-    let main = wide("Import simplewall configuration?");
+    let title = wide(&rust_i18n::t!("wizard.title"));
+    let main = wide(&rust_i18n::t!("wizard.subtitle"));
     let body_w = wide(body);
     // Plain short labels — the body already explains the trade-
     // off, so the buttons just carry the verb. The earlier
@@ -170,8 +158,8 @@ fn show_dialog(parent: HWND, body: &str) -> Option<ChoiceRaw> {
     // I conflated TDF_ALLOW_DIALOG_CANCELLATION (0x0008) with
     // TDF_USE_COMMAND_LINKS (0x0010); even with the right flag
     // the long-form labels were too wordy for a 2-button choice.
-    let import_label = wide("Import");
-    let fresh_label = wide("Start fresh");
+    let import_label = wide(&rust_i18n::t!("wizard.import_btn"));
+    let fresh_label = wide(&rust_i18n::t!("wizard.start_fresh_btn"));
 
     let buttons = [
         TASKDIALOG_BUTTON {

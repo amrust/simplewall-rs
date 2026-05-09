@@ -8,6 +8,8 @@
 // a no-op so `cargo doc` / cross-target builds keep working.
 
 fn main() {
+    println!("cargo:rerun-if-changed=locales");
+
     #[cfg(windows)]
     {
         println!("cargo:rerun-if-changed=assets/amwall.rc");

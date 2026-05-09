@@ -1,0 +1,397 @@
+# amwall — Nederlandse vertaling.
+# Vertaling van locales/en.toml. Houd de sleutels ongewijzigd,
+# vertaal alleen de waarden. Placeholders %{…} moeten intact blijven.
+
+# --- Menubalk titels ---
+[menu]
+file = "&Bestand"
+edit = "B&ewerken"
+view = "&Beeld"
+settings = "&Instellingen"
+rules = "&Regels"
+blocklist = "B&lokkeerlijst"
+help = "&Help"
+
+# --- Bestandsmenu items ---
+[file]
+settings = "&Instellingen\tCtrl+P"
+add_app = "&App toevoegen…\tCtrl+O"
+import = "&Importeren…"
+export = "&Exporteren…"
+exit = "&Afsluiten"
+
+# --- Bewerkenmenu items ---
+[edit]
+purge_unused = "Ongebruikte apps &verwijderen"
+purge_timers = "&Timers verwijderen"
+clear_log = "&Log wissen"
+refresh = "&Vernieuwen\tF5"
+
+# --- Beeldmenu items ---
+[view]
+always_on_top = "Altijd &bovenop"
+dark_theme = "&Donker thema gebruiken"
+autosize_columns = "Kolommen &automatisch aanpassen"
+filenames_only = "Alleen &bestandsnamen tonen"
+show_search = "&Zoekbalk tonen"
+layout_details = "Weergave: &Details"
+layout_icons = "Weergave: &Pictogrammen"
+layout_tiles = "Weergave: &Tegels"
+icon_small = "Pictogramgrootte: &Klein"
+icon_large = "Pictogramgrootte: &Groot"
+icon_extralarge = "Pictogramgrootte: &Extra groot"
+font = "&Lettertype…"
+
+# --- Instellingenmenu items ---
+[settings]
+load_on_startup = "&Laden bij systeemstart"
+start_minimized = "&Geminimaliseerd starten"
+skip_uac = "UAC-waarschuwing overslaan"
+check_updates = "Controleren op &updates"
+auto_allow_microsoft = "Door &Microsoft ondertekende programma's automatisch toestaan"
+check_signatures = "Apps controleren op digitale &handtekeningen"
+check_hashes = "Apps controleren op SHA-256-&hash"
+
+# --- Regels submenu ---
+[rules]
+block_outbound = "&Uitgaand verkeer blokkeren voor alles"
+block_inbound = "&Inkomend verkeer blokkeren voor alles"
+allow_loopback = "&Loopback toestaan"
+allow_6to4 = "IPv6 (&6to4) toestaan"
+allow_windows_update = "&Windows Update toestaan"
+
+# --- Blokkeerlijst submenu ---
+[blocklist]
+disable = "&Uitschakelen"
+allow = "&Toestaan"
+block = "&Blokkeren"
+spy_telemetry = "Microsoft-&spionage en telemetrie"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft-&applicaties"
+
+# --- Helpmenu items ---
+[help]
+website = "&Website"
+check_updates = "&Controleren op updates"
+about = "&Over"
+emergency_reset = "&Noodreset WFP..."
+
+# --- Tablabels ---
+[tab]
+apps = "Apps"
+services = "Services"
+uwp = "UWP-apps"
+blocklist = "Blokkeerlijst"
+system_rules = "Systeemregels"
+user_rules = "Gebruikersregels"
+connections = "Verbindingen"
+packets_log = "Pakkettenlog"
+
+# --- Kolomkoppen ---
+[column]
+name = "Naam"
+added = "Toegevoegd"
+path = "Pad"
+date = "Datum"
+protocol = "Protocol"
+direction = "Richting"
+address_src = "Adres (Bron)"
+host_src = "Host (Bron)"
+port_src = "Poort (Bron)"
+address_dst = "Adres (Bestemming)"
+host_dst = "Host (Bestemming)"
+port_dst = "Poort (Bestemming)"
+state = "Status"
+filter = "Filter"
+index = "#"
+
+# --- Groepskoppen ---
+[group]
+blocked = "Geblokkeerd"
+blocked_silent = "Geblokkeerd (stil)"
+timer = "Timer"
+special = "Speciale apps"
+allowed = "Toegestaan"
+enabled = "Ingeschakeld"
+disabled = "Uitgeschakeld"
+
+# --- Werkbalk tooltips ---
+[tooltip]
+enable_filters = "Filters inschakelen (Ctrl+T)"
+new_rule = "Een nieuwe gebruikersregel aanmaken"
+enable_notifications = "Meldingen voor geblokkeerd verkeer inschakelen"
+enable_log = "Geblokkeerd verkeer loggen naar een bestand"
+enable_ui_log = "Pakkettenlog in de interface tonen"
+reload = "Profiel herladen vanaf schijf (F5)"
+open_settings = "Instellingen openen"
+open_log_file = "Het pakkettenlogbestand openen"
+clear_log = "De pakkettenlog wissen"
+open_releases = "De GitHub-releasepagina openen"
+
+# --- Werkbalk knoplabels ---
+[toolbar]
+enable_filters = "Filters inschakelen"
+disable_filters = "Filters uitschakelen"
+
+# --- Statusbalk berichten ---
+[status]
+filters_enabled = "Filters zijn ingeschakeld."
+filters_disabled = "Filters zijn uitgeschakeld."
+imported_simplewall = "simplewall-profiel geïmporteerd."
+checking_updates = "Controleren op updates..."
+up_to_date = "Up-to-date."
+update_check_failed = "Controle op updates mislukt."
+nothing_to_remove = "Niets te verwijderen uit het profiel."
+engine_failed = "Openen van WFP-engine mislukt."
+uninstall_failed = "Verwijderen van filters mislukt."
+install_failed = "Installatie van filters mislukt."
+app_exists = "App staat al in het profiel."
+app_added = "App toegevoegd."
+rule_added = "Regel toegevoegd."
+rule_updated = "Regel bijgewerkt."
+rule_deleted = "Regel verwijderd."
+autosave_failed = "Automatisch opslaan mislukt."
+import_read_error = "Importeren mislukt: leesfout."
+import_parse_error = "Importeren mislukt: parsingfout."
+imported = "Geïmporteerd."
+export_write_error = "Exporteren mislukt: schrijffout."
+exported = "Geëxporteerd."
+refresh_read_error = "Vernieuwen mislukt: leesfout."
+refresh_parse_error = "Vernieuwen mislukt: parsingfout."
+profile_reloaded = "Profiel herladen."
+no_unused = "Geen ongebruikte apps om te verwijderen."
+no_timers = "Geen actieve timers."
+log_cleared = "Log gewist."
+font_failed = "Lettertype laden mislukt; teruggedraaid."
+font_updated = "Lettertype bijgewerkt."
+emergency_done = "Noodreset voltooid."
+auto_allowed_one = "1 door Microsoft ondertekende app automatisch toegestaan"
+auto_allowed_many = "%{count} door Microsoft ondertekende apps automatisch toegestaan"
+silenced = "Gedempt: %{name}"
+allowed_count = "Toegestaan: %{name}"
+connecting = "Verbinden met %{remote}"
+removed_entries = "%{count} items uit het profiel verwijderd."
+purged_apps = "%{count} ongebruikte app(s) verwijderd."
+cleared_timers = "%{count} app-timer(s) gewist."
+skip_uac_enabled = "UAC overslaan: ingeschakeld. Toekomstige starts tonen geen UAC voor beheerders."
+skip_uac_disabled = "UAC overslaan: uitgeschakeld. Toekomstige starts tonen UAC voor beheerdersacties."
+hash_drift_one = "Hash-afwijking: %{name}"
+hash_drift_many = "Hash-afwijking bij %{count} apps (zie log)"
+filters_removed = "%{filters} filter(s) verwijderd, %{sublayers} sublaag/sublagen gewist."
+filters_installed = "%{added} filter(s) geïnstalleerd, %{skipped} overgeslagen."
+tray_blocked = "amwall - geblokkeerd: %{name}"
+
+# --- Dialoogtitels ---
+[dialog]
+update_available = "amwall - update beschikbaar"
+check_updates = "amwall - Controleren op updates"
+confirm_bulk_delete = "Bulkverwijdering bevestigen"
+admin_required = "Beheerder vereist"
+delete_rule = "Regel verwijderen"
+exit = "amwall afsluiten?"
+clear_log = "Log wissen"
+allow_blocked = "Eerder geblokkeerd verkeer toestaan?"
+emergency_reset = "Noodreset WFP"
+about_title = "Over amwall"
+about_app = "amwall"
+settings_title = "Instellingen"
+properties_signed = "amwall - Eigenschappen (ondertekend door %{signer})"
+
+# --- Dialoogberichten ---
+[message]
+update_available_body = "amwall %{latest} is beschikbaar (u gebruikt %{current}).\n\nDe releasepagina openen in uw browser?"
+update_uptodate_body = "Huidige versie: %{current}\nLaatste versie: %{latest}\n\nAl up-to-date."
+update_error_body = "Kan GitHub niet bereiken om op updates te controleren.\n\nMogelijke oorzaken: geen internet, de firewall blokkeert uitgaand HTTPS-verkeer van amwall, of de API-limiet van GitHub (60 anonieme verzoeken per uur). Probeer het later opnieuw."
+admin_required_body = "Filterbeheer vereist beheerdersrechten.\n\nSluit amwall en start het opnieuw vanuit een verhoogde opdrachtprompt\n(rechtermuisknop → \"Als administrator uitvoeren\")."
+delete_rule_confirm = "De regel \"%{name}\" verwijderen?"
+bulk_delete_confirm = "%{count} items uit het profiel verwijderen?\n\nDit kan niet ongedaan worden gemaakt."
+exit_body = "Filters zijn momenteel ingeschakeld. Als u amwall afsluit, blijven ze actief (ze overleven het beëindigen van het proces). Doorgaan?"
+clear_log_body = "De pakkettenlog wissen? Dit leegt het logtabblad in het geheugen en kapt het logbestand op schijf af. De actie kan niet ongedaan worden gemaakt."
+emergency_reset_body = "De noodreset zal:\n\n• Alle WFP-filters verwijderen die amwall heeft geïnstalleerd\n• Het app-profiel en de lijst met gebruikersregels legen\n• Filters inschakelen uitschakelen\n\nGebruik dit als amwall iets blokkeert dat u niet kunt identificeren en u het standaard netwerkgedrag van het besturingssysteem wilt herstellen. De wijziging is onmiddellijk. Doorgaan?"
+allow_one_body = "%{name} is momenteel geblokkeerd. Toestaan zorgt ervoor dat het de volgende keer dat het probeert verbinding te maken, het netwerk kan bereiken.\n\nDoorgaan?"
+allow_many_body = "%{count} eerder geblokkeerde apps worden op Toestaan gezet. Ze kunnen het netwerk bereiken de volgende keer dat ze het proberen.\n\nDoorgaan?"
+blocked_notification = "Geblokkeerd: %{app}"
+
+# --- Contextmenu ---
+[context]
+allow = "Toestaan"
+block = "Blokkeren"
+copy_details = "&Details kopiëren"
+properties = "Eigenschappen\tEnter"
+remove_from_profile = "Uit profiel verwijderen\tDel"
+explore = "Verkennen (map openen)\tCtrl+E"
+copy = "Naam kopiëren\tCtrl+C"
+
+# --- Systeemvakmenu ---
+[tray]
+show = "amwall tonen"
+enable_filters = "Filters inschakelen"
+disable_filters = "Filters uitschakelen"
+settings = "Instellingen..."
+exit = "amwall afsluiten"
+
+# --- Eerste-keer-wizard ---
+[wizard]
+title = "Welkom bij amwall"
+subtitle = "simplewall-configuratie importeren?"
+import_btn = "Importeren"
+start_fresh_btn = "Nieuw beginnen"
+body = """amwall heeft een bestaande simplewall-configuratie gevonden:
+
+• Pad: %{path}
+• %{apps} app(s) met regels
+• %{rules} aangepaste regel(s)
+
+Importeren kopieert het profile.xml van simplewall naar amwall en gebruikt het als startpunt. simplewall blijft geïnstalleerd en de bestaande kernelfilters blijven actief — schakel simplewall uit voordat u op "Filters inschakelen" klikt in amwall om te voorkomen dat beide firewalls overlappende regels toepassen.
+
+U kunt later Bestand → Importeren gebruiken als u dit nu overslaat."""
+
+# --- Instellingendialoog tabbladen ---
+[settings_tab]
+general = "Algemeen"
+interface = "Interface"
+highlighting = "Markering"
+rules = "Regels"
+blocklist = "Blokkeerlijst"
+notifications = "Meldingen"
+logging = "Logging"
+exclude = "Uitsluiten"
+
+# --- Regeleditor tabbladen ---
+[rule_editor]
+general = "Algemeen"
+rule = "Regel"
+apps = "Apps"
+
+# --- Protocollabels ---
+[protocol]
+any = "Alle"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Adresfamilielabels ---
+[version]
+any = "Alle"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Richtinglabels ---
+[direction]
+outbound = "Uitgaand"
+inbound = "Inkomend"
+both = "Beide"
+other = "Overig"
+
+# --- Actielabels ---
+[action]
+allow = "Toestaan"
+block = "Blokkeren"
+permit = "Toelaten"
+
+# --- Instellingenpagina: Algemeen ---
+[rc_general]
+group_config = "Algemene configuratie"
+always_on_top = "Altijd bovenop"
+load_on_startup = "Laden bij systeemstart"
+start_minimized = "Geminimaliseerd starten"
+skip_uac = "\"Gebruikersaccountbeheer\"-waarschuwing overslaan"
+check_updates = "Periodiek controleren op updates (aanbevolen)"
+group_language = "Taal"
+select_language = "Taal selecteren:"
+
+# --- Instellingenpagina: Interface ---
+[rc_interface]
+group_confirm = "Bevestigingen"
+confirm_exit = "Bevestigingsdialoog tonen bij afsluiten"
+confirm_exit_timer = "Bevestigingsdialoog tonen bij afsluiten wanneer timers actief"
+confirm_log_clear = "Bevestigen bij wissen van het logbestand"
+confirm_allow = "Bevestigen bij toestaan van eerder geblokkeerd verkeer"
+group_tray = "Systeemvakpictogram"
+tray_single_click = "Eenmaal klikken op systeemvakpictogram om te openen"
+
+# --- Instellingenpagina: Markering ---
+[rc_highlight]
+group = "Markering"
+hint = "Dubbelklik op een item om het te wijzigen."
+
+# --- Instellingenpagina: Regels ---
+[rc_rules]
+group_connections = "Verbindingen"
+block_outbound = "Uitgaande verbindingen blokkeren voor alles"
+block_inbound = "Inkomende verbindingen blokkeren voor alles"
+allow_loopback = "Loopback-verbindingen toestaan voor alles"
+allow_6to4 = "IPv6-omleidingen (6to4) toestaan voor alles"
+group_security = "Beveiliging"
+stealth_mode = "Poortscannen voorkomen (stealth-modus)"
+boottime_filters = "Opstartfilters inschakelen"
+group_advanced = "Geavanceerd"
+check_signatures = "Apps controleren op digitale handtekeningen"
+use_hashes = "Bestands-hashes gebruiken voor app-identificatie"
+resolve_addresses = "Netwerkadressen oplossen"
+
+# --- Instellingenpagina: Blokkeerlijst ---
+[rc_blocklist]
+group_spy = "Microsoft-spionage en telemetrie"
+group_update = "Microsoft Update"
+group_apps = "Microsoft-applicaties"
+
+# --- Instellingenpagina: Meldingen ---
+[rc_notifications]
+group = "Meldingen"
+enable = "Pakketmeldingen inschakelen"
+sound = "Meldingsgeluid inschakelen"
+fullscreen = "Stille modus inschakelen bij app op volledig scherm"
+on_tray = "Meldingsvenster bij systeemvak tonen"
+timeout = "Tijd tussen vergelijkbare meldingen (sec.):"
+
+# --- Instellingenpagina: Logging ---
+[rc_logging]
+group_log = "Pakkettenlog"
+enable = "Pakkettenloggen naar bestand inschakelen"
+max_size = "Maximale loggrootte (kB):"
+group_viewer = "Logweergave"
+group_ui = "Interface"
+enable_ui = "Pakkettenloggen in de interface inschakelen"
+
+# --- Instellingenpagina: Uitsluiten ---
+[rc_exclude]
+group_notif = "Meldingen: niet melden over ..."
+blocklist = "blokkeerlijst"
+user_rules = "gebruikersregels"
+group_log = "Logging: niet loggen ..."
+stealth = "poortscannerverbindingen"
+allowed = "toegestane verbindingen"
+
+# --- App-eigenschappendialoog ---
+[rc_properties]
+title = "App-eigenschappen"
+path = "Pad:"
+comment = "Opmerking:"
+group_settings = "Instellingen:"
+enabled = "Ingeschakeld (verkeer van deze app toestaan)"
+silent = "Stil (geen meldingen)"
+save = "Opslaan"
+close = "Sluiten"
+
+# --- Verbindingsverzoekdialoog ---
+[rc_prompt]
+title = "amwall - verbindingsverzoek van applicatie"
+header = "Een applicatie probeert verbinding te maken:"
+question = "Het verkeer van deze app toestaan of geblokkeerd houden?"
+allow = "Toestaan"
+block = "Blokkeren"
+
+# --- Regeleditor dialoog ---
+[rc_editor]
+add_rule_title = "Regelinvoer"
+save = "Opslaan"
+close = "Sluiten"
+
+# --- Bestandsdialoogfilters ---
+[filter]
+xml_profile = "XML-profiel (*.xml)"
+all_files = "Alle bestanden (*.*)"
+executable = "Uitvoerbaar bestand (*.exe)"

@@ -1,0 +1,396 @@
+# amwall — Terjemahan Bahasa Indonesia.
+# Disalin dari en.toml dan diterjemahkan ke Bahasa Indonesia.
+
+# --- Judul bilah menu ---
+[menu]
+file = "&Berkas"
+edit = "&Edit"
+view = "&Tampilan"
+settings = "&Pengaturan"
+rules = "&Aturan"
+blocklist = "Daftar &Blokir"
+help = "&Bantuan"
+
+# --- Item menu Berkas ---
+[file]
+settings = "&Pengaturan\tCtrl+P"
+add_app = "&Tambah aplikasi…\tCtrl+O"
+import = "&Impor…"
+export = "&Ekspor…"
+exit = "&Keluar"
+
+# --- Item menu Edit ---
+[edit]
+purge_unused = "Hapus aplikasi &tidak terpakai"
+purge_timers = "Hapus pe&ngatur waktu"
+clear_log = "&Bersihkan log"
+refresh = "&Segarkan\tF5"
+
+# --- Item menu Tampilan ---
+[view]
+always_on_top = "Selalu di &atas"
+dark_theme = "Gunakan tema &gelap"
+autosize_columns = "&Otomatis ukuran kolom"
+filenames_only = "Tampilkan &nama berkas saja"
+show_search = "Tampilkan bilah &pencarian"
+layout_details = "Tata letak: &Detail"
+layout_icons = "Tata letak: &Ikon"
+layout_tiles = "Tata letak: &Ubin"
+icon_small = "Ukuran ikon: Ke&cil"
+icon_large = "Ukuran ikon: &Besar"
+icon_extralarge = "Ukuran ikon: &Ekstra besar"
+font = "&Font…"
+
+# --- Item menu Pengaturan ---
+[settings]
+load_on_startup = "&Muat saat sistem mulai"
+start_minimized = "Mulai dalam keadaan &minimal"
+skip_uac = "Lewati peringatan UAC"
+check_updates = "Periksa &pembaruan"
+auto_allow_microsoft = "Izinkan otomatis program bertanda tangan &Microsoft"
+check_signatures = "Periksa tanda tangan &digital aplikasi"
+check_hashes = "Periksa &hash SHA-256 aplikasi"
+
+# --- Submenu Aturan ---
+[rules]
+block_outbound = "Blokir koneksi &keluar untuk semua"
+block_inbound = "Blokir koneksi &masuk untuk semua"
+allow_loopback = "Izinkan &loopback"
+allow_6to4 = "Izinkan IPv6 (&6to4)"
+allow_windows_update = "Izinkan &Windows Update"
+
+# --- Submenu Daftar Blokir ---
+[blocklist]
+disable = "&Nonaktifkan"
+allow = "&Izinkan"
+block = "&Blokir"
+spy_telemetry = "&Spionase dan telemetri Microsoft"
+ms_update = "&Pembaruan Microsoft"
+ms_apps = "&Aplikasi Microsoft"
+
+# --- Item menu Bantuan ---
+[help]
+website = "&Situs web"
+check_updates = "&Periksa pembaruan"
+about = "&Tentang"
+emergency_reset = "&Pengaturan ulang WFP darurat..."
+
+# --- Label tab ---
+[tab]
+apps = "Aplikasi"
+services = "Layanan"
+uwp = "Aplikasi UWP"
+blocklist = "Daftar Blokir"
+system_rules = "Aturan sistem"
+user_rules = "Aturan pengguna"
+connections = "Koneksi"
+packets_log = "Log paket"
+
+# --- Header kolom ---
+[column]
+name = "Nama"
+added = "Ditambahkan"
+path = "Jalur"
+date = "Tanggal"
+protocol = "Protokol"
+direction = "Arah"
+address_src = "Alamat (Sumber)"
+host_src = "Host (Sumber)"
+port_src = "Port (Sumber)"
+address_dst = "Alamat (Tujuan)"
+host_dst = "Host (Tujuan)"
+port_dst = "Port (Tujuan)"
+state = "Status"
+filter = "Filter"
+index = "#"
+
+# --- Header grup ---
+[group]
+blocked = "Diblokir"
+blocked_silent = "Diblokir (senyap)"
+timer = "Pengatur waktu"
+special = "Aplikasi khusus"
+allowed = "Diizinkan"
+enabled = "Aktif"
+disabled = "Nonaktif"
+
+# --- Tooltip bilah alat ---
+[tooltip]
+enable_filters = "Aktifkan filter (Ctrl+T)"
+new_rule = "Buat aturan pengguna baru"
+enable_notifications = "Aktifkan notifikasi untuk lalu lintas yang diblokir"
+enable_log = "Catat lalu lintas yang diblokir ke berkas"
+enable_ui_log = "Tampilkan log paket di antarmuka"
+reload = "Muat ulang profil dari disk (F5)"
+open_settings = "Buka Pengaturan"
+open_log_file = "Buka berkas log paket"
+clear_log = "Bersihkan log paket"
+open_releases = "Buka halaman rilis GitHub"
+
+# --- Label tombol bilah alat ---
+[toolbar]
+enable_filters = "Aktifkan filter"
+disable_filters = "Nonaktifkan filter"
+
+# --- Pesan bilah status ---
+[status]
+filters_enabled = "Filter aktif."
+filters_disabled = "Filter nonaktif."
+imported_simplewall = "Profil simplewall diimpor."
+checking_updates = "Memeriksa pembaruan..."
+up_to_date = "Sudah terbaru."
+update_check_failed = "Pemeriksaan pembaruan gagal."
+nothing_to_remove = "Tidak ada yang perlu dihapus dari profil."
+engine_failed = "Gagal membuka WFP engine."
+uninstall_failed = "Penghapusan filter gagal."
+install_failed = "Pemasangan filter gagal."
+app_exists = "Aplikasi sudah ada di profil."
+app_added = "Aplikasi ditambahkan."
+rule_added = "Aturan ditambahkan."
+rule_updated = "Aturan diperbarui."
+rule_deleted = "Aturan dihapus."
+autosave_failed = "Simpan otomatis gagal."
+import_read_error = "Impor gagal: kesalahan baca."
+import_parse_error = "Impor gagal: kesalahan parsing."
+imported = "Diimpor."
+export_write_error = "Ekspor gagal: kesalahan tulis."
+exported = "Diekspor."
+refresh_read_error = "Penyegaran gagal: kesalahan baca."
+refresh_parse_error = "Penyegaran gagal: kesalahan parsing."
+profile_reloaded = "Profil dimuat ulang."
+no_unused = "Tidak ada aplikasi tidak terpakai untuk dihapus."
+no_timers = "Tidak ada pengatur waktu aktif."
+log_cleared = "Log dibersihkan."
+font_failed = "Pemuatan font gagal; dikembalikan."
+font_updated = "Font diperbarui."
+emergency_done = "Pengaturan ulang darurat selesai."
+auto_allowed_one = "Izinkan otomatis 1 aplikasi bertanda tangan Microsoft"
+auto_allowed_many = "Izinkan otomatis %{count} aplikasi bertanda tangan Microsoft"
+silenced = "Disenyapkan: %{name}"
+allowed_count = "Diizinkan: %{name}"
+connecting = "Menghubungkan ke %{remote}"
+removed_entries = "Menghapus %{count} entri dari profil."
+purged_apps = "Menghapus %{count} aplikasi tidak terpakai."
+cleared_timers = "Menghapus %{count} pengatur waktu aplikasi."
+skip_uac_enabled = "Lewati UAC: aktif. Peluncuran selanjutnya tidak akan menampilkan UAC untuk pengguna admin."
+skip_uac_disabled = "Lewati UAC: nonaktif. Peluncuran selanjutnya akan menampilkan UAC untuk tindakan admin."
+hash_drift_one = "Perubahan hash: %{name}"
+hash_drift_many = "Perubahan hash pada %{count} aplikasi (lihat log)"
+filters_removed = "%{filters} filter dihapus, %{sublayers} sublayer dibersihkan."
+filters_installed = "%{added} filter dipasang, %{skipped} dilewati."
+tray_blocked = "amwall - diblokir: %{name}"
+
+# --- Judul dialog ---
+[dialog]
+update_available = "amwall - pembaruan tersedia"
+check_updates = "amwall - Periksa pembaruan"
+confirm_bulk_delete = "Konfirmasi hapus massal"
+admin_required = "Diperlukan Administrator"
+delete_rule = "Hapus aturan"
+exit = "Keluar dari amwall?"
+clear_log = "Bersihkan log"
+allow_blocked = "Izinkan lalu lintas yang diblokir sebelumnya?"
+emergency_reset = "Pengaturan ulang WFP darurat"
+about_title = "Tentang amwall"
+about_app = "amwall"
+settings_title = "Pengaturan"
+properties_signed = "amwall - Properti (ditandatangani oleh %{signer})"
+
+# --- Isi pesan dialog ---
+[message]
+update_available_body = "amwall %{latest} tersedia (Anda menggunakan %{current}).\n\nBuka halaman rilis di peramban?"
+update_uptodate_body = "Versi saat ini: %{current}\nVersi terbaru: %{latest}\n\nSudah terbaru."
+update_error_body = "Tidak dapat menghubungi GitHub untuk memeriksa pembaruan.\n\nKemungkinan penyebab: tidak ada internet, firewall memblokir amwall dari HTTPS keluar, atau batas kecepatan API GitHub (60 permintaan anonim per jam). Coba lagi nanti."
+admin_required_body = "Pengelolaan filter memerlukan hak istimewa Administrator.\n\nTutup amwall dan luncurkan ulang dari shell yang ditinggikan\n(klik kanan → \"Jalankan sebagai administrator\")."
+delete_rule_confirm = "Hapus aturan \"%{name}\"?"
+bulk_delete_confirm = "Hapus %{count} entri dari profil?\n\nTindakan ini tidak dapat dibatalkan."
+exit_body = "Filter saat ini aktif. Menutup amwall akan membiarkannya tetap berlaku (filter bertahan setelah proses keluar). Lanjutkan?"
+clear_log_body = "Bersihkan log paket? Ini mengosongkan tab log di memori dan memotong berkas log di disk. Tindakan ini tidak dapat dibatalkan."
+emergency_reset_body = "Pengaturan ulang darurat akan:\n\n• Menghapus setiap filter WFP yang dipasang amwall\n• Mengosongkan daftar Profil Aplikasi dan Aturan pengguna\n• Menonaktifkan Aktifkan filter\n\nGunakan ini jika amwall memblokir sesuatu yang tidak dapat Anda identifikasi dan Anda perlu memulihkan perilaku jaringan default OS. Perubahan berlaku segera. Lanjutkan?"
+allow_one_body = "%{name} saat ini diblokir. Mengizinkannya akan membiarkannya mengakses jaringan saat berikutnya mencoba.\n\nLanjutkan?"
+allow_many_body = "%{count} aplikasi yang diblokir sebelumnya akan diubah ke Izinkan. Mereka akan mengakses jaringan saat berikutnya mereka mencoba.\n\nLanjutkan?"
+blocked_notification = "Diblokir: %{app}"
+
+# --- Menu konteks ---
+[context]
+allow = "Izinkan"
+block = "Blokir"
+copy_details = "&Salin detail"
+properties = "Properti\tEnter"
+remove_from_profile = "Hapus dari profil\tDel"
+explore = "Jelajahi (buka folder)\tCtrl+E"
+copy = "Salin nama\tCtrl+C"
+
+# --- Menu baki ---
+[tray]
+show = "Tampilkan amwall"
+enable_filters = "Aktifkan filter"
+disable_filters = "Nonaktifkan filter"
+settings = "Pengaturan..."
+exit = "Keluar amwall"
+
+# --- Wizard pertama kali ---
+[wizard]
+title = "Selamat datang di amwall"
+subtitle = "Impor konfigurasi simplewall?"
+import_btn = "Impor"
+start_fresh_btn = "Mulai baru"
+body = """amwall menemukan konfigurasi simplewall yang ada:
+
+• Jalur: %{path}
+• %{apps} aplikasi dengan aturan
+• %{rules} aturan kustom
+
+Mengimpor akan menyalin profile.xml simplewall ke amwall dan menggunakannya sebagai titik awal. simplewall tetap terpasang dan filter kernel yang ada tetap aktif — nonaktifkan simplewall sebelum mengklik "Aktifkan filter" di amwall untuk menghindari kedua firewall menerapkan aturan yang tumpang tindih.
+
+Anda dapat menjalankan Berkas → Impor nanti jika melewati sekarang."""
+
+# --- Tab dialog Pengaturan ---
+[settings_tab]
+general = "Umum"
+interface = "Antarmuka"
+highlighting = "Penyorotan"
+rules = "Aturan"
+blocklist = "Daftar Blokir"
+notifications = "Notifikasi"
+logging = "Pencatatan"
+exclude = "Pengecualian"
+
+# --- Tab editor aturan ---
+[rule_editor]
+general = "Umum"
+rule = "Aturan"
+apps = "Aplikasi"
+
+# --- Label protokol ---
+[protocol]
+any = "Semua"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Label keluarga alamat ---
+[version]
+any = "Semua"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Label arah ---
+[direction]
+outbound = "Keluar"
+inbound = "Masuk"
+both = "Keduanya"
+other = "Lainnya"
+
+# --- Label aksi ---
+[action]
+allow = "Izinkan"
+block = "Blokir"
+permit = "Perbolehkan"
+
+# --- Halaman pengaturan: Umum ---
+[rc_general]
+group_config = "Konfigurasi umum"
+always_on_top = "Selalu di atas"
+load_on_startup = "Muat saat sistem mulai"
+start_minimized = "Mulai dalam keadaan minimal"
+skip_uac = "Lewati peringatan \"User Account Control\""
+check_updates = "Periksa pembaruan secara berkala (disarankan)"
+group_language = "Bahasa"
+select_language = "Pilih bahasa:"
+
+# --- Halaman pengaturan: Antarmuka ---
+[rc_interface]
+group_confirm = "Konfirmasi"
+confirm_exit = "Tampilkan dialog konfirmasi saat keluar"
+confirm_exit_timer = "Tampilkan dialog konfirmasi saat keluar ketika pengatur waktu aktif"
+confirm_log_clear = "Konfirmasi saat membersihkan berkas log"
+confirm_allow = "Konfirmasi saat mengizinkan lalu lintas yang diblokir sebelumnya"
+group_tray = "Ikon baki"
+tray_single_click = "Klik sekali pada ikon baki untuk membuka"
+
+# --- Halaman pengaturan: Penyorotan ---
+[rc_highlight]
+group = "Penyorotan"
+hint = "Klik ganda pada item untuk mengubahnya."
+
+# --- Halaman pengaturan: Aturan ---
+[rc_rules]
+group_connections = "Koneksi"
+block_outbound = "Blokir koneksi keluar untuk semua"
+block_inbound = "Blokir koneksi masuk untuk semua"
+allow_loopback = "Izinkan koneksi loopback untuk semua"
+allow_6to4 = "Izinkan pengalihan IPv6 (6to4) untuk semua"
+group_security = "Keamanan"
+stealth_mode = "Cegah pemindaian port (mode siluman)"
+boottime_filters = "Aktifkan filter saat boot"
+group_advanced = "Lanjutan"
+check_signatures = "Periksa tanda tangan digital aplikasi"
+use_hashes = "Gunakan hash berkas untuk identifikasi aplikasi"
+resolve_addresses = "Resolusi alamat jaringan"
+
+# --- Halaman pengaturan: Daftar Blokir ---
+[rc_blocklist]
+group_spy = "Spionase dan telemetri Microsoft"
+group_update = "Pembaruan Microsoft"
+group_apps = "Aplikasi Microsoft"
+
+# --- Halaman pengaturan: Notifikasi ---
+[rc_notifications]
+group = "Notifikasi"
+enable = "Aktifkan notifikasi paket"
+sound = "Aktifkan suara notifikasi"
+fullscreen = "Aktifkan mode senyap saat aplikasi layar penuh di latar depan"
+on_tray = "Tampilkan jendela notifikasi di baki"
+timeout = "Jeda waktu antara notifikasi serupa (detik):"
+
+# --- Halaman pengaturan: Pencatatan ---
+[rc_logging]
+group_log = "Log paket"
+enable = "Aktifkan pencatatan paket ke berkas"
+max_size = "Ukuran log maksimum (kB):"
+group_viewer = "Penampil log"
+group_ui = "Antarmuka"
+enable_ui = "Aktifkan pencatatan paket di antarmuka"
+
+# --- Halaman pengaturan: Pengecualian ---
+[rc_exclude]
+group_notif = "Notifikasi: jangan beritahu tentang ..."
+blocklist = "daftar blokir"
+user_rules = "aturan pengguna"
+group_log = "Pencatatan: jangan catat ..."
+stealth = "koneksi pemindai port"
+allowed = "koneksi yang diizinkan"
+
+# --- Dialog properti aplikasi ---
+[rc_properties]
+title = "Properti aplikasi"
+path = "Jalur:"
+comment = "Komentar:"
+group_settings = "Pengaturan:"
+enabled = "Aktif (izinkan lalu lintas aplikasi ini)"
+silent = "Senyap (tanpa notifikasi)"
+save = "Simpan"
+close = "Tutup"
+
+# --- Dialog permintaan koneksi ---
+[rc_prompt]
+title = "amwall - permintaan koneksi aplikasi"
+header = "Sebuah aplikasi mencoba untuk terhubung:"
+question = "Izinkan lalu lintas aplikasi ini, atau tetap blokir?"
+allow = "Izinkan"
+block = "Blokir"
+
+# --- Dialog editor aturan ---
+[rc_editor]
+add_rule_title = "Entri aturan"
+save = "Simpan"
+close = "Tutup"
+
+# --- Filter dialog berkas ---
+[filter]
+xml_profile = "Profil XML (*.xml)"
+all_files = "Semua berkas (*.*)"
+executable = "Berkas eksekusi (*.exe)"

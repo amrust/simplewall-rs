@@ -40,3 +40,7 @@ Desktop.ini
 
 # stderr capture from VS Code build-and-run task.
 /swaplog.txt
+
+# Locale audit (internal review, not published)
+locales/localeanalysis.md
+locales/localechecks.md

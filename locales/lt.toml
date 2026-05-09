@@ -1,0 +1,396 @@
+# amwall — Lietuvių kalba (Lithuanian).
+# Vertimo failas, sukurtas pagal en.toml struktūrą.
+
+# --- Meniu juostos pavadinimai ---
+[menu]
+file = "&Failas"
+edit = "&Redaguoti"
+view = "&Rodymas"
+settings = "&Nustatymai"
+rules = "&Taisyklės"
+blocklist = "&Blokavimo sąrašas"
+help = "&Pagalba"
+
+# --- Failo meniu elementai ---
+[file]
+settings = "&Nustatymai\tCtrl+P"
+add_app = "&Pridėti programą…\tCtrl+O"
+import = "&Importuoti…"
+export = "&Eksportuoti…"
+exit = "&Išeiti"
+
+# --- Redagavimo meniu elementai ---
+[edit]
+purge_unused = "Pašalinti &nenaudojamas programas"
+purge_timers = "Pašalinti &laikmačius"
+clear_log = "&Išvalyti žurnalą"
+refresh = "&Atnaujinti\tF5"
+
+# --- Rodymo meniu elementai ---
+[view]
+always_on_top = "Visada &viršuje"
+dark_theme = "Naudoti &tamsią temą"
+autosize_columns = "&Automatinis stulpelių dydis"
+filenames_only = "Rodyti tik &failų vardus"
+show_search = "Rodyti &paieškos juostą"
+layout_details = "Išdėstymas: &Detalės"
+layout_icons = "Išdėstymas: &Piktogramos"
+layout_tiles = "Išdėstymas: &Plytelės"
+icon_small = "Piktogramų dydis: &Mažas"
+icon_large = "Piktogramų dydis: &Didelis"
+icon_extralarge = "Piktogramų dydis: &Ypač didelis"
+font = "&Šriftas…"
+
+# --- Nustatymų meniu elementai ---
+[settings]
+load_on_startup = "&Įkelti paleidžiant sistemą"
+start_minimized = "Paleisti &sumažintą"
+skip_uac = "Praleisti UAC įspėjimą"
+check_updates = "Tikrinti &atnaujinimus"
+auto_allow_microsoft = "Automatiškai leisti &Microsoft pasirašytas programas"
+check_signatures = "Tikrinti programų skaitmeninius &parašus"
+check_hashes = "Tikrinti programų SHA-256 &maišą"
+
+# --- Taisyklių submeniu ---
+[rules]
+block_outbound = "Blokuoti &išeinančius ryšius visiems"
+block_inbound = "Blokuoti &įeinančius ryšius visiems"
+allow_loopback = "Leisti &loopback"
+allow_6to4 = "Leisti IPv6 (&6to4)"
+allow_windows_update = "Leisti &Windows Update"
+
+# --- Blokavimo sąrašo submeniu ---
+[blocklist]
+disable = "&Išjungti"
+allow = "&Leisti"
+block = "&Blokuoti"
+spy_telemetry = "Microsoft &šnipinėjimas ir telemetrija"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft &programos"
+
+# --- Pagalbos meniu elementai ---
+[help]
+website = "&Svetainė"
+check_updates = "&Tikrinti atnaujinimus"
+about = "&Apie"
+emergency_reset = "&Avarinis WFP atstatymas..."
+
+# --- Kortelių etiketės ---
+[tab]
+apps = "Programos"
+services = "Tarnybos"
+uwp = "UWP programos"
+blocklist = "Blokavimo sąrašas"
+system_rules = "Sistemos taisyklės"
+user_rules = "Vartotojo taisyklės"
+connections = "Ryšiai"
+packets_log = "Paketų žurnalas"
+
+# --- Stulpelių antraštės ---
+[column]
+name = "Pavadinimas"
+added = "Pridėta"
+path = "Kelias"
+date = "Data"
+protocol = "Protokolas"
+direction = "Kryptis"
+address_src = "Adresas (šaltinis)"
+host_src = "Serveris (šaltinis)"
+port_src = "Prievadas (šaltinis)"
+address_dst = "Adresas (paskirties)"
+host_dst = "Serveris (paskirties)"
+port_dst = "Prievadas (paskirties)"
+state = "Būsena"
+filter = "Filtras"
+index = "#"
+
+# --- Grupių antraštės ---
+[group]
+blocked = "Užblokuota"
+blocked_silent = "Užblokuota (tyliai)"
+timer = "Laikmatis"
+special = "Specialios programos"
+allowed = "Leidžiama"
+enabled = "Įjungta"
+disabled = "Išjungta"
+
+# --- Įrankių juostos patarimai ---
+[tooltip]
+enable_filters = "Įjungti filtrus (Ctrl+T)"
+new_rule = "Sukurti naują vartotojo taisyklę"
+enable_notifications = "Įjungti pranešimus apie blokuojamą srautą"
+enable_log = "Registruoti blokuojamą srautą į failą"
+enable_ui_log = "Rodyti paketų žurnalą sąsajoje"
+reload = "Perkrauti profilį iš disko (F5)"
+open_settings = "Atidaryti nustatymus"
+open_log_file = "Atidaryti paketų žurnalo failą"
+clear_log = "Išvalyti paketų žurnalą"
+open_releases = "Atidaryti GitHub leidimų puslapį"
+
+# --- Įrankių juostos mygtukų etiketės ---
+[toolbar]
+enable_filters = "Įjungti filtrus"
+disable_filters = "Išjungti filtrus"
+
+# --- Būsenos juostos pranešimai ---
+[status]
+filters_enabled = "Filtrai įjungti."
+filters_disabled = "Filtrai išjungti."
+imported_simplewall = "Importuotas simplewall profilis."
+checking_updates = "Tikrinami atnaujinimai..."
+up_to_date = "Naujausia versija."
+update_check_failed = "Nepavyko patikrinti atnaujinimų."
+nothing_to_remove = "Nėra ką pašalinti iš profilio."
+engine_failed = "Nepavyko atidaryti WFP variklio."
+uninstall_failed = "Filtrų pašalinimas nepavyko."
+install_failed = "Filtrų įdiegimas nepavyko."
+app_exists = "Programa jau yra profilyje."
+app_added = "Programa pridėta."
+rule_added = "Taisyklė pridėta."
+rule_updated = "Taisyklė atnaujinta."
+rule_deleted = "Taisyklė ištrinta."
+autosave_failed = "Automatinis išsaugojimas nepavyko."
+import_read_error = "Importavimas nepavyko: skaitymo klaida."
+import_parse_error = "Importavimas nepavyko: analizės klaida."
+imported = "Importuota."
+export_write_error = "Eksportavimas nepavyko: rašymo klaida."
+exported = "Eksportuota."
+refresh_read_error = "Atnaujinimas nepavyko: skaitymo klaida."
+refresh_parse_error = "Atnaujinimas nepavyko: analizės klaida."
+profile_reloaded = "Profilis perkrautas."
+no_unused = "Nėra nenaudojamų programų pašalinimui."
+no_timers = "Nėra aktyvių laikmačių."
+log_cleared = "Žurnalas išvalytas."
+font_failed = "Šrifto įkėlimas nepavyko; grąžinta."
+font_updated = "Šriftas atnaujintas."
+emergency_done = "Avarinis atstatymas baigtas."
+auto_allowed_one = "Automatiškai leista 1 Microsoft pasirašyta programa"
+auto_allowed_many = "Automatiškai leista %{count} Microsoft pasirašytų programų"
+silenced = "Nutildyta: %{name}"
+allowed_count = "Leista: %{name}"
+connecting = "Jungiamasi prie %{remote}"
+removed_entries = "Pašalinta %{count} įrašų iš profilio."
+purged_apps = "Pašalinta %{count} nenaudojamų programų."
+cleared_timers = "Išvalyta %{count} programų laikmačių."
+skip_uac_enabled = "UAC praleidimas: įjungtas. Būsimi paleidimai nerodys UAC administratoriams."
+skip_uac_disabled = "UAC praleidimas: išjungtas. Būsimi paleidimai rodys UAC administratoriams."
+hash_drift_one = "Maišos pokytis: %{name}"
+hash_drift_many = "Maišos pokytis %{count} programose (žr. žurnalą)"
+filters_removed = "%{filters} filtrų pašalinta, %{sublayers} posluoksnių išvalyta."
+filters_installed = "%{added} filtrų įdiegta, %{skipped} praleista."
+tray_blocked = "amwall - užblokuota: %{name}"
+
+# --- Dialogų pavadinimai ---
+[dialog]
+update_available = "amwall - pasiekiamas atnaujinimas"
+check_updates = "amwall - Tikrinti atnaujinimus"
+confirm_bulk_delete = "Patvirtinti masinį trynimą"
+admin_required = "Reikalingos administratoriaus teisės"
+delete_rule = "Ištrinti taisyklę"
+exit = "Išeiti iš amwall?"
+clear_log = "Išvalyti žurnalą"
+allow_blocked = "Leisti anksčiau blokuotą srautą?"
+emergency_reset = "Avarinis WFP atstatymas"
+about_title = "Apie amwall"
+about_app = "amwall"
+settings_title = "Nustatymai"
+properties_signed = "amwall - Savybės (pasirašė %{signer})"
+
+# --- Dialogų tekstai ---
+[message]
+update_available_body = "amwall %{latest} yra pasiekiamas (jūs naudojate %{current}).\n\nAtidaryti leidimų puslapį naršyklėje?"
+update_uptodate_body = "Dabartinė versija: %{current}\nNaujausia versija: %{latest}\n\nJau naujausia versija."
+update_error_body = "Nepavyko pasiekti GitHub atnaujinimų tikrinimui.\n\nGalimos priežastys: nėra interneto, ugniasienė blokuoja amwall išeinantį HTTPS, arba GitHub API limitas (60 anoniminių užklausų per valandą). Bandykite vėliau."
+admin_required_body = "Filtrų valdymui reikalingos administratoriaus teisės.\n\nUždarykite amwall ir paleiskite iš naujo su padidintomis teisėmis\n(dešinys pelės mygtukas → \"Paleisti kaip administratorius\")."
+delete_rule_confirm = "Ištrinti taisyklę \"%{name}\"?"
+bulk_delete_confirm = "Pašalinti %{count} įrašų iš profilio?\n\nŠio veiksmo negalima atšaukti."
+exit_body = "Filtrai šiuo metu įjungti. Išėjus iš amwall jie liks aktyvūs (jie išlieka po proceso pabaigos). Tęsti?"
+clear_log_body = "Išvalyti paketų žurnalą? Tai ištuštins atmintyje esantį žurnalo skirtuką ir sutrumpins žurnalo failą diske. Šio veiksmo negalima atšaukti."
+emergency_reset_body = "Avarinis atstatymas:\n\n• Pašalins kiekvieną WFP filtrą, kurį amwall įdiegė\n• Ištuštins programų profilį ir vartotojo taisyklių sąrašus\n• Išjungs filtrus\n\nNaudokite tai, jei amwall blokuoja kažką, ko negalite identifikuoti, ir jums reikia atkurti numatytąjį OS tinklo elgesį. Pakeitimas įsigalioja iš karto. Tęsti?"
+allow_one_body = "%{name} šiuo metu užblokuota. Leidimas leis jai pasiekti tinklą kitą kartą bandant.\n\nTęsti?"
+allow_many_body = "%{count} anksčiau blokuotų programų bus nustatytos kaip leidžiamos. Jos galės pasiekti tinklą kitą kartą bandydamos.\n\nTęsti?"
+blocked_notification = "Užblokuota: %{app}"
+
+# --- Kontekstinis meniu ---
+[context]
+allow = "Leisti"
+block = "Blokuoti"
+copy_details = "&Kopijuoti informaciją"
+properties = "Savybės\tEnter"
+remove_from_profile = "Pašalinti iš profilio\tDel"
+explore = "Atidaryti aplanką\tCtrl+E"
+copy = "Kopijuoti pavadinimą\tCtrl+C"
+
+# --- Dėklo meniu ---
+[tray]
+show = "Rodyti amwall"
+enable_filters = "Įjungti filtrus"
+disable_filters = "Išjungti filtrus"
+settings = "Nustatymai..."
+exit = "Išeiti iš amwall"
+
+# --- Pirmojo paleidimo vedlys ---
+[wizard]
+title = "Sveiki atvykę į amwall"
+subtitle = "Importuoti simplewall konfigūraciją?"
+import_btn = "Importuoti"
+start_fresh_btn = "Pradėti iš naujo"
+body = """amwall rado esamą simplewall konfigūraciją:
+
+• Kelias: %{path}
+• %{apps} programų su taisyklėmis
+• %{rules} pasirinktinių taisyklių
+
+Importavimas nukopijuoja simplewall profile.xml į amwall ir naudoja jį kaip pradinį tašką. simplewall lieka įdiegtas ir jo esami branduolio filtrai išlieka aktyvūs — išjunkite simplewall prieš spausdami \"Įjungti filtrus\" amwall, kad išvengtumėte persidengiančių taisyklių.
+
+Galite pasirinkti Failas → Importuoti vėliau, jei dabar praleisite."""
+
+# --- Nustatymų dialogo kortelės ---
+[settings_tab]
+general = "Bendra"
+interface = "Sąsaja"
+highlighting = "Paryškinimas"
+rules = "Taisyklės"
+blocklist = "Blokavimo sąrašas"
+notifications = "Pranešimai"
+logging = "Registravimas"
+exclude = "Išimtys"
+
+# --- Taisyklių redaktoriaus kortelės ---
+[rule_editor]
+general = "Bendra"
+rule = "Taisyklė"
+apps = "Programos"
+
+# --- Protokolų etiketės ---
+[protocol]
+any = "Bet kuris"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Adresų šeimos etiketės ---
+[version]
+any = "Bet kuri"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Krypties etiketės ---
+[direction]
+outbound = "Išeinantis"
+inbound = "Įeinantis"
+both = "Abu"
+other = "Kita"
+
+# --- Veiksmo etiketės ---
+[action]
+allow = "Leisti"
+block = "Blokuoti"
+permit = "Leisti"
+
+# --- Nustatymų puslapis: Bendra ---
+[rc_general]
+group_config = "Bendroji konfigūracija"
+always_on_top = "Visada viršuje"
+load_on_startup = "Įkelti paleidžiant sistemą"
+start_minimized = "Paleisti sumažintą"
+skip_uac = "Praleisti \"User Account Control\" įspėjimą"
+check_updates = "Periodiškai tikrinti atnaujinimus (rekomenduojama)"
+group_language = "Kalba"
+select_language = "Pasirinkite kalbą:"
+
+# --- Nustatymų puslapis: Sąsaja ---
+[rc_interface]
+group_confirm = "Patvirtinimai"
+confirm_exit = "Rodyti patvirtinimo dialogą išeinant"
+confirm_exit_timer = "Rodyti patvirtinimo dialogą išeinant kai aktyvūs laikmačiai"
+confirm_log_clear = "Patvirtinti valant žurnalo failą"
+confirm_allow = "Patvirtinti leidžiant anksčiau blokuotą srautą"
+group_tray = "Dėklo piktograma"
+tray_single_click = "Vienas paspaudimas ant dėklo piktogramos atidaryti"
+
+# --- Nustatymų puslapis: Paryškinimas ---
+[rc_highlight]
+group = "Paryškinimas"
+hint = "Dukart spustelėkite elementą, kad jį pakeistumėte."
+
+# --- Nustatymų puslapis: Taisyklės ---
+[rc_rules]
+group_connections = "Ryšiai"
+block_outbound = "Blokuoti visų išeinančius ryšius"
+block_inbound = "Blokuoti visų įeinančius ryšius"
+allow_loopback = "Leisti visų loopback ryšius"
+allow_6to4 = "Leisti visų IPv6 peradresavimus (6to4)"
+group_security = "Saugumas"
+stealth_mode = "Užkirsti kelią prievadų nuskaitymui (slaptas režimas)"
+boottime_filters = "Įjungti paleidimo metu filtrus"
+group_advanced = "Išplėstiniai"
+check_signatures = "Tikrinti programų skaitmeninius parašus"
+use_hashes = "Naudoti failų maišas programų identifikavimui"
+resolve_addresses = "Nustatyti tinklo adresus"
+
+# --- Nustatymų puslapis: Blokavimo sąrašas ---
+[rc_blocklist]
+group_spy = "Microsoft šnipinėjimas ir telemetrija"
+group_update = "Microsoft Update"
+group_apps = "Microsoft programos"
+
+# --- Nustatymų puslapis: Pranešimai ---
+[rc_notifications]
+group = "Pranešimai"
+enable = "Įjungti paketų pranešimus"
+sound = "Įjungti pranešimų garsą"
+fullscreen = "Įjungti tylųjį režimą kai viso ekrano programa priekyje"
+on_tray = "Rodyti pranešimų langą prie dėklo"
+timeout = "Laikas tarp panašių pranešimų (sek.):"
+
+# --- Nustatymų puslapis: Registravimas ---
+[rc_logging]
+group_log = "Paketų žurnalas"
+enable = "Įjungti paketų registravimą į failą"
+max_size = "Didžiausias žurnalo dydis (kB):"
+group_viewer = "Žurnalo peržiūra"
+group_ui = "Sąsaja"
+enable_ui = "Įjungti paketų registravimą sąsajoje"
+
+# --- Nustatymų puslapis: Išimtys ---
+[rc_exclude]
+group_notif = "Pranešimai: nepranešti apie ..."
+blocklist = "blokavimo sąrašą"
+user_rules = "vartotojo taisykles"
+group_log = "Registravimas: neregistruoti ..."
+stealth = "prievadų nuskaitymo ryšių"
+allowed = "leistų ryšių"
+
+# --- Programos savybių dialogas ---
+[rc_properties]
+title = "Programos savybės"
+path = "Kelias:"
+comment = "Komentaras:"
+group_settings = "Nustatymai:"
+enabled = "Įjungta (leisti šios programos srautą)"
+silent = "Tylu (be pranešimų)"
+save = "Išsaugoti"
+close = "Uždaryti"
+
+# --- Ryšio užklausos dialogas ---
+[rc_prompt]
+title = "amwall - programos ryšio užklausa"
+header = "Programa bando prisijungti:"
+question = "Leisti šios programos srautą, ar palikti užblokuotą?"
+allow = "Leisti"
+block = "Blokuoti"
+
+# --- Taisyklių redaktoriaus dialogas ---
+[rc_editor]
+add_rule_title = "Taisyklės įrašas"
+save = "Išsaugoti"
+close = "Uždaryti"
+
+# --- Failų dialogo filtrai ---
+[filter]
+xml_profile = "XML profilis (*.xml)"
+all_files = "Visi failai (*.*)"
+executable = "Vykdomasis failas (*.exe)"

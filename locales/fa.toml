@@ -1,0 +1,397 @@
+# amwall — ترجمه فارسی.
+# ترجمه از locales/en.toml. کلیدها را تغییر ندهید،
+# فقط مقادیر را ترجمه کنید. جایگاه‌نماهای %{…} باید دست‌نخورده بمانند.
+
+# --- عناوین نوار منو ---
+[menu]
+file = "&فایل"
+edit = "&ویرایش"
+view = "&نمایش"
+settings = "&تنظیمات"
+rules = "&قوانین"
+blocklist = "&فهرست مسدودی‌ها"
+help = "&راهنما"
+
+# --- آیتم‌های منوی فایل ---
+[file]
+settings = "&تنظیمات\tCtrl+P"
+add_app = "&افزودن برنامه…\tCtrl+O"
+import = "&درون‌ریزی…"
+export = "&برون‌ریزی…"
+exit = "&خروج"
+
+# --- آیتم‌های منوی ویرایش ---
+[edit]
+purge_unused = "حذف برنامه‌های &استفاده‌نشده"
+purge_timers = "حذف &زمان‌سنج‌ها"
+clear_log = "&پاک کردن گزارش"
+refresh = "&بازخوانی\tF5"
+
+# --- آیتم‌های منوی نمایش ---
+[view]
+always_on_top = "همیشه &روی همه"
+dark_theme = "استفاده از پوسته &تیره"
+autosize_columns = "&تنظیم خودکار عرض ستون‌ها"
+filenames_only = "نمایش فقط نام &فایل‌ها"
+show_search = "نمایش نوار &جستجو"
+layout_details = "چیدمان: &جزئیات"
+layout_icons = "چیدمان: &آیکون‌ها"
+layout_tiles = "چیدمان: &کاشی‌ها"
+icon_small = "اندازه آیکون: &کوچک"
+icon_large = "اندازه آیکون: &بزرگ"
+icon_extralarge = "اندازه آیکون: &خیلی بزرگ"
+font = "&قلم…"
+
+# --- آیتم‌های منوی تنظیمات ---
+[settings]
+load_on_startup = "&بارگذاری در هنگام راه‌اندازی سیستم"
+start_minimized = "شروع به صورت &کوچک‌شده"
+skip_uac = "رد شدن از هشدار UAC"
+check_updates = "بررسی &به‌روزرسانی‌ها"
+auto_allow_microsoft = "اجازه خودکار به برنامه‌های امضاشده توسط &Microsoft"
+check_signatures = "بررسی امضای &دیجیتال برنامه‌ها"
+check_hashes = "بررسی &هش SHA-256 برنامه‌ها"
+
+# --- زیرمنوی قوانین ---
+[rules]
+block_outbound = "مسدود کردن اتصالات &خروجی برای همه"
+block_inbound = "مسدود کردن اتصالات &ورودی برای همه"
+allow_loopback = "اجازه دادن به &loopback"
+allow_6to4 = "اجازه دادن به IPv6 (&6to4)"
+allow_windows_update = "اجازه دادن به &Windows Update"
+
+# --- زیرمنوی Blocklist ---
+[blocklist]
+disable = "&غیرفعال"
+allow = "&اجازه"
+block = "&مسدود"
+spy_telemetry = "&جاسوسی و تله‌متری Microsoft"
+ms_update = "Microsoft &Update"
+ms_apps = "&برنامه‌های Microsoft"
+
+# --- آیتم‌های منوی راهنما ---
+[help]
+website = "&وب‌سایت"
+check_updates = "&بررسی به‌روزرسانی‌ها"
+about = "&درباره"
+emergency_reset = "&بازنشانی اضطراری WFP..."
+
+# --- برچسب‌های زبانه ---
+[tab]
+apps = "برنامه‌ها"
+services = "خدمات"
+uwp = "برنامه‌های UWP"
+blocklist = "فهرست مسدودی‌ها"
+system_rules = "قوانین سیستم"
+user_rules = "قوانین کاربر"
+connections = "اتصالات"
+packets_log = "گزارش بسته‌ها"
+
+# --- سرستون‌ها ---
+[column]
+name = "نام"
+added = "اضافه‌شده"
+path = "مسیر"
+date = "تاریخ"
+protocol = "پروتکل"
+direction = "جهت"
+address_src = "آدرس (مبدأ)"
+host_src = "میزبان (مبدأ)"
+port_src = "پورت (مبدأ)"
+address_dst = "آدرس (مقصد)"
+host_dst = "میزبان (مقصد)"
+port_dst = "پورت (مقصد)"
+state = "وضعیت"
+filter = "فیلتر"
+index = "#"
+
+# --- سرگروه‌ها ---
+[group]
+blocked = "مسدودشده"
+blocked_silent = "مسدودشده (بی‌صدا)"
+timer = "زمان‌سنج"
+special = "برنامه‌های ویژه"
+allowed = "مجاز"
+enabled = "فعال"
+disabled = "غیرفعال"
+
+# --- راهنمای نوار ابزار ---
+[tooltip]
+enable_filters = "فعال کردن فیلترها (Ctrl+T)"
+new_rule = "ایجاد یک قانون کاربری جدید"
+enable_notifications = "فعال کردن اعلان‌ها برای ترافیک مسدودشده"
+enable_log = "ثبت ترافیک مسدودشده در فایل"
+enable_ui_log = "نمایش گزارش بسته‌ها در رابط کاربری"
+reload = "بارگذاری مجدد پروفایل از دیسک (F5)"
+open_settings = "باز کردن تنظیمات"
+open_log_file = "باز کردن فایل گزارش بسته‌ها"
+clear_log = "پاک کردن گزارش بسته‌ها"
+open_releases = "باز کردن صفحه انتشارها در GitHub"
+
+# --- برچسب دکمه‌های نوار ابزار ---
+[toolbar]
+enable_filters = "فعال کردن فیلترها"
+disable_filters = "غیرفعال کردن فیلترها"
+
+# --- پیام‌های نوار وضعیت ---
+[status]
+filters_enabled = "فیلترها فعال هستند."
+filters_disabled = "فیلترها غیرفعال هستند."
+imported_simplewall = "پروفایل simplewall درون‌ریزی شد."
+checking_updates = "در حال بررسی به‌روزرسانی‌ها..."
+up_to_date = "به‌روز است."
+update_check_failed = "بررسی به‌روزرسانی ناموفق بود."
+nothing_to_remove = "چیزی برای حذف از پروفایل وجود ندارد."
+engine_failed = "باز کردن موتور WFP ناموفق بود."
+uninstall_failed = "حذف فیلترها ناموفق بود."
+install_failed = "نصب فیلترها ناموفق بود."
+app_exists = "برنامه از قبل در پروفایل وجود دارد."
+app_added = "برنامه اضافه شد."
+rule_added = "قانون اضافه شد."
+rule_updated = "قانون به‌روزرسانی شد."
+rule_deleted = "قانون حذف شد."
+autosave_failed = "ذخیره خودکار ناموفق بود."
+import_read_error = "درون‌ریزی ناموفق: خطای خواندن."
+import_parse_error = "درون‌ریزی ناموفق: خطای تجزیه."
+imported = "درون‌ریزی شد."
+export_write_error = "برون‌ریزی ناموفق: خطای نوشتن."
+exported = "برون‌ریزی شد."
+refresh_read_error = "بازخوانی ناموفق: خطای خواندن."
+refresh_parse_error = "بازخوانی ناموفق: خطای تجزیه."
+profile_reloaded = "پروفایل بارگذاری مجدد شد."
+no_unused = "برنامه استفاده‌نشده‌ای برای حذف وجود ندارد."
+no_timers = "زمان‌سنج فعالی وجود ندارد."
+log_cleared = "گزارش پاک شد."
+font_failed = "بارگذاری قلم ناموفق بود؛ بازگردانده شد."
+font_updated = "قلم به‌روزرسانی شد."
+emergency_done = "بازنشانی اضطراری انجام شد."
+auto_allowed_one = "۱ برنامه امضاشده توسط Microsoft به صورت خودکار مجاز شد"
+auto_allowed_many = "%{count} برنامه امضاشده توسط Microsoft به صورت خودکار مجاز شدند"
+silenced = "بی‌صدا شده: %{name}"
+allowed_count = "مجاز: %{name}"
+connecting = "در حال اتصال به %{remote}"
+removed_entries = "%{count} مورد از پروفایل حذف شد."
+purged_apps = "%{count} برنامه استفاده‌نشده حذف شد."
+cleared_timers = "%{count} زمان‌سنج برنامه پاک شد."
+skip_uac_enabled = "رد شدن از UAC: فعال. اجراهای آینده UAC را برای کاربران مدیر نمایش نخواهند داد."
+skip_uac_disabled = "رد شدن از UAC: غیرفعال. اجراهای آینده UAC را برای عملیات مدیریتی نمایش خواهند داد."
+hash_drift_one = "تغییر هش: %{name}"
+hash_drift_many = "تغییر هش در %{count} برنامه (گزارش را ببینید)"
+filters_removed = "%{filters} فیلتر حذف شد، %{sublayers} زیرلایه پاک شد."
+filters_installed = "%{added} فیلتر نصب شد، %{skipped} رد شد."
+tray_blocked = "amwall - مسدودشده: %{name}"
+
+# --- عناوین پنجره‌های گفتگو ---
+[dialog]
+update_available = "amwall - به‌روزرسانی موجود است"
+check_updates = "amwall - بررسی به‌روزرسانی‌ها"
+confirm_bulk_delete = "تأیید حذف دسته‌جمعی"
+admin_required = "نیاز به مدیر سیستم"
+delete_rule = "حذف قانون"
+exit = "خروج از amwall؟"
+clear_log = "پاک کردن گزارش"
+allow_blocked = "اجازه دادن به ترافیک مسدودشده قبلی؟"
+emergency_reset = "بازنشانی اضطراری WFP"
+about_title = "درباره amwall"
+about_app = "amwall"
+settings_title = "تنظیمات"
+properties_signed = "amwall - مشخصات (امضاشده توسط %{signer})"
+
+# --- متن پیام‌های پنجره‌های گفتگو ---
+[message]
+update_available_body = "amwall %{latest} موجود است (شما نسخه %{current} را اجرا می‌کنید).\n\nصفحه انتشارها را در مرورگر باز کنید؟"
+update_uptodate_body = "نسخه فعلی: %{current}\nآخرین نسخه: %{latest}\n\nدر حال حاضر به‌روز است."
+update_error_body = "دسترسی به GitHub برای بررسی به‌روزرسانی‌ها ممکن نبود.\n\nعلل احتمالی: عدم اتصال به اینترنت، مسدود بودن HTTPS خروجی amwall توسط دیوار آتش، یا محدودیت نرخ API GitHub (۶۰ درخواست ناشناس در ساعت). بعدا دوباره امتحان کنید."
+admin_required_body = "مدیریت فیلترها به دسترسی مدیر سیستم نیاز دارد.\n\namwall را ببندید و از یک ترمینال بالادستی دوباره اجرا کنید\n(کلیک راست → \"اجرا به عنوان مدیر\")."
+delete_rule_confirm = "قانون \"%{name}\" حذف شود؟"
+bulk_delete_confirm = "%{count} مورد از پروفایل حذف شود؟\n\nاین عمل قابل بازگشت نیست."
+exit_body = "فیلترها در حال حاضر فعال هستند. خروج از amwall آن‌ها را فعال نگه می‌دارد (پس از بسته شدن فرآیند باقی می‌مانند). ادامه می‌دهید؟"
+clear_log_body = "گزارش بسته‌ها پاک شود؟ این عمل زبانه گزارش حافظه را خالی و فایل گزارش روی دیسک را کوتاه می‌کند. این عمل قابل بازگشت نیست."
+emergency_reset_body = "بازنشانی اضطراری موارد زیر را انجام می‌دهد:\n\n• حذف تمام فیلترهای WFP نصب‌شده توسط amwall\n• خالی کردن پروفایل برنامه‌ها و فهرست قوانین کاربر\n• غیرفعال کردن فعال‌سازی فیلترها\n\nاگر amwall چیزی را مسدود می‌کند که نمی‌توانید شناسایی کنید و باید رفتار پیش‌فرض شبکه سیستم‌عامل را بازیابی کنید، از این گزینه استفاده کنید. تغییر فوری است. ادامه می‌دهید؟"
+allow_one_body = "%{name} در حال حاضر مسدود است. اجازه دادن به آن باعث می‌شود در تلاش بعدی به شبکه دسترسی پیدا کند.\n\nادامه می‌دهید؟"
+allow_many_body = "%{count} برنامه مسدودشده قبلی به حالت مجاز تغییر خواهند یافت. در تلاش بعدی به شبکه دسترسی خواهند داشت.\n\nادامه می‌دهید؟"
+blocked_notification = "مسدودشده: %{app}"
+
+# --- منوی زمینه ---
+[context]
+allow = "اجازه"
+block = "مسدود"
+copy_details = "&کپی جزئیات"
+properties = "مشخصات\tEnter"
+remove_from_profile = "حذف از پروفایل\tDel"
+explore = "کاوش (باز کردن پوشه)\tCtrl+E"
+copy = "کپی نام\tCtrl+C"
+
+# --- منوی سینی ---
+[tray]
+show = "نمایش amwall"
+enable_filters = "فعال کردن فیلترها"
+disable_filters = "غیرفعال کردن فیلترها"
+settings = "تنظیمات..."
+exit = "خروج از amwall"
+
+# --- راهنمای اولین اجرا ---
+[wizard]
+title = "به amwall خوش آمدید"
+subtitle = "پیکربندی simplewall درون‌ریزی شود؟"
+import_btn = "درون‌ریزی"
+start_fresh_btn = "شروع تازه"
+body = """amwall یک پیکربندی موجود simplewall پیدا کرد:
+
+• مسیر: %{path}
+• %{apps} برنامه با قوانین
+• %{rules} قانون سفارشی
+
+درون‌ریزی، فایل profile.xml از simplewall را به amwall کپی کرده و به عنوان نقطه شروع استفاده می‌کند. simplewall نصب باقی می‌ماند و فیلترهای هسته موجود آن فعال می‌مانند — قبل از کلیک روی \"فعال کردن فیلترها\" در amwall، simplewall را غیرفعال کنید تا از اعمال قوانین همپوشان توسط هر دو دیوار آتش جلوگیری شود.
+
+می‌توانید بعدا از طریق فایل → درون‌ریزی این کار را انجام دهید."""
+
+# --- زبانه‌های پنجره تنظیمات ---
+[settings_tab]
+general = "عمومی"
+interface = "رابط کاربری"
+highlighting = "برجسته‌سازی"
+rules = "قوانین"
+blocklist = "فهرست مسدودی‌ها"
+notifications = "اعلان‌ها"
+logging = "ثبت گزارش"
+exclude = "مستثنی"
+
+# --- زبانه‌های ویرایشگر قوانین ---
+[rule_editor]
+general = "عمومی"
+rule = "قانون"
+apps = "برنامه‌ها"
+
+# --- برچسب‌های پروتکل ---
+[protocol]
+any = "همه"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- برچسب‌های خانواده آدرس ---
+[version]
+any = "همه"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- برچسب‌های جهت ---
+[direction]
+outbound = "خروجی"
+inbound = "ورودی"
+both = "هر دو"
+other = "دیگر"
+
+# --- برچسب‌های عملکرد ---
+[action]
+allow = "اجازه"
+block = "مسدود"
+permit = "مجوز"
+
+# --- صفحه تنظیمات: عمومی ---
+[rc_general]
+group_config = "پیکربندی عمومی"
+always_on_top = "همیشه روی همه"
+load_on_startup = "بارگذاری در هنگام راه‌اندازی سیستم"
+start_minimized = "شروع به صورت کوچک‌شده"
+skip_uac = "رد شدن از هشدار \"کنترل حساب کاربری\""
+check_updates = "بررسی دوره‌ای به‌روزرسانی‌ها (توصیه می‌شود)"
+group_language = "زبان"
+select_language = "انتخاب زبان:"
+
+# --- صفحه تنظیمات: رابط کاربری ---
+[rc_interface]
+group_confirm = "تأییدیه‌ها"
+confirm_exit = "نمایش پنجره تأیید هنگام خروج"
+confirm_exit_timer = "نمایش پنجره تأیید هنگام خروج با زمان‌سنج‌های فعال"
+confirm_log_clear = "تأیید هنگام پاک کردن فایل گزارش"
+confirm_allow = "تأیید هنگام اجازه دادن به ترافیک مسدودشده قبلی"
+group_tray = "آیکون سینی"
+tray_single_click = "تک‌کلیک روی آیکون سینی برای باز کردن"
+
+# --- صفحه تنظیمات: برجسته‌سازی ---
+[rc_highlight]
+group = "برجسته‌سازی"
+hint = "برای تغییر روی یک مورد دوبار کلیک کنید."
+
+# --- صفحه تنظیمات: قوانین ---
+[rc_rules]
+group_connections = "اتصالات"
+block_outbound = "مسدود کردن اتصالات خروجی برای همه"
+block_inbound = "مسدود کردن اتصالات ورودی برای همه"
+allow_loopback = "اجازه دادن به اتصالات loopback برای همه"
+allow_6to4 = "اجازه دادن به تغییر مسیر IPv6 (6to4) برای همه"
+group_security = "امنیت"
+stealth_mode = "جلوگیری از اسکن پورت (حالت مخفی)"
+boottime_filters = "فعال کردن فیلترها هنگام راه‌اندازی"
+group_advanced = "پیشرفته"
+check_signatures = "بررسی امضای دیجیتال برنامه‌ها"
+use_hashes = "استفاده از هش فایل برای شناسایی برنامه‌ها"
+resolve_addresses = "تبدیل آدرس‌های شبکه"
+
+# --- صفحه تنظیمات: Blocklist ---
+[rc_blocklist]
+group_spy = "جاسوسی و تله‌متری Microsoft"
+group_update = "Microsoft Update"
+group_apps = "برنامه‌های Microsoft"
+
+# --- صفحه تنظیمات: اعلان‌ها ---
+[rc_notifications]
+group = "اعلان‌ها"
+enable = "فعال کردن اعلان‌های بسته‌ها"
+sound = "فعال کردن صدای اعلان‌ها"
+fullscreen = "فعال کردن حالت بی‌صدا هنگام تمام‌صفحه بودن برنامه"
+on_tray = "نمایش پنجره اعلان در سینی"
+timeout = "فاصله زمانی بین اعلان‌های مشابه (ثانیه):"
+
+# --- صفحه تنظیمات: ثبت گزارش ---
+[rc_logging]
+group_log = "گزارش بسته‌ها"
+enable = "فعال کردن ثبت گزارش بسته‌ها در فایل"
+max_size = "حداکثر اندازه گزارش (kB):"
+group_viewer = "نمایشگر گزارش"
+group_ui = "رابط کاربری"
+enable_ui = "فعال کردن ثبت گزارش بسته‌ها در رابط کاربری"
+
+# --- صفحه تنظیمات: مستثنی ---
+[rc_exclude]
+group_notif = "اعلان‌ها: اعلان ندادن درباره ..."
+blocklist = "فهرست مسدودی‌ها"
+user_rules = "قوانین کاربر"
+group_log = "ثبت گزارش: ثبت نکردن ..."
+stealth = "اتصالات اسکن پورت"
+allowed = "اتصالات مجاز"
+
+# --- پنجره مشخصات برنامه ---
+[rc_properties]
+title = "مشخصات برنامه"
+path = "مسیر:"
+comment = "توضیح:"
+group_settings = "تنظیمات:"
+enabled = "فعال (اجازه دادن به ترافیک این برنامه)"
+silent = "بی‌صدا (بدون اعلان)"
+save = "ذخیره"
+close = "بستن"
+
+# --- پنجره درخواست اتصال ---
+[rc_prompt]
+title = "amwall - درخواست اتصال برنامه"
+header = "یک برنامه در حال تلاش برای اتصال است:"
+question = "به ترافیک این برنامه اجازه می‌دهید یا مسدود بماند؟"
+allow = "اجازه"
+block = "مسدود"
+
+# --- پنجره ویرایشگر قوانین ---
+[rc_editor]
+add_rule_title = "ورودی قانون"
+save = "ذخیره"
+close = "بستن"
+
+# --- فیلترهای پنجره فایل ---
+[filter]
+xml_profile = "پروفایل XML (*.xml)"
+all_files = "همه فایل‌ها (*.*)"
+executable = "فایل اجرایی (*.exe)"

@@ -1,0 +1,397 @@
+# amwall — Türkçe çeviri.
+# locales/en.toml dosyasının çevirisi. Anahtarlar değiştirilmeden
+# yalnızca değerler çevrilir. %{…} yer tutucuları olduğu gibi kalmalıdır.
+
+# --- Menü çubuğu başlıkları ---
+[menu]
+file = "&Dosya"
+edit = "Düz&enle"
+view = "&Görünüm"
+settings = "&Ayarlar"
+rules = "&Kurallar"
+blocklist = "&Engel listesi"
+help = "&Yardım"
+
+# --- Dosya menüsü öğeleri ---
+[file]
+settings = "&Ayarlar\tCtrl+P"
+add_app = "&Uygulama ekle…\tCtrl+O"
+import = "&İçe aktar…"
+export = "&Dışa aktar…"
+exit = "&Çıkış"
+
+# --- Düzenle menüsü öğeleri ---
+[edit]
+purge_unused = "Kullanılmayan uygulamaları &temizle"
+purge_timers = "&Zamanlayıcıları temizle"
+clear_log = "&Günlüğü temizle"
+refresh = "&Yenile\tF5"
+
+# --- Görünüm menüsü öğeleri ---
+[view]
+always_on_top = "Her zaman &üstte"
+dark_theme = "&Koyu tema kullan"
+autosize_columns = "Sütunları &otomatik boyutlandır"
+filenames_only = "Yalnızca &dosya adlarını göster"
+show_search = "&Arama çubuğunu göster"
+layout_details = "Düzen: &Ayrıntılar"
+layout_icons = "Düzen: S&imgeler"
+layout_tiles = "Düzen: &Karolar"
+icon_small = "Simge boyutu: &Küçük"
+icon_large = "Simge boyutu: &Büyük"
+icon_extralarge = "Simge boyutu: Çok b&üyük"
+font = "&Yazı tipi…"
+
+# --- Ayarlar menüsü öğeleri ---
+[settings]
+load_on_startup = "Sistem &başlangıcında yükle"
+start_minimized = "&Simge durumunda başlat"
+skip_uac = "UAC uyarısını atla"
+check_updates = "&Güncellemeleri denetle"
+auto_allow_microsoft = "&Microsoft imzalı programlara otomatik izin ver"
+check_signatures = "Uygulamaların dijital &imzalarını denetle"
+check_hashes = "Uygulamaların SHA-256 &hash değerini denetle"
+
+# --- Kurallar alt menüsü ---
+[rules]
+block_outbound = "&Giden bağlantıları tümü için engelle"
+block_inbound = "G&elen bağlantıları tümü için engelle"
+allow_loopback = "&Loopback bağlantılarına izin ver"
+allow_6to4 = "IPv6 (&6to4) bağlantılarına izin ver"
+allow_windows_update = "&Windows Update'e izin ver"
+
+# --- Engel listesi alt menüsü ---
+[blocklist]
+disable = "&Devre dışı bırak"
+allow = "İzin &ver"
+block = "&Engelle"
+spy_telemetry = "Microsoft &casusluk ve telemetri"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft &uygulamaları"
+
+# --- Yardım menüsü öğeleri ---
+[help]
+website = "&Web sitesi"
+check_updates = "&Güncellemeleri denetle"
+about = "&Hakkında"
+emergency_reset = "&Acil WFP sıfırlama..."
+
+# --- Sekme etiketleri ---
+[tab]
+apps = "Uygulamalar"
+services = "Hizmetler"
+uwp = "UWP uygulamaları"
+blocklist = "Engel listesi"
+system_rules = "Sistem kuralları"
+user_rules = "Kullanıcı kuralları"
+connections = "Bağlantılar"
+packets_log = "Paket günlüğü"
+
+# --- Sütun başlıkları ---
+[column]
+name = "Ad"
+added = "Eklendi"
+path = "Yol"
+date = "Tarih"
+protocol = "Protokol"
+direction = "Yön"
+address_src = "Adres (Kaynak)"
+host_src = "Host (Kaynak)"
+port_src = "Port (Kaynak)"
+address_dst = "Adres (Hedef)"
+host_dst = "Host (Hedef)"
+port_dst = "Port (Hedef)"
+state = "Durum"
+filter = "Filtre"
+index = "#"
+
+# --- Grup başlıkları ---
+[group]
+blocked = "Engellendi"
+blocked_silent = "Engellendi (sessiz)"
+timer = "Zamanlayıcı"
+special = "Özel uygulamalar"
+allowed = "İzin verildi"
+enabled = "Etkin"
+disabled = "Devre dışı"
+
+# --- Araç çubuğu ipuçları ---
+[tooltip]
+enable_filters = "Filtreleri etkinleştir (Ctrl+T)"
+new_rule = "Yeni bir kullanıcı kuralı oluştur"
+enable_notifications = "Engellenen trafik için bildirimleri etkinleştir"
+enable_log = "Engellenen trafiği dosyaya kaydet"
+enable_ui_log = "Paket günlüğünü arayüzde göster"
+reload = "Profili diskten yeniden yükle (F5)"
+open_settings = "Ayarları aç"
+open_log_file = "Paket günlüğü dosyasını aç"
+clear_log = "Paket günlüğünü temizle"
+open_releases = "GitHub sürüm sayfasını aç"
+
+# --- Araç çubuğu düğme etiketleri ---
+[toolbar]
+enable_filters = "Filtreleri etkinleştir"
+disable_filters = "Filtreleri devre dışı bırak"
+
+# --- Durum çubuğu mesajları ---
+[status]
+filters_enabled = "Filtreler etkin."
+filters_disabled = "Filtreler devre dışı."
+imported_simplewall = "simplewall profili içe aktarıldı."
+checking_updates = "Güncellemeler denetleniyor..."
+up_to_date = "Güncel."
+update_check_failed = "Güncelleme denetimi başarısız oldu."
+nothing_to_remove = "Profilden kaldırılacak bir şey yok."
+engine_failed = "WFP motoru açılamadı."
+uninstall_failed = "Filtre kaldırma başarısız oldu."
+install_failed = "Filtre kurulumu başarısız oldu."
+app_exists = "Uygulama zaten profilde mevcut."
+app_added = "Uygulama eklendi."
+rule_added = "Kural eklendi."
+rule_updated = "Kural güncellendi."
+rule_deleted = "Kural silindi."
+autosave_failed = "Otomatik kayıt başarısız oldu."
+import_read_error = "İçe aktarma başarısız: okuma hatası."
+import_parse_error = "İçe aktarma başarısız: ayrıştırma hatası."
+imported = "İçe aktarıldı."
+export_write_error = "Dışa aktarma başarısız: yazma hatası."
+exported = "Dışa aktarıldı."
+refresh_read_error = "Yenileme başarısız: okuma hatası."
+refresh_parse_error = "Yenileme başarısız: ayrıştırma hatası."
+profile_reloaded = "Profil yeniden yüklendi."
+no_unused = "Temizlenecek kullanılmayan uygulama yok."
+no_timers = "Etkin zamanlayıcı yok."
+log_cleared = "Günlük temizlendi."
+font_failed = "Yazı tipi yüklenemedi; geri alındı."
+font_updated = "Yazı tipi güncellendi."
+emergency_done = "Acil sıfırlama tamamlandı."
+auto_allowed_one = "Microsoft imzalı 1 uygulamaya otomatik izin verildi"
+auto_allowed_many = "Microsoft imzalı %{count} uygulamaya otomatik izin verildi"
+silenced = "Sessize alındı: %{name}"
+allowed_count = "İzin verildi: %{name}"
+connecting = "%{remote} sunucusuna bağlanılıyor"
+removed_entries = "Profilden %{count} giriş kaldırıldı."
+purged_apps = "%{count} kullanılmayan uygulama temizlendi."
+cleared_timers = "%{count} uygulama zamanlayıcısı temizlendi."
+skip_uac_enabled = "UAC atla: etkin. Gelecek başlatmalarda yönetici kullanıcılar için UAC gösterilmeyecek."
+skip_uac_disabled = "UAC atla: devre dışı. Gelecek başlatmalarda yönetici eylemleri için UAC gösterilecek."
+hash_drift_one = "Hash sapması: %{name}"
+hash_drift_many = "%{count} uygulamada hash sapması (günlüğe bakın)"
+filters_removed = "%{filters} filtre kaldırıldı, %{sublayers} alt katman temizlendi."
+filters_installed = "%{added} filtre kuruldu, %{skipped} atlandı."
+tray_blocked = "amwall - engellendi: %{name}"
+
+# --- İletişim kutusu başlıkları ---
+[dialog]
+update_available = "amwall - güncelleme mevcut"
+check_updates = "amwall - Güncellemeleri denetle"
+confirm_bulk_delete = "Toplu silmeyi onayla"
+admin_required = "Yönetici gerekli"
+delete_rule = "Kuralı sil"
+exit = "amwall'dan çıkılsın mı?"
+clear_log = "Günlüğü temizle"
+allow_blocked = "Daha önce engellenen trafiğe izin verilsin mi?"
+emergency_reset = "Acil WFP sıfırlama"
+about_title = "amwall hakkında"
+about_app = "amwall"
+settings_title = "Ayarlar"
+properties_signed = "amwall - Özellikler (%{signer} tarafından imzalanmış)"
+
+# --- İletişim kutusu mesajları ---
+[message]
+update_available_body = "amwall %{latest} kullanılabilir (şu anda %{current} kullanıyorsunuz).\n\nSürüm sayfası tarayıcınızda açılsın mı?"
+update_uptodate_body = "Mevcut sürüm: %{current}\nSon sürüm: %{latest}\n\nZaten güncel."
+update_error_body = "Güncellemeleri denetlemek için GitHub'a ulaşılamadı.\n\nOlası nedenler: internet bağlantısı yok, güvenlik duvarı amwall'ın giden HTTPS trafiğini engelliyor veya GitHub API hız sınırı (saatte 60 anonim istek). Daha sonra tekrar deneyin."
+admin_required_body = "Filtre yönetimi Yönetici ayrıcalıkları gerektirir.\n\namwall'ı kapatın ve yükseltilmiş bir komut satırından yeniden başlatın\n(sağ tıklayın → \"Yönetici olarak çalıştır\")."
+delete_rule_confirm = "\"%{name}\" kuralı silinsin mi?"
+bulk_delete_confirm = "Profilden %{count} giriş kaldırılsın mı?\n\nBu işlem geri alınamaz."
+exit_body = "Filtreler şu anda etkin. amwall'dan çıkmak filtreleri yerinde bırakacaktır (işlem sonlandırılsa da kalırlar). Devam edilsin mi?"
+clear_log_body = "Paket günlüğü temizlensin mi? Bu işlem bellekteki günlük sekmesini boşaltır ve diskteki günlük dosyasını keser. İşlem geri alınamaz."
+emergency_reset_body = "Acil sıfırlama şunları yapacaktır:\n\n• amwall tarafından kurulan tüm WFP filtrelerini kaldırır\n• Uygulama Profilini ve Kullanıcı kuralları listesini boşaltır\n• Filtreleri etkinleştir seçeneğini kapatır\n\nBunu, amwall'ın tanımlayamadığınız bir şeyi engellemesi ve işletim sisteminin varsayılan ağ davranışını geri yüklemeniz gerektiğinde kullanın. Değişiklik anında uygulanır. Devam edilsin mi?"
+allow_one_body = "%{name} şu anda engelli. İzin verilmesi, bir sonraki denemesinde ağa erişmesini sağlayacaktır.\n\nDevam edilsin mi?"
+allow_many_body = "Daha önce engellenen %{count} uygulama İzin Verildi olarak ayarlanacak. Bir sonraki denemelerinde ağa erişebilecekler.\n\nDevam edilsin mi?"
+blocked_notification = "Engellendi: %{app}"
+
+# --- Bağlam menüsü ---
+[context]
+allow = "İzin ver"
+block = "Engelle"
+copy_details = "&Ayrıntıları kopyala"
+properties = "Özellikler\tEnter"
+remove_from_profile = "Profilden kaldır\tDel"
+explore = "Klasörü aç\tCtrl+E"
+copy = "Adı kopyala\tCtrl+C"
+
+# --- Sistem tepsisi menüsü ---
+[tray]
+show = "amwall'ı göster"
+enable_filters = "Filtreleri etkinleştir"
+disable_filters = "Filtreleri devre dışı bırak"
+settings = "Ayarlar..."
+exit = "amwall'dan çık"
+
+# --- İlk çalıştırma sihirbazı ---
+[wizard]
+title = "amwall'a hoş geldiniz"
+subtitle = "simplewall yapılandırması içe aktarılsın mı?"
+import_btn = "İçe aktar"
+start_fresh_btn = "Sıfırdan başla"
+body = """amwall mevcut bir simplewall yapılandırması buldu:
+
+• Yol: %{path}
+• %{apps} kurallı uygulama
+• %{rules} özel kural
+
+İçe aktarma, simplewall'ın profile.xml dosyasını amwall'a kopyalar ve başlangıç noktası olarak kullanır. simplewall kurulu kalır ve mevcut çekirdek filtreleri etkin olmaya devam eder — her iki güvenlik duvarının çakışan kurallar uygulamasını önlemek için amwall'da "Filtreleri etkinleştir"e tıklamadan önce simplewall'ı devre dışı bırakın.
+
+Şimdi atlarsanız daha sonra Dosya → İçe aktar kullanabilirsiniz."""
+
+# --- Ayarlar iletişim kutusu sekmeleri ---
+[settings_tab]
+general = "Genel"
+interface = "Arayüz"
+highlighting = "Vurgulama"
+rules = "Kurallar"
+blocklist = "Engel listesi"
+notifications = "Bildirimler"
+logging = "Günlükleme"
+exclude = "Hariç tut"
+
+# --- Kural düzenleyici sekmeleri ---
+[rule_editor]
+general = "Genel"
+rule = "Kural"
+apps = "Uygulamalar"
+
+# --- Protokol etiketleri ---
+[protocol]
+any = "Herhangi"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Adres ailesi etiketleri ---
+[version]
+any = "Herhangi"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Yön etiketleri ---
+[direction]
+outbound = "Giden"
+inbound = "Gelen"
+both = "Her ikisi"
+other = "Diğer"
+
+# --- Eylem etiketleri ---
+[action]
+allow = "İzin ver"
+block = "Engelle"
+permit = "Onayla"
+
+# --- Ayarlar sayfası: Genel ---
+[rc_general]
+group_config = "Genel yapılandırma"
+always_on_top = "Her zaman üstte"
+load_on_startup = "Sistem başlangıcında yükle"
+start_minimized = "Simge durumunda başlat"
+skip_uac = "\"Kullanıcı Hesabı Denetimi\" uyarısını atla"
+check_updates = "Düzenli olarak güncellemeleri denetle (önerilir)"
+group_language = "Dil"
+select_language = "Dil seçin:"
+
+# --- Ayarlar sayfası: Arayüz ---
+[rc_interface]
+group_confirm = "Onaylar"
+confirm_exit = "Çıkışta onay iletişim kutusunu göster"
+confirm_exit_timer = "Zamanlayıcılar etkinken çıkışta onay iletişim kutusunu göster"
+confirm_log_clear = "Günlük dosyasını temizlerken onayla"
+confirm_allow = "Daha önce engellenen trafiğe izin verirken onayla"
+group_tray = "Sistem tepsisi simgesi"
+tray_single_click = "Açmak için sistem tepsisi simgesine tek tıklama"
+
+# --- Ayarlar sayfası: Vurgulama ---
+[rc_highlight]
+group = "Vurgulama"
+hint = "Değiştirmek için bir öğeye çift tıklayın."
+
+# --- Ayarlar sayfası: Kurallar ---
+[rc_rules]
+group_connections = "Bağlantılar"
+block_outbound = "Tümü için giden bağlantıları engelle"
+block_inbound = "Tümü için gelen bağlantıları engelle"
+allow_loopback = "Tümü için loopback bağlantılarına izin ver"
+allow_6to4 = "Tümü için IPv6 yönlendirmelerine (6to4) izin ver"
+group_security = "Güvenlik"
+stealth_mode = "Port taramayı engelle (gizli mod)"
+boottime_filters = "Önyükleme zamanı filtrelerini etkinleştir"
+group_advanced = "Gelişmiş"
+check_signatures = "Uygulamaların dijital imzalarını denetle"
+use_hashes = "Uygulama tanımlama için dosya hash'lerini kullan"
+resolve_addresses = "Ağ adreslerini çözümle"
+
+# --- Ayarlar sayfası: Engel listesi ---
+[rc_blocklist]
+group_spy = "Microsoft casusluk ve telemetri"
+group_update = "Microsoft Update"
+group_apps = "Microsoft uygulamaları"
+
+# --- Ayarlar sayfası: Bildirimler ---
+[rc_notifications]
+group = "Bildirimler"
+enable = "Paket bildirimlerini etkinleştir"
+sound = "Bildirim sesini etkinleştir"
+fullscreen = "Tam ekran uygulama ön plandayken sessiz modu etkinleştir"
+on_tray = "Bildirim penceresini sistem tepsisinde göster"
+timeout = "Benzer bildirimler arası süre (sn.):"
+
+# --- Ayarlar sayfası: Günlükleme ---
+[rc_logging]
+group_log = "Paket günlüğü"
+enable = "Paket günlüklemeyi dosyaya etkinleştir"
+max_size = "Maksimum günlük boyutu (kB):"
+group_viewer = "Günlük görüntüleyici"
+group_ui = "Arayüz"
+enable_ui = "Arayüzde paket günlüklemeyi etkinleştir"
+
+# --- Ayarlar sayfası: Hariç tut ---
+[rc_exclude]
+group_notif = "Bildirimler: şunlar hakkında bildirme ..."
+blocklist = "engel listesi"
+user_rules = "kullanıcı kuralları"
+group_log = "Günlükleme: şunları günlükleme ..."
+stealth = "port tarayıcı bağlantıları"
+allowed = "izin verilen bağlantılar"
+
+# --- Uygulama özellikleri iletişim kutusu ---
+[rc_properties]
+title = "Uygulama özellikleri"
+path = "Yol:"
+comment = "Açıklama:"
+group_settings = "Ayarlar:"
+enabled = "Etkin (bu uygulamanın trafiğine izin ver)"
+silent = "Sessiz (bildirim yok)"
+save = "Kaydet"
+close = "Kapat"
+
+# --- Bağlantı istek iletişim kutusu ---
+[rc_prompt]
+title = "amwall - uygulama bağlantı isteği"
+header = "Bir uygulama bağlanmaya çalışıyor:"
+question = "Bu uygulamanın trafiğine izin ver, yoksa engelli kalsın mı?"
+allow = "İzin ver"
+block = "Engelle"
+
+# --- Kural düzenleyici iletişim kutusu ---
+[rc_editor]
+add_rule_title = "Kural girişi"
+save = "Kaydet"
+close = "Kapat"
+
+# --- Dosya iletişim kutusu filtreleri ---
+[filter]
+xml_profile = "XML profili (*.xml)"
+all_files = "Tüm dosyalar (*.*)"
+executable = "Çalıştırılabilir dosya (*.exe)"

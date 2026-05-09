@@ -1,0 +1,398 @@
+# amwall — Archivo de idioma español.
+# Todas las claves corresponden a la estructura de en.toml.
+# Solo se traducen los valores; los marcadores (%{…}) y
+# los atajos de teclado se mantienen sin cambios.
+
+# --- Barra de menús ---
+[menu]
+file = "&Archivo"
+edit = "&Edición"
+view = "&Ver"
+settings = "&Configuración"
+rules = "&Reglas"
+blocklist = "Lista de &bloqueo"
+help = "A&yuda"
+
+# --- Menú Archivo ---
+[file]
+settings = "&Configuración\tCtrl+P"
+add_app = "&Agregar app…\tCtrl+O"
+import = "&Importar…"
+export = "&Exportar…"
+exit = "&Salir"
+
+# --- Menú Edición ---
+[edit]
+purge_unused = "Purgar apps &no utilizadas"
+purge_timers = "Purgar &temporizadores"
+clear_log = "&Borrar registro"
+refresh = "&Actualizar\tF5"
+
+# --- Menú Ver ---
+[view]
+always_on_top = "Siempre en &primer plano"
+dark_theme = "Tema &oscuro"
+autosize_columns = "&Ajustar columnas"
+filenames_only = "Mostrar solo nombres de &archivo"
+show_search = "Mostrar barra de &búsqueda"
+layout_details = "Diseño: &Detalles"
+layout_icons = "Diseño: &Iconos"
+layout_tiles = "Diseño: &Mosaicos"
+icon_small = "Tamaño de icono: &Pequeño"
+icon_large = "Tamaño de icono: &Grande"
+icon_extralarge = "Tamaño de icono: &Extra grande"
+font = "&Fuente…"
+
+# --- Menú Configuración ---
+[settings]
+load_on_startup = "&Cargar al iniciar el sistema"
+start_minimized = "Iniciar &minimizado"
+skip_uac = "Omitir advertencia UAC"
+check_updates = "Buscar &actualizaciones"
+auto_allow_microsoft = "Permitir automáticamente programas firmados por &Microsoft"
+check_signatures = "Verificar &firmas digitales de las apps"
+check_hashes = "Verificar &hash SHA-256 de las apps"
+
+# --- Submenú Reglas ---
+[rules]
+block_outbound = "Bloquear conexiones &salientes para todos"
+block_inbound = "Bloquear conexiones &entrantes para todos"
+allow_loopback = "Permitir &loopback"
+allow_6to4 = "Permitir IPv6 (&6to4)"
+allow_windows_update = "Permitir &Windows Update"
+
+# --- Submenú Lista de bloqueo ---
+[blocklist]
+disable = "&Desactivar"
+allow = "&Permitir"
+block = "&Bloquear"
+spy_telemetry = "&Espionaje y telemetría de Microsoft"
+ms_update = "Microsoft &Update"
+ms_apps = "&Aplicaciones de Microsoft"
+
+# --- Menú Ayuda ---
+[help]
+website = "Sitio &web"
+check_updates = "&Buscar actualizaciones"
+about = "&Acerca de"
+emergency_reset = "Restablecimiento de &emergencia WFP..."
+
+# --- Pestañas ---
+[tab]
+apps = "Apps"
+services = "Servicios"
+uwp = "Apps UWP"
+blocklist = "Lista de bloqueo"
+system_rules = "Reglas del sistema"
+user_rules = "Reglas de usuario"
+connections = "Conexiones"
+packets_log = "Registro de paquetes"
+
+# --- Encabezados de columnas ---
+[column]
+name = "Nombre"
+added = "Agregado"
+path = "Ruta"
+date = "Fecha"
+protocol = "Protocolo"
+direction = "Dirección"
+address_src = "Dirección (Origen)"
+host_src = "Host (Origen)"
+port_src = "Puerto (Origen)"
+address_dst = "Dirección (Destino)"
+host_dst = "Host (Destino)"
+port_dst = "Puerto (Destino)"
+state = "Estado"
+filter = "Filtro"
+index = "#"
+
+# --- Encabezados de grupos ---
+[group]
+blocked = "Bloqueado"
+blocked_silent = "Bloqueado (silencioso)"
+timer = "Temporizador"
+special = "Apps especiales"
+allowed = "Permitido"
+enabled = "Activado"
+disabled = "Desactivado"
+
+# --- Tooltips de la barra de herramientas ---
+[tooltip]
+enable_filters = "Activar filtros (Ctrl+T)"
+new_rule = "Crear una nueva regla de usuario"
+enable_notifications = "Activar notificaciones para tráfico bloqueado"
+enable_log = "Registrar tráfico bloqueado en un archivo"
+enable_ui_log = "Mostrar registro de paquetes en la interfaz"
+reload = "Recargar el perfil desde el disco (F5)"
+open_settings = "Abrir configuración"
+open_log_file = "Abrir el archivo de registro de paquetes"
+clear_log = "Borrar el registro de paquetes"
+open_releases = "Abrir la página de releases de GitHub"
+
+# --- Etiquetas de la barra de herramientas ---
+[toolbar]
+enable_filters = "Activar filtros"
+disable_filters = "Desactivar filtros"
+
+# --- Barra de estado ---
+[status]
+filters_enabled = "Los filtros están activados."
+filters_disabled = "Los filtros están desactivados."
+imported_simplewall = "Perfil de simplewall importado."
+checking_updates = "Buscando actualizaciones..."
+up_to_date = "Actualizado."
+update_check_failed = "Error al buscar actualizaciones."
+nothing_to_remove = "Nada que eliminar del perfil."
+engine_failed = "No se pudo abrir el motor WFP."
+uninstall_failed = "Error al desinstalar filtros."
+install_failed = "Error al instalar filtros."
+app_exists = "La app ya está en el perfil."
+app_added = "App agregada."
+rule_added = "Regla agregada."
+rule_updated = "Regla actualizada."
+rule_deleted = "Regla eliminada."
+autosave_failed = "Error en el guardado automático."
+import_read_error = "Error de importación: error de lectura."
+import_parse_error = "Error de importación: error de análisis."
+imported = "Importado."
+export_write_error = "Error de exportación: error de escritura."
+exported = "Exportado."
+refresh_read_error = "Error de actualización: error de lectura."
+refresh_parse_error = "Error de actualización: error de análisis."
+profile_reloaded = "Perfil recargado."
+no_unused = "No hay apps sin usar para purgar."
+no_timers = "No hay temporizadores activos."
+log_cleared = "Registro borrado."
+font_failed = "Error al cargar la fuente; revertida."
+font_updated = "Fuente actualizada."
+emergency_done = "Restablecimiento de emergencia completado."
+auto_allowed_one = "1 app firmada por Microsoft permitida automáticamente"
+auto_allowed_many = "%{count} apps firmadas por Microsoft permitidas automáticamente"
+silenced = "Silenciado: %{name}"
+allowed_count = "Permitido: %{name}"
+connecting = "Conectando a %{remote}"
+removed_entries = "%{count} entradas eliminadas del perfil."
+purged_apps = "%{count} app(s) sin usar purgada(s)."
+cleared_timers = "%{count} temporizador(es) de app borrado(s)."
+skip_uac_enabled = "Omitir UAC: activado. Los próximos inicios no mostrarán UAC para administradores."
+skip_uac_disabled = "Omitir UAC: desactivado. Los próximos inicios mostrarán UAC para acciones de administrador."
+hash_drift_one = "Cambio de hash: %{name}"
+hash_drift_many = "Cambio de hash en %{count} apps (ver registro)"
+filters_removed = "%{filters} filtro(s) eliminado(s), %{sublayers} subcapa(s) borrada(s)."
+filters_installed = "%{added} filtro(s) instalado(s), %{skipped} omitido(s)."
+tray_blocked = "amwall – bloqueado: %{name}"
+
+# --- Títulos de diálogos ---
+[dialog]
+update_available = "amwall – actualización disponible"
+check_updates = "amwall – Buscar actualizaciones"
+confirm_bulk_delete = "Confirmar eliminación masiva"
+admin_required = "Se requiere administrador"
+delete_rule = "Eliminar regla"
+exit = "¿Salir de amwall?"
+clear_log = "Borrar registro"
+allow_blocked = "¿Permitir tráfico previamente bloqueado?"
+emergency_reset = "Restablecimiento de emergencia WFP"
+about_title = "Acerca de amwall"
+about_app = "amwall"
+settings_title = "Configuración"
+properties_signed = "amwall – Propiedades (firmado por %{signer})"
+
+# --- Mensajes de diálogos ---
+[message]
+update_available_body = "amwall %{latest} está disponible (está usando %{current}).\n\n¿Abrir la página de releases en su navegador?"
+update_uptodate_body = "Versión actual: %{current}\nÚltima versión: %{latest}\n\nYa está al día."
+update_error_body = "No se pudo conectar con GitHub para buscar actualizaciones.\n\nPosibles causas: sin internet, el firewall bloquea las conexiones HTTPS salientes de amwall, o el límite de solicitudes de la API de GitHub (60 solicitudes anónimas por hora). Inténtelo más tarde."
+admin_required_body = "La gestión de filtros requiere privilegios de Administrador.\n\nCierra amwall y vuelve a iniciarlo desde una terminal elevada\n(clic derecho → «Ejecutar como administrador»)."
+delete_rule_confirm = "¿Eliminar la regla «%{name}»?"
+bulk_delete_confirm = "¿Eliminar %{count} entradas del perfil?\n\nEsta acción no se puede deshacer."
+exit_body = "Los filtros están actualmente activados. Salir de amwall los dejará en su lugar (sobreviven al cierre del proceso). ¿Continuar?"
+clear_log_body = "¿Borrar el registro de paquetes? Esto vacía la pestaña de registro en memoria y trunca el archivo de registro en disco. La acción no se puede deshacer."
+emergency_reset_body = "El restablecimiento de emergencia:\n\n• Eliminará todos los filtros WFP instalados por amwall\n• Vaciará las listas de perfil de apps y reglas de usuario\n• Desactivará «Activar filtros»\n\nUse esta opción si amwall está bloqueando algo que no puede identificar y necesita restaurar el comportamiento de red predeterminado del sistema. El cambio es inmediato. ¿Continuar?"
+allow_one_body = "%{name} está actualmente bloqueado. Permitirlo le dará acceso a la red en su próximo intento.\n\n¿Continuar?"
+allow_many_body = "%{count} apps previamente bloqueadas se configurarán como Permitidas. Podrán acceder a la red en su próximo intento.\n\n¿Continuar?"
+blocked_notification = "Bloqueado: %{app}"
+
+# --- Menú contextual ---
+[context]
+allow = "Permitir"
+block = "Bloquear"
+copy_details = "&Copiar detalles"
+properties = "Propiedades\tEnter"
+remove_from_profile = "Eliminar del perfil\tDel"
+explore = "Explorar (abrir carpeta)\tCtrl+E"
+copy = "Copiar nombre\tCtrl+C"
+
+# --- Menú de bandeja ---
+[tray]
+show = "Mostrar amwall"
+enable_filters = "Activar filtros"
+disable_filters = "Desactivar filtros"
+settings = "Configuración..."
+exit = "Salir de amwall"
+
+# --- Asistente de primer inicio ---
+[wizard]
+title = "Bienvenido/a a amwall"
+subtitle = "¿Importar configuración de simplewall?"
+import_btn = "Importar"
+start_fresh_btn = "Empezar de cero"
+body = """amwall encontró una configuración existente de simplewall:
+
+• Ruta: %{path}
+• %{apps} app(s) con reglas
+• %{rules} regla(s) personalizada(s)
+
+Al importar se copia el profile.xml de simplewall a amwall y se usa como punto de partida. simplewall permanece instalado y sus filtros de kernel existentes siguen activos — desactiva simplewall antes de hacer clic en «Activar filtros» en amwall para evitar que ambos firewalls apliquen reglas superpuestas.
+
+Puede importar más tarde desde Archivo → Importar."""
+
+# --- Pestañas del diálogo de Configuración ---
+[settings_tab]
+general = "General"
+interface = "Interfaz"
+highlighting = "Resaltado"
+rules = "Reglas"
+blocklist = "Lista de bloqueo"
+notifications = "Notificaciones"
+logging = "Registro"
+exclude = "Exclusiones"
+
+# --- Pestañas del editor de reglas ---
+[rule_editor]
+general = "General"
+rule = "Regla"
+apps = "Apps"
+
+# --- Protocolos ---
+[protocol]
+any = "Cualquiera"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Familia de direcciones ---
+[version]
+any = "Cualquiera"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Dirección ---
+[direction]
+outbound = "Saliente"
+inbound = "Entrante"
+both = "Ambos"
+other = "Otro"
+
+# --- Acción ---
+[action]
+allow = "Permitir"
+block = "Bloquear"
+permit = "Autorizar"
+
+# --- Página de Configuración: General ---
+[rc_general]
+group_config = "Configuración general"
+always_on_top = "Siempre en primer plano"
+load_on_startup = "Cargar al iniciar el sistema"
+start_minimized = "Iniciar minimizado"
+skip_uac = "Omitir advertencia de «Control de cuentas de usuario»"
+check_updates = "Buscar actualizaciones periódicamente (recomendado)"
+group_language = "Idioma"
+select_language = "Seleccionar idioma:"
+
+# --- Página de Configuración: Interfaz ---
+[rc_interface]
+group_confirm = "Confirmaciones"
+confirm_exit = "Mostrar diálogo de confirmación al salir"
+confirm_exit_timer = "Mostrar diálogo de confirmación al salir con temporizadores activos"
+confirm_log_clear = "Confirmar al borrar el archivo de registro"
+confirm_allow = "Confirmar al permitir tráfico previamente bloqueado"
+group_tray = "Icono de bandeja"
+tray_single_click = "Clic simple en el icono de bandeja para abrir"
+
+# --- Página de Configuración: Resaltado ---
+[rc_highlight]
+group = "Resaltado"
+hint = "Haga doble clic en un elemento para cambiarlo."
+
+# --- Página de Configuración: Reglas ---
+[rc_rules]
+group_connections = "Conexiones"
+block_outbound = "Bloquear conexiones salientes para todos"
+block_inbound = "Bloquear conexiones entrantes para todos"
+allow_loopback = "Permitir conexiones loopback para todos"
+allow_6to4 = "Permitir redirecciones IPv6 (6to4) para todos"
+group_security = "Seguridad"
+stealth_mode = "Prevenir escaneo de puertos (modo sigiloso)"
+boottime_filters = "Activar filtros en tiempo de arranque"
+group_advanced = "Avanzado"
+check_signatures = "Verificar firmas digitales de las apps"
+use_hashes = "Usar hashes de archivo para identificación de apps"
+resolve_addresses = "Resolver direcciones de red"
+
+# --- Página de Configuración: Lista de bloqueo ---
+[rc_blocklist]
+group_spy = "Espionaje y telemetría de Microsoft"
+group_update = "Microsoft Update"
+group_apps = "Aplicaciones de Microsoft"
+
+# --- Página de Configuración: Notificaciones ---
+[rc_notifications]
+group = "Notificaciones"
+enable = "Activar notificaciones de paquetes"
+sound = "Activar sonido de notificaciones"
+fullscreen = "Activar modo silencioso con app en pantalla completa en primer plano"
+on_tray = "Mostrar ventana de notificación en la bandeja"
+timeout = "Tiempo entre notificaciones similares (seg.):"
+
+# --- Página de Configuración: Registro ---
+[rc_logging]
+group_log = "Registro de paquetes"
+enable = "Activar registro de paquetes en archivo"
+max_size = "Tamaño máximo del registro (kB):"
+group_viewer = "Visor de registro"
+group_ui = "Interfaz"
+enable_ui = "Activar registro de paquetes en la interfaz"
+
+# --- Página de Configuración: Exclusiones ---
+[rc_exclude]
+group_notif = "Notificaciones: no notificar sobre …"
+blocklist = "lista de bloqueo"
+user_rules = "reglas de usuario"
+group_log = "Registro: no registrar …"
+stealth = "conexiones de escaneo de puertos"
+allowed = "conexiones permitidas"
+
+# --- Diálogo de propiedades de la app ---
+[rc_properties]
+title = "Propiedades de la app"
+path = "Ruta:"
+comment = "Comentario:"
+group_settings = "Configuración:"
+enabled = "Activado (permitir tráfico de esta app)"
+silent = "Silencioso (sin notificaciones)"
+save = "Guardar"
+close = "Cerrar"
+
+# --- Diálogo de solicitud de conexión ---
+[rc_prompt]
+title = "amwall – solicitud de conexión de aplicación"
+header = "Una aplicación está intentando conectarse:"
+question = "¿Permitir el tráfico de esta app o mantenerlo bloqueado?"
+allow = "Permitir"
+block = "Bloquear"
+
+# --- Diálogo del editor de reglas ---
+[rc_editor]
+add_rule_title = "Entrada de regla"
+save = "Guardar"
+close = "Cerrar"
+
+# --- Filtros de archivos ---
+[filter]
+xml_profile = "Perfil XML (*.xml)"
+all_files = "Todos los archivos (*.*)"
+executable = "Ejecutable (*.exe)"

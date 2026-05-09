@@ -1,0 +1,398 @@
+# amwall — Suomen kielipaketti.
+# Lisää uusia kieliä kopioimalla tämä tiedosto esim. locales/de.toml
+# ja kääntämällä arvot. rust-i18n upottaa kaikki kielitiedostot
+# käännösaikana; aseta aktiivinen kieli rust_i18n::set_locale()-funktiolla.
+
+# --- Valikkorivin otsikot ---
+[menu]
+file = "&Tiedosto"
+edit = "&Muokkaa"
+view = "&Näytä"
+settings = "&Asetukset"
+rules = "&Säännöt"
+blocklist = "&Estolista"
+help = "&Ohje"
+
+# --- Tiedosto-valikon kohteet ---
+[file]
+settings = "&Asetukset\tCtrl+P"
+add_app = "&Lisää sovellus…\tCtrl+O"
+import = "&Tuo…"
+export = "&Vie…"
+exit = "&Lopeta"
+
+# --- Muokkaa-valikon kohteet ---
+[edit]
+purge_unused = "Poista &käyttämättömät sovellukset"
+purge_timers = "Poista &ajastimet"
+clear_log = "&Tyhjennä loki"
+refresh = "&Päivitä\tF5"
+
+# --- Näytä-valikon kohteet ---
+[view]
+always_on_top = "Aina &päällimmäisenä"
+dark_theme = "Käytä &tummaa teemaa"
+autosize_columns = "&Sovita sarakkeet"
+filenames_only = "Näytä vain &tiedostonimet"
+show_search = "Näytä &hakupalkki"
+layout_details = "Asettelu: &Tiedot"
+layout_icons = "Asettelu: &Kuvakkeet"
+layout_tiles = "Asettelu: &Ruudut"
+icon_small = "Kuvakekoko: &Pieni"
+icon_large = "Kuvakekoko: S&uuri"
+icon_extralarge = "Kuvakekoko: &Erittäin suuri"
+font = "&Fontti…"
+
+# --- Asetukset-valikon kohteet ---
+[settings]
+load_on_startup = "&Lataa järjestelmän käynnistyksessä"
+start_minimized = "Käynnistä &pienennettynä"
+skip_uac = "Ohita UAC-varoitus"
+check_updates = "Tarkista &päivitykset"
+auto_allow_microsoft = "Salli automaattisesti &Microsoft-allekirjoitetut ohjelmat"
+check_signatures = "Tarkista sovellusten digitaaliset &allekirjoitukset"
+check_hashes = "Tarkista sovellusten SHA-256-&tiiviste"
+
+# --- Säännöt-alavalikko ---
+[rules]
+block_outbound = "Estä &lähtevä kaikilta"
+block_inbound = "Estä &saapuva kaikilta"
+allow_loopback = "Salli &loopback"
+allow_6to4 = "Salli IPv6 (&6to4)"
+allow_windows_update = "Salli &Windows Update"
+
+# --- Estolista-alavalikko ---
+[blocklist]
+disable = "&Poista käytöstä"
+allow = "&Salli"
+block = "&Estä"
+spy_telemetry = "Microsoftin &vakoilu ja telemetria"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoftin &sovellukset"
+
+# --- Ohje-valikon kohteet ---
+[help]
+website = "&Verkkosivusto"
+check_updates = "&Tarkista päivitykset"
+about = "&Tietoja"
+emergency_reset = "&Hätänollaus WFP..."
+
+# --- Välilehdet ---
+[tab]
+apps = "Sovellukset"
+services = "Palvelut"
+uwp = "UWP-sovellukset"
+blocklist = "Estolista"
+system_rules = "Järjestelmäsäännöt"
+user_rules = "Käyttäjäsäännöt"
+connections = "Yhteydet"
+packets_log = "Pakettiloki"
+
+# --- Sarakeotsikot ---
+[column]
+name = "Nimi"
+added = "Lisätty"
+path = "Polku"
+date = "Päivämäärä"
+protocol = "Protokolla"
+direction = "Suunta"
+address_src = "Osoite (Lähde)"
+host_src = "Isäntä (Lähde)"
+port_src = "Portti (Lähde)"
+address_dst = "Osoite (Kohde)"
+host_dst = "Isäntä (Kohde)"
+port_dst = "Portti (Kohde)"
+state = "Tila"
+filter = "Suodatin"
+index = "#"
+
+# --- Ryhmäotsikot ---
+[group]
+blocked = "Estetty"
+blocked_silent = "Estetty (hiljainen)"
+timer = "Ajastin"
+special = "Erikoissovellukset"
+allowed = "Sallittu"
+enabled = "Käytössä"
+disabled = "Pois käytöstä"
+
+# --- Työkalupalkin vihjeet ---
+[tooltip]
+enable_filters = "Ota suodattimet käyttöön (Ctrl+T)"
+new_rule = "Luo uusi käyttäjäsääntö"
+enable_notifications = "Ota ilmoitukset käyttöön estetylle liikenteelle"
+enable_log = "Kirjaa estetty liikenne tiedostoon"
+enable_ui_log = "Näytä pakettiloki käyttöliittymässä"
+reload = "Lataa profiili uudelleen levyltä (F5)"
+open_settings = "Avaa asetukset"
+open_log_file = "Avaa pakettilokitiedosto"
+clear_log = "Tyhjennä pakettiloki"
+open_releases = "Avaa GitHub-julkaisusivu"
+
+# --- Työkalupalkin painikkeet ---
+[toolbar]
+enable_filters = "Ota suodattimet käyttöön"
+disable_filters = "Poista suodattimet käytöstä"
+
+# --- Tilapalkin viestit ---
+[status]
+filters_enabled = "Suodattimet ovat käytössä."
+filters_disabled = "Suodattimet eivät ole käytössä."
+imported_simplewall = "simplewall-profiili tuotu."
+checking_updates = "Tarkistetaan päivityksiä..."
+up_to_date = "Ajan tasalla."
+update_check_failed = "Päivitystarkistus epäonnistui."
+nothing_to_remove = "Ei poistettavaa profiilista."
+engine_failed = "WFP-moottorin avaaminen epäonnistui."
+uninstall_failed = "Suodattimien poisto epäonnistui."
+install_failed = "Suodattimien asennus epäonnistui."
+app_exists = "Sovellus on jo profiilissa."
+app_added = "Sovellus lisätty."
+rule_added = "Sääntö lisätty."
+rule_updated = "Sääntö päivitetty."
+rule_deleted = "Sääntö poistettu."
+autosave_failed = "Automaattinen tallennus epäonnistui."
+import_read_error = "Tuonti epäonnistui: lukuvirhe."
+import_parse_error = "Tuonti epäonnistui: jäsennysvirhe."
+imported = "Tuotu."
+export_write_error = "Vienti epäonnistui: kirjoitusvirhe."
+exported = "Viety."
+refresh_read_error = "Päivitys epäonnistui: lukuvirhe."
+refresh_parse_error = "Päivitys epäonnistui: jäsennysvirhe."
+profile_reloaded = "Profiili ladattu uudelleen."
+no_unused = "Ei käyttämättömiä sovelluksia poistettavaksi."
+no_timers = "Ei aktiivisia ajastimia."
+log_cleared = "Loki tyhjennetty."
+font_failed = "Fontin lataus epäonnistui; palautettu."
+font_updated = "Fontti päivitetty."
+emergency_done = "Hätänollaus suoritettu."
+auto_allowed_one = "Automaattisesti sallittu 1 Microsoft-allekirjoitettu sovellus"
+auto_allowed_many = "Automaattisesti sallittu %{count} Microsoft-allekirjoitettua sovellusta"
+silenced = "Hiljennetty: %{name}"
+allowed_count = "Sallittu: %{name}"
+connecting = "Yhdistetään kohteeseen %{remote}"
+removed_entries = "%{count} merkintää poistettu profiilista."
+purged_apps = "%{count} käyttämätöntä sovellusta poistettu."
+cleared_timers = "%{count} sovellusajastinta tyhjennetty."
+skip_uac_enabled = "Ohita UAC: käytössä. Tulevat käynnistykset eivät näytä UAC-kehotetta järjestelmänvalvojille."
+skip_uac_disabled = "Ohita UAC: pois käytöstä. Tulevat käynnistykset näyttävät UAC-kehotteen järjestelmänvalvojatoiminnoille."
+hash_drift_one = "Tiivistepoikkeama: %{name}"
+hash_drift_many = "Tiivistepoikkeama %{count} sovelluksessa (katso loki)"
+filters_removed = "%{filters} suodatinta poistettu, %{sublayers} alikerrosta tyhjennetty."
+filters_installed = "%{added} suodatinta asennettu, %{skipped} ohitettu."
+tray_blocked = "amwall - estetty: %{name}"
+
+# --- Dialogien otsikot ---
+[dialog]
+update_available = "amwall - päivitys saatavilla"
+check_updates = "amwall - Tarkista päivitykset"
+confirm_bulk_delete = "Vahvista joukkopoisto"
+admin_required = "Järjestelmänvalvoja vaaditaan"
+delete_rule = "Poista sääntö"
+exit = "Suljetaanko amwall?"
+clear_log = "Tyhjennä loki"
+allow_blocked = "Sallitaanko aiemmin estetty liikenne?"
+emergency_reset = "WFP-hätänollaus"
+about_title = "Tietoja amwall"
+about_app = "amwall"
+settings_title = "Asetukset"
+properties_signed = "amwall - Ominaisuudet (allekirjoittanut %{signer})"
+
+# --- Dialogien viestit ---
+[message]
+update_available_body = "amwall %{latest} on saatavilla (käytössäsi on %{current}).\n\nAvataanko julkaisusivu selaimessa?"
+update_uptodate_body = "Nykyinen versio: %{current}\nUusin versio: %{latest}\n\nJo ajan tasalla."
+update_error_body = "GitHubiin ei saatu yhteyttä päivitysten tarkistamiseksi.\n\nMahdolliset syyt: ei internetyhteyttä, palomuuri estää amwallin lähtevän HTTPS-liikenteen tai GitHubin API-rajoitus (60 anonyymiä pyyntöä tunnissa). Yritä myöhemmin uudelleen."
+admin_required_body = "Suodattimien hallinta vaatii järjestelmänvalvojan oikeudet.\n\nSulje amwall ja käynnistä uudelleen korotetusta komentorivestä\n(napsauta hiiren oikealla → \"Suorita järjestelmänvalvojana\")."
+delete_rule_confirm = "Poistetaanko sääntö \"%{name}\"?"
+bulk_delete_confirm = "Poistetaanko %{count} merkintää profiilista?\n\nTätä ei voi kumota."
+exit_body = "Suodattimet ovat parhaillaan käytössä. amwallin sulkeminen jättää ne paikoilleen (ne säilyvät prosessin päättymisen jälkeen). Jatketaanko?"
+clear_log_body = "Tyhjennetäänkö pakettiloki? Tämä tyhjentää muistissa olevan lokivälilehden ja katkaisee levyllä olevan lokitiedoston. Toimintoa ei voi kumota."
+emergency_reset_body = "Hätänollaus tekee seuraavat:\n\n• Poistaa kaikki amwallin asentamat WFP-suodattimet\n• Tyhjentää sovellusprofiili- ja käyttäjäsääntöluettelot\n• Poistaa Ota suodattimet käyttöön -asetuksen\n\nKäytä tätä, jos amwall estää jotain mitä et pysty tunnistamaan ja sinun täytyy palauttaa käyttöjärjestelmän oletusverkkokäyttäytyminen. Muutos on välitön. Jatketaanko?"
+allow_one_body = "%{name} on tällä hetkellä estetty. Salliminen antaa sen käyttää verkkoa seuraavalla kerralla.\n\nJatketaanko?"
+allow_many_body = "%{count} aiemmin estettyä sovellusta asetetaan sallituksi. Ne pääsevät verkkoon seuraavalla yrityksellä.\n\nJatketaanko?"
+blocked_notification = "Estetty: %{app}"
+
+# --- Kontekstivalikko ---
+[context]
+allow = "Salli"
+block = "Estä"
+copy_details = "&Kopioi tiedot"
+properties = "Ominaisuudet\tEnter"
+remove_from_profile = "Poista profiilista\tDel"
+explore = "Selaa (avaa kansio)\tCtrl+E"
+copy = "Kopioi nimi\tCtrl+C"
+
+# --- Ilmaisinalueen valikko ---
+[tray]
+show = "Näytä amwall"
+enable_filters = "Ota suodattimet käyttöön"
+disable_filters = "Poista suodattimet käytöstä"
+settings = "Asetukset..."
+exit = "Sulje amwall"
+
+# --- Ensikäynnistyksen ohjattu toiminto ---
+[wizard]
+title = "Tervetuloa amwalliin"
+subtitle = "Tuodaanko simplewall-asetukset?"
+import_btn = "Tuo"
+start_fresh_btn = "Aloita alusta"
+body = """amwall löysi olemassa olevan simplewall-kokoonpanon:
+
+• Polku: %{path}
+• %{apps} sovellusta säännöillä
+• %{rules} mukautettua sääntöä
+
+Tuonti kopioi simplewallin profile.xml-tiedoston amwalliin ja käyttää sitä lähtökohtana. simplewall pysyy asennettuna ja sen olemassa olevat ytimen suodattimet pysyvät aktiivisina — poista simplewall käytöstä ennen kuin napsautat "Ota suodattimet käyttöön" amwallissa, jotta molemmat palomuurit eivät käytä päällekkäisiä sääntöjä.
+
+Voit tuoda myöhemmin valitsemalla Tiedosto → Tuo, jos ohitat tämän nyt."""
+
+# --- Asetusdialogin välilehdet ---
+[settings_tab]
+general = "Yleiset"
+interface = "Käyttöliittymä"
+highlighting = "Korostus"
+rules = "Säännöt"
+blocklist = "Estolista"
+notifications = "Ilmoitukset"
+logging = "Lokitus"
+exclude = "Poissulkeminen"
+
+# --- Sääntömuokkaimen välilehdet ---
+[rule_editor]
+general = "Yleiset"
+rule = "Sääntö"
+apps = "Sovellukset"
+
+# --- Protokollamerkinnät ---
+[protocol]
+any = "Mikä tahansa"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Osoiteperhemerkinnät ---
+[version]
+any = "Mikä tahansa"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Suuntamerkinnät ---
+[direction]
+outbound = "Lähtevä"
+inbound = "Saapuva"
+both = "Molemmat"
+other = "Muu"
+
+# --- Toimintomerkinnät ---
+[action]
+allow = "Salli"
+block = "Estä"
+permit = "Salli"
+
+# --- Asetussivu: Yleiset ---
+[rc_general]
+group_config = "Yleinen kokoonpano"
+always_on_top = "Aina päällimmäisenä"
+load_on_startup = "Lataa järjestelmän käynnistyksessä"
+start_minimized = "Käynnistä pienennettynä"
+skip_uac = "Ohita \"Käyttäjätilien valvonta\" -varoituskehote"
+check_updates = "Tarkista päivitykset säännöllisesti (suositeltava)"
+group_language = "Kieli"
+select_language = "Valitse kieli:"
+
+# --- Asetussivu: Käyttöliittymä ---
+[rc_interface]
+group_confirm = "Vahvistukset"
+confirm_exit = "Näytä vahvistusikkuna suljettaessa"
+confirm_exit_timer = "Näytä vahvistusikkuna suljettaessa, kun ajastimet ovat aktiivisia"
+confirm_log_clear = "Vahvista lokitiedoston tyhjennys"
+confirm_allow = "Vahvista aiemmin estetyn liikenteen salliminen"
+group_tray = "Ilmaisinalueen kuvake"
+tray_single_click = "Avaa yhdellä napsautuksella ilmaisinalueen kuvaketta"
+
+# --- Asetussivu: Korostus ---
+[rc_highlight]
+group = "Korostus"
+hint = "Kaksoisnapsauta kohdetta muuttaaksesi sitä."
+
+# --- Asetussivu: Säännöt ---
+[rc_rules]
+group_connections = "Yhteydet"
+block_outbound = "Estä lähtevät yhteydet kaikilta"
+block_inbound = "Estä saapuvat yhteydet kaikilta"
+allow_loopback = "Salli loopback-yhteydet kaikilta"
+allow_6to4 = "Salli IPv6-uudelleenohjaukset (6to4) kaikilta"
+group_security = "Tietoturva"
+stealth_mode = "Estä porttiskannaus (piilotila)"
+boottime_filters = "Ota käynnistysajan suodattimet käyttöön"
+group_advanced = "Lisäasetukset"
+check_signatures = "Tarkista sovellusten digitaaliset allekirjoitukset"
+use_hashes = "Käytä tiedostotiivisteitä sovellusten tunnistamiseen"
+resolve_addresses = "Selvitä verkko-osoitteet"
+
+# --- Asetussivu: Estolista ---
+[rc_blocklist]
+group_spy = "Microsoftin vakoilu ja telemetria"
+group_update = "Microsoft Update"
+group_apps = "Microsoftin sovellukset"
+
+# --- Asetussivu: Ilmoitukset ---
+[rc_notifications]
+group = "Ilmoitukset"
+enable = "Ota paketti-ilmoitukset käyttöön"
+sound = "Ota ilmoitusääni käyttöön"
+fullscreen = "Ota hiljainen tila käyttöön, kun koko näytön sovellus on etualalla"
+on_tray = "Näytä ilmoitusikkuna ilmaisinalueella"
+timeout = "Aikakatkaisu samankaltaisten ilmoitusten välillä (sek.):"
+
+# --- Asetussivu: Lokitus ---
+[rc_logging]
+group_log = "Pakettiloki"
+enable = "Ota pakettien lokitus tiedostoon käyttöön"
+max_size = "Lokin enimmäiskoko (kB):"
+group_viewer = "Lokin katseluohjelma"
+group_ui = "Käyttöliittymä"
+enable_ui = "Ota pakettien lokitus käyttöliittymässä käyttöön"
+
+# --- Asetussivu: Poissulkeminen ---
+[rc_exclude]
+group_notif = "Ilmoitukset: älä ilmoita …"
+blocklist = "estolista"
+user_rules = "käyttäjäsäännöt"
+group_log = "Lokitus: älä kirjaa …"
+stealth = "porttiskanneriyhteydet"
+allowed = "sallitut yhteydet"
+
+# --- Sovelluksen ominaisuudet -dialogi ---
+[rc_properties]
+title = "Sovelluksen ominaisuudet"
+path = "Polku:"
+comment = "Kommentti:"
+group_settings = "Asetukset:"
+enabled = "Käytössä (salli tämän sovelluksen liikenne)"
+silent = "Hiljainen (ei ilmoituksia)"
+save = "Tallenna"
+close = "Sulje"
+
+# --- Yhteyskehotedialogi ---
+[rc_prompt]
+title = "amwall - sovelluksen yhteyspyyntö"
+header = "Sovellus yrittää muodostaa yhteyden:"
+question = "Sallitaanko tämän sovelluksen liikenne vai pidetäänkö se estettynä?"
+allow = "Salli"
+block = "Estä"
+
+# --- Sääntömuokkaindialogi ---
+[rc_editor]
+add_rule_title = "Sääntömerkintä"
+save = "Tallenna"
+close = "Sulje"
+
+# --- Tiedostodialogien suodattimet ---
+[filter]
+xml_profile = "XML-profiili (*.xml)"
+all_files = "Kaikki tiedostot (*.*)"
+executable = "Suoritettava tiedosto (*.exe)"

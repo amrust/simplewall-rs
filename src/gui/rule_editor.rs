@@ -222,7 +222,7 @@ fn on_init_parent(hwnd: HWND) {
     };
 
     // Insert the three tab labels.
-    let labels = ["General", "Rule", "Apps"];
+    let labels = [rust_i18n::t!("rule_editor.general"), rust_i18n::t!("rule_editor.rule"), rust_i18n::t!("rule_editor.apps")];
     for (i, label) in labels.iter().enumerate() {
         let mut buf = wide(label);
         let item = TCITEMW {
@@ -594,11 +594,15 @@ unsafe extern "system" fn general_dlg_proc(
                 let _ = SetDlgItemTextW(hwnd, IDC_RULE_COMMENT_ID, PCWSTR(comments.as_ptr()));
             }
             // Populate combos.
-            populate_dlg_combo(
-                hwnd,
-                IDC_RULE_PROTOCOL_ID,
-                &["Any", "TCP", "UDP", "ICMP", "ICMPv6"],
-            );
+            let proto_items: [String; 5] = [
+                rust_i18n::t!("protocol.any").into(),
+                rust_i18n::t!("protocol.tcp").into(),
+                rust_i18n::t!("protocol.udp").into(),
+                rust_i18n::t!("protocol.icmp").into(),
+                rust_i18n::t!("protocol.icmpv6").into(),
+            ];
+            let proto_strs: Vec<&str> = proto_items.iter().map(|s| s.as_str()).collect();
+            populate_dlg_combo(hwnd, IDC_RULE_PROTOCOL_ID, &proto_strs);
             let proto_idx = match initial.protocol {
                 None => 0,
                 Some(6) => 1,
@@ -616,7 +620,13 @@ unsafe extern "system" fn general_dlg_proc(
                     LPARAM(0),
                 );
             }
-            populate_dlg_combo(hwnd, IDC_RULE_VERSION_ID, &["Any", "IPv4", "IPv6"]);
+            let ver_items: [String; 3] = [
+                rust_i18n::t!("version.any").into(),
+                rust_i18n::t!("version.ipv4").into(),
+                rust_i18n::t!("version.ipv6").into(),
+            ];
+            let ver_strs: Vec<&str> = ver_items.iter().map(|s| s.as_str()).collect();
+            populate_dlg_combo(hwnd, IDC_RULE_VERSION_ID, &ver_strs);
             let family_idx = match initial.address_family {
                 None => 0,
                 Some(AddressFamily::Ipv4) => 1,
@@ -632,11 +642,13 @@ unsafe extern "system" fn general_dlg_proc(
                     LPARAM(0),
                 );
             }
-            populate_dlg_combo(
-                hwnd,
-                IDC_RULE_DIRECTION_ID,
-                &["Outbound", "Inbound", "Both"],
-            );
+            let dir_items: [String; 3] = [
+                rust_i18n::t!("direction.outbound").into(),
+                rust_i18n::t!("direction.inbound").into(),
+                rust_i18n::t!("direction.both").into(),
+            ];
+            let dir_strs: Vec<&str> = dir_items.iter().map(|s| s.as_str()).collect();
+            populate_dlg_combo(hwnd, IDC_RULE_DIRECTION_ID, &dir_strs);
             let dir_idx = match initial.direction {
                 Direction::Outbound => 0,
                 Direction::Inbound => 1,
@@ -652,7 +664,12 @@ unsafe extern "system" fn general_dlg_proc(
                     LPARAM(0),
                 );
             }
-            populate_dlg_combo(hwnd, IDC_RULE_ACTION_ID, &["Allow", "Block"]);
+            let act_items: [String; 2] = [
+                rust_i18n::t!("action.allow").into(),
+                rust_i18n::t!("action.block").into(),
+            ];
+            let act_strs: Vec<&str> = act_items.iter().map(|s| s.as_str()).collect();
+            populate_dlg_combo(hwnd, IDC_RULE_ACTION_ID, &act_strs);
             let action_idx = match initial.action {
                 Action::Permit => 0,
                 Action::Block => 1,

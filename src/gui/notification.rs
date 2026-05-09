@@ -307,20 +307,20 @@ fn format_lines(d: &NetEventDetails) -> Vec<String> {
         .map(|p| p.rsplit_once('\\').map(|(_, t)| t).unwrap_or(p))
         .unwrap_or("(system)");
 
-    let proto = match d.protocol {
-        Some(1) => "ICMPv4",
-        Some(6) => "TCP",
-        Some(17) => "UDP",
-        Some(58) => "ICMPv6",
-        Some(_) | None => "",
+    let proto: String = match d.protocol {
+        Some(1) => rust_i18n::t!("protocol.icmpv4").into(),
+        Some(6) => rust_i18n::t!("protocol.tcp").into(),
+        Some(17) => rust_i18n::t!("protocol.udp").into(),
+        Some(58) => rust_i18n::t!("protocol.icmpv6").into(),
+        Some(_) | None => String::new(),
     };
-    let dir = match d.direction {
-        Some(NetDirection::Outbound) => "outbound",
-        Some(NetDirection::Inbound) => "inbound",
-        None => "",
+    let dir: String = match d.direction {
+        Some(NetDirection::Outbound) => rust_i18n::t!("direction.outbound").into(),
+        Some(NetDirection::Inbound) => rust_i18n::t!("direction.inbound").into(),
+        None => String::new(),
     };
 
-    let mut header = format!("Blocked: {app}");
+    let mut header = rust_i18n::t!("message.blocked_notification", app = app).into_owned();
     if !proto.is_empty() {
         if dir.is_empty() {
             header.push_str(&format!(" ({proto})"));

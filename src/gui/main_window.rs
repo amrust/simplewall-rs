@@ -90,6 +90,8 @@ use super::ids::{
     IDM_USEDARKTHEME_CHK, IDM_USEHASHES_CHK, IDM_VIEW_DETAILS, IDM_VIEW_ICON, IDM_VIEW_TILE,
     IDM_WEBSITE, TAB_LISTVIEW_IDS,
 };
+use rust_i18n::t;
+
 use super::dialogs;
 use super::toolbar::{self, Toolbar};
 use super::{post_quit, wide};
@@ -458,7 +460,7 @@ const LVN_GROUPINFO: u32 = 0xFFFFFF44;
 /// Register the window class, create the main window, show it.
 /// Ownership of `app` is transferred into the window's
 /// `GWLP_USERDATA` and reclaimed on `WM_NCDESTROY`.
-pub fn create(app: Box<App>) -> Result<HWND, String> {
+pub fn create(app: Box<App>, force_show: bool) -> Result<HWND, String> {
     unsafe {
         // ComCtl32 v6: tab/listview/status/toolbar/rebar all live in
         // comctl32 and need this initialiser before first use. The
@@ -503,7 +505,7 @@ pub fn create(app: Box<App>) -> Result<HWND, String> {
         // Pull `start_minimized` before consuming `app` so we can
         // skip the SW_SHOW below and let the tray icon be the
         // sole entry point on first paint.
-        let start_minimized = app.settings.borrow().start_minimized;
+        let start_minimized = app.settings.borrow().start_minimized && !force_show;
 
         // Wrap the App in WndState and pass the raw pointer through
         // CreateWindowExW. Consumed by WM_NCCREATE; reclaimed by
@@ -562,114 +564,98 @@ fn build_main_menu() -> Option<HMENU> {
 
         // ---- File ----
         let file = CreatePopupMenu().ok()?;
-        append_string(file, IDM_SETTINGS, "&Settings\tCtrl+P");
+        append_string(file, IDM_SETTINGS, &t!("file.settings"));
         append_separator(file);
-        append_string(file, IDM_ADD_FILE, "&Add app…\tCtrl+O");
+        append_string(file, IDM_ADD_FILE, &t!("file.add_app"));
         append_separator(file);
-        append_string(file, IDM_IMPORT, "&Import…");
-        append_string(file, IDM_EXPORT, "&Export…");
+        append_string(file, IDM_IMPORT, &t!("file.import"));
+        append_string(file, IDM_EXPORT, &t!("file.export"));
         append_separator(file);
-        append_string(file, IDM_EXIT, "E&xit");
-        append_popup(menu, file, "&File");
+        append_string(file, IDM_EXIT, &t!("file.exit"));
+        append_popup(menu, file, &t!("menu.file"));
 
         // ---- Edit ----
         let edit = CreatePopupMenu().ok()?;
-        append_string(edit, IDM_PURGE_UNUSED, "Purge &unused apps");
-        append_string(edit, IDM_PURGE_TIMERS, "Purge &timers");
+        append_string(edit, IDM_PURGE_UNUSED, &t!("edit.purge_unused"));
+        append_string(edit, IDM_PURGE_TIMERS, &t!("edit.purge_timers"));
         append_separator(edit);
-        append_string(edit, IDM_LOGCLEAR, "&Clear log");
+        append_string(edit, IDM_LOGCLEAR, &t!("edit.clear_log"));
         append_separator(edit);
-        append_string(edit, IDM_REFRESH, "&Refresh\tF5");
-        append_popup(menu, edit, "&Edit");
+        append_string(edit, IDM_REFRESH, &t!("edit.refresh"));
+        append_popup(menu, edit, &t!("menu.edit"));
 
         // ---- View ----
         let view = CreatePopupMenu().ok()?;
-        append_string(view, IDM_ALWAYSONTOP_CHK, "Always on &top");
-        append_string(view, IDM_USEDARKTHEME_CHK, "Use &dark theme");
-        append_string(view, IDM_AUTOSIZECOLUMNS_CHK, "&Autosize columns");
-        append_string(view, IDM_SHOWFILENAMESONLY_CHK, "Show &filenames only");
-        append_string(view, IDM_SHOWSEARCHBAR_CHK, "Show &search bar");
+        append_string(view, IDM_ALWAYSONTOP_CHK, &t!("view.always_on_top"));
+        append_string(view, IDM_USEDARKTHEME_CHK, &t!("view.dark_theme"));
+        append_string(view, IDM_AUTOSIZECOLUMNS_CHK, &t!("view.autosize_columns"));
+        append_string(view, IDM_SHOWFILENAMESONLY_CHK, &t!("view.filenames_only"));
+        append_string(view, IDM_SHOWSEARCHBAR_CHK, &t!("view.show_search"));
         append_separator(view);
-        append_string(view, IDM_VIEW_DETAILS, "Layout: &Details");
-        append_string(view, IDM_VIEW_ICON, "Layout: &Icons");
-        append_string(view, IDM_VIEW_TILE, "Layout: &Tiles");
+        append_string(view, IDM_VIEW_DETAILS, &t!("view.layout_details"));
+        append_string(view, IDM_VIEW_ICON, &t!("view.layout_icons"));
+        append_string(view, IDM_VIEW_TILE, &t!("view.layout_tiles"));
         append_separator(view);
-        append_string(view, IDM_SIZE_SMALL, "Icon size: S&mall");
-        append_string(view, IDM_SIZE_LARGE, "Icon size: &Large");
-        append_string(view, IDM_SIZE_EXTRALARGE, "Icon size: &Extra-large");
+        append_string(view, IDM_SIZE_SMALL, &t!("view.icon_small"));
+        append_string(view, IDM_SIZE_LARGE, &t!("view.icon_large"));
+        append_string(view, IDM_SIZE_EXTRALARGE, &t!("view.icon_extralarge"));
         append_separator(view);
-        append_string(view, IDM_FONT, "&Font…");
-        append_popup(menu, view, "&View");
+        append_string(view, IDM_FONT, &t!("view.font"));
+        append_popup(menu, view, &t!("menu.view"));
 
         // ---- Settings ----
         let settings = CreatePopupMenu().ok()?;
-        append_string(settings, IDM_LOADONSTARTUP_CHK, "&Load on system startup");
-        append_string(settings, IDM_STARTMINIMIZED_CHK, "Start &minimized");
-        append_string(settings, IDM_SKIPUACWARNING_CHK, "Skip UAC warning");
-        append_string(settings, IDM_CHECKUPDATES_CHK, "Check for &updates");
-        append_string(
-            settings,
-            IDM_AUTOALLOW_MICROSOFT_CHK,
-            "Auto-allow &Microsoft-signed programs",
-        );
+        append_string(settings, IDM_LOADONSTARTUP_CHK, &t!("settings.load_on_startup"));
+        append_string(settings, IDM_STARTMINIMIZED_CHK, &t!("settings.start_minimized"));
+        append_string(settings, IDM_SKIPUACWARNING_CHK, &t!("settings.skip_uac"));
+        append_string(settings, IDM_CHECKUPDATES_CHK, &t!("settings.check_updates"));
+        append_string(settings, IDM_AUTOALLOW_MICROSOFT_CHK, &t!("settings.auto_allow_microsoft"));
         append_separator(settings);
-        append_string(
-            settings,
-            IDM_USECERTIFICATES_CHK,
-            "Check apps for digital &signatures",
-        );
-        append_string(
-            settings,
-            IDM_USEHASHES_CHK,
-            "Check apps for SHA-256 &hash",
-        );
+        append_string(settings, IDM_USECERTIFICATES_CHK, &t!("settings.check_signatures"));
+        append_string(settings, IDM_USEHASHES_CHK, &t!("settings.check_hashes"));
         append_separator(settings);
 
         let rules = CreatePopupMenu().ok()?;
-        append_string(rules, IDM_RULE_BLOCKOUTBOUND, "Block &outbound for all");
-        append_string(rules, IDM_RULE_BLOCKINBOUND, "Block &inbound for all");
+        append_string(rules, IDM_RULE_BLOCKOUTBOUND, &t!("rules.block_outbound"));
+        append_string(rules, IDM_RULE_BLOCKINBOUND, &t!("rules.block_inbound"));
         append_separator(rules);
-        append_string(rules, IDM_RULE_ALLOWLOOPBACK, "Allow &loopback");
-        append_string(rules, IDM_RULE_ALLOW6TO4, "Allow IPv6 (&6to4)");
-        append_string(
-            rules,
-            IDM_RULE_ALLOWWINDOWSUPDATE,
-            "Allow &Windows Update",
-        );
-        append_popup(settings, rules, "&Rules");
-        append_popup(menu, settings, "&Settings");
+        append_string(rules, IDM_RULE_ALLOWLOOPBACK, &t!("rules.allow_loopback"));
+        append_string(rules, IDM_RULE_ALLOW6TO4, &t!("rules.allow_6to4"));
+        append_string(rules, IDM_RULE_ALLOWWINDOWSUPDATE, &t!("rules.allow_windows_update"));
+        append_popup(settings, rules, &t!("menu.rules"));
+        append_popup(menu, settings, &t!("menu.settings"));
 
         // ---- Blocklist ----
         let blocklist = CreatePopupMenu().ok()?;
 
         let spy = CreatePopupMenu().ok()?;
-        append_string(spy, IDM_BLOCKLIST_SPY_DISABLE, "&Disable");
-        append_string(spy, IDM_BLOCKLIST_SPY_ALLOW, "&Allow");
-        append_string(spy, IDM_BLOCKLIST_SPY_BLOCK, "&Block");
-        append_popup(blocklist, spy, "Microsoft &spying and telemetry");
+        append_string(spy, IDM_BLOCKLIST_SPY_DISABLE, &t!("blocklist.disable"));
+        append_string(spy, IDM_BLOCKLIST_SPY_ALLOW, &t!("blocklist.allow"));
+        append_string(spy, IDM_BLOCKLIST_SPY_BLOCK, &t!("blocklist.block"));
+        append_popup(blocklist, spy, &t!("blocklist.spy_telemetry"));
 
         let update = CreatePopupMenu().ok()?;
-        append_string(update, IDM_BLOCKLIST_UPDATE_DISABLE, "&Disable");
-        append_string(update, IDM_BLOCKLIST_UPDATE_ALLOW, "&Allow");
-        append_string(update, IDM_BLOCKLIST_UPDATE_BLOCK, "&Block");
-        append_popup(blocklist, update, "Microsoft &Update");
+        append_string(update, IDM_BLOCKLIST_UPDATE_DISABLE, &t!("blocklist.disable"));
+        append_string(update, IDM_BLOCKLIST_UPDATE_ALLOW, &t!("blocklist.allow"));
+        append_string(update, IDM_BLOCKLIST_UPDATE_BLOCK, &t!("blocklist.block"));
+        append_popup(blocklist, update, &t!("blocklist.ms_update"));
 
         let extra = CreatePopupMenu().ok()?;
-        append_string(extra, IDM_BLOCKLIST_EXTRA_DISABLE, "&Disable");
-        append_string(extra, IDM_BLOCKLIST_EXTRA_ALLOW, "&Allow");
-        append_string(extra, IDM_BLOCKLIST_EXTRA_BLOCK, "&Block");
-        append_popup(blocklist, extra, "Microsoft &applications");
+        append_string(extra, IDM_BLOCKLIST_EXTRA_DISABLE, &t!("blocklist.disable"));
+        append_string(extra, IDM_BLOCKLIST_EXTRA_ALLOW, &t!("blocklist.allow"));
+        append_string(extra, IDM_BLOCKLIST_EXTRA_BLOCK, &t!("blocklist.block"));
+        append_popup(blocklist, extra, &t!("blocklist.ms_apps"));
 
-        append_popup(menu, blocklist, "&Blocklist");
+        append_popup(menu, blocklist, &t!("menu.blocklist"));
 
         // ---- Help ----
         let help = CreatePopupMenu().ok()?;
-        append_string(help, IDM_WEBSITE, "&Website");
-        append_string(help, IDM_CHECKUPDATES, "&Check for updates");
-        append_string(help, IDM_ABOUT, "&About");
+        append_string(help, IDM_WEBSITE, &t!("help.website"));
+        append_string(help, IDM_CHECKUPDATES, &t!("help.check_updates"));
+        append_string(help, IDM_ABOUT, &t!("help.about"));
         append_separator(help);
-        append_string(help, IDM_EMERGENCY_RESET, "&Emergency WFP reset...");
-        append_popup(menu, help, "&Help");
+        append_string(help, IDM_EMERGENCY_RESET, &t!("help.emergency_reset"));
+        append_popup(menu, help, &t!("menu.help"));
 
         Some(menu)
     }
@@ -1188,7 +1174,7 @@ fn on_create(hwnd: HWND) -> Result<(), String> {
     // Status bar at the bottom. Two parts: filter state, item count.
     let status = create_status_bar(hwnd)?;
     state.status.set(status);
-    set_status_text(status, 0, "Filters are disabled.");
+    set_status_text(status, 0, &t!("status.filters_disabled"));
     set_status_text(status, 1, "");
 
     // Populate the tabs that are driven from `profile.*`. Apps tab
@@ -1339,7 +1325,7 @@ fn maybe_run_first_run_wizard(hwnd: HWND, state: &WndState) {
                     set_status_text(
                         state.status.get(),
                         0,
-                        "Imported simplewall profile.",
+                        &t!("status.imported_simplewall"),
                     );
                 }
                 Err(e) => eprintln!(
@@ -1429,7 +1415,7 @@ fn detect_initial_filter_state(hwnd: HWND, state: &WndState) {
     state.filters_active.set(true);
     update_enable_filters_button(state, true);
     update_titlebar_icon(hwnd, true);
-    set_status_text(state.status.get(), 0, "Filters are enabled.");
+    set_status_text(state.status.get(), 0, &t!("status.filters_enabled"));
 }
 
 /// Swap the toolbar's "Enable filters" button between its enabled
@@ -1555,8 +1541,8 @@ fn update_enable_filters_button(state: &WndState, active: bool) {
     };
     let img_idx = super::icons::index_for(&icons, lookup_id);
 
-    let label = if active { "Disable filters" } else { "Enable filters" };
-    let mut wlabel = wide(label);
+    let label = if active { t!("toolbar.disable_filters") } else { t!("toolbar.enable_filters") };
+    let mut wlabel = wide(&label);
     let mut info = TBBUTTONINFOW {
         cbSize: std::mem::size_of::<TBBUTTONINFOW>() as u32,
         dwMask: TBIF_IMAGE | TBIF_TEXT,
@@ -2004,9 +1990,9 @@ fn auto_catalog_drops(
         // dropped by the default-deny.
         reinstall_filters_if_active(state);
         let label = if auto_allowed_count == 1 {
-            "Auto-allowed 1 Microsoft-signed app".to_string()
+            t!("status.auto_allowed_one")
         } else {
-            format!("Auto-allowed {auto_allowed_count} Microsoft-signed apps")
+            t!("status.auto_allowed_many", count = auto_allowed_count)
         };
         set_status_text(state.status.get(), 0, &label);
     }
@@ -2105,14 +2091,9 @@ fn on_update_available(hwnd: HWND, wparam: WPARAM) {
     }
     let info = unsafe { Box::from_raw(raw) };
 
-    let body = format!(
-        "amwall {} is available (you're running {}).\n\n\
-         Open the releases page in your browser?",
-        info.latest_tag,
-        env!("CARGO_PKG_VERSION"),
-    );
+    let body = t!("message.update_available_body", latest = &info.latest_tag, current = env!("CARGO_PKG_VERSION"));
     let mut wbody = wide(&body);
-    let mut wtitle = wide("amwall - update available");
+    let mut wtitle = wide(&t!("dialog.update_available"));
     let result = unsafe {
         MessageBoxW(
             hwnd,
@@ -2140,7 +2121,7 @@ fn on_update_available(hwnd: HWND, wparam: WPARAM) {
 /// Manual `Help -> Check for updates` entry point. Fires the
 /// async update-check worker with the manual flag set, so the
 /// worker reports back regardless of outcome (newer / same /
-/// fetch failed). Surfaces an immediate "Checking for updates..."
+/// fetch failed). Surfaces an immediate &t!("status.checking_updates")
 /// in the status bar so the user knows the click registered
 /// before the (typically <1 s) HTTP round-trip completes.
 fn on_check_updates_manual(hwnd: HWND) {
@@ -2148,7 +2129,7 @@ fn on_check_updates_manual(hwnd: HWND) {
         Some(s) => s,
         None => return,
     };
-    set_status_text(state.status.get(), 0, "Checking for updates...");
+    set_status_text(state.status.get(), 0, &t!("status.checking_updates"));
     super::update_check::check_async_manual(hwnd, env!("CARGO_PKG_VERSION"));
 }
 
@@ -2168,13 +2149,9 @@ fn on_update_uptodate(hwnd: HWND, wparam: WPARAM) {
     }
     let info = unsafe { Box::from_raw(raw) };
 
-    let body = format!(
-        "Current version: {}\nLatest version: {}\n\nAlready up to date.",
-        env!("CARGO_PKG_VERSION"),
-        info.latest_tag,
-    );
+    let body = t!("message.update_uptodate_body", current = env!("CARGO_PKG_VERSION"), latest = &info.latest_tag);
     let mut wbody = wide(&body);
-    let mut wtitle = wide("amwall - Check for updates");
+    let mut wtitle = wide(&t!("dialog.check_updates"));
     unsafe {
         MessageBoxW(
             hwnd,
@@ -2184,7 +2161,7 @@ fn on_update_uptodate(hwnd: HWND, wparam: WPARAM) {
         );
     }
     if let Some(state) = unsafe { state_ref(hwnd) } {
-        set_status_text(state.status.get(), 0, "Up to date.");
+        set_status_text(state.status.get(), 0, &t!("status.up_to_date"));
     }
 }
 
@@ -2196,13 +2173,8 @@ fn on_update_error(hwnd: HWND) {
     use windows::Win32::UI::WindowsAndMessaging::{
         MB_ICONWARNING, MB_OK, MessageBoxW,
     };
-    let mut wbody = wide(
-        "Could not reach GitHub to check for updates.\n\n\
-         Possible causes: no internet, the firewall blocking amwall \
-         from outbound HTTPS, or GitHub's API rate limit (60 anonymous \
-         requests per hour). Try again later.",
-    );
-    let mut wtitle = wide("amwall - Check for updates");
+    let mut wbody = wide(&t!("message.update_error_body"));
+    let mut wtitle = wide(&t!("dialog.check_updates"));
     unsafe {
         MessageBoxW(
             hwnd,
@@ -2212,7 +2184,7 @@ fn on_update_error(hwnd: HWND) {
         );
     }
     if let Some(state) = unsafe { state_ref(hwnd) } {
-        set_status_text(state.status.get(), 0, "Update check failed.");
+        set_status_text(state.status.get(), 0, &t!("status.update_check_failed"));
     }
 }
 
@@ -2248,16 +2220,10 @@ fn on_connect_block(hwnd: HWND, wparam: WPARAM) {
     save_profile_to_disk(state);
     populate_apps_tab(state);
     on_tab_change(hwnd);
-    set_status_text(
-        state.status.get(),
-        0,
-        &format!(
-            "Silenced: {}",
-            path.file_name()
-                .map(|s| s.to_string_lossy().into_owned())
-                .unwrap_or_else(|| path.display().to_string())
-        ),
-    );
+    let name = path.file_name()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_else(|| path.display().to_string());
+    set_status_text(state.status.get(), 0, &t!("status.silenced", name = name));
 }
 
 /// Handler for `WM_USER_CONNECT_ALLOW` posted by the connect-
@@ -2291,16 +2257,10 @@ fn on_connect_allow(hwnd: HWND, wparam: WPARAM) {
     populate_apps_tab(state);
     on_tab_change(hwnd);
     reinstall_filters_if_active(state);
-    set_status_text(
-        state.status.get(),
-        0,
-        &format!(
-            "Allowed: {}",
-            path.file_name()
-                .map(|s| s.to_string_lossy().into_owned())
-                .unwrap_or_else(|| path.display().to_string())
-        ),
-    );
+    let name = path.file_name()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_else(|| path.display().to_string());
+    set_status_text(state.status.get(), 0, &t!("status.allowed_count", name = name));
 }
 
 /// Drain any pending events from the channel into the log buffer,
@@ -2390,13 +2350,11 @@ fn drain_events(hwnd: HWND, state: &WndState) {
         && state.app.settings.borrow().notification_on_tray
     {
         for (path, remote) in &new_apps {
-            let title = format!(
-                "amwall - blocked: {}",
-                path.file_name()
-                    .map(|s| s.to_string_lossy().into_owned())
-                    .unwrap_or_else(|| path.display().to_string())
-            );
-            let body = format!("Connecting to {remote}");
+            let name = path.file_name()
+                .map(|s| s.to_string_lossy().into_owned())
+                .unwrap_or_else(|| path.display().to_string());
+            let title = t!("status.tray_blocked", name = name);
+            let body = t!("status.connecting", remote = remote);
             super::tray::show_balloon(hwnd, &title, &body);
         }
     }
@@ -3633,7 +3591,7 @@ fn on_apps_delete_selected(hwnd: HWND, listview_id: i32) {
     }
 
     if removed == 0 {
-        set_status_text(state.status.get(), 0, "Nothing to remove from profile.");
+        set_status_text(state.status.get(), 0, &t!("status.nothing_to_remove"));
         return;
     }
 
@@ -3649,11 +3607,7 @@ fn on_apps_delete_selected(hwnd: HWND, listview_id: i32) {
     // listview's parent rect re-runs the paint pipeline cleanly.
     force_active_apps_listview_jiggle(hwnd, state);
     reinstall_filters_if_active(state);
-    set_status_text(
-        state.status.get(),
-        0,
-        &format!("Removed {removed} entrie(s) from profile."),
-    );
+    set_status_text(state.status.get(), 0, &t!("status.removed_entries", count = removed));
 }
 
 /// MessageBox confirm for bulk-delete. Yes/No, default No so a
@@ -3662,10 +3616,8 @@ fn confirm_bulk_delete(hwnd: HWND, count: usize) -> bool {
     use windows::Win32::UI::WindowsAndMessaging::{
         IDYES, MB_DEFBUTTON2, MB_ICONWARNING, MB_YESNO,
     };
-    let msg = wide(&format!(
-        "Remove {count} entries from the profile?\n\nThis can't be undone.",
-    ));
-    let title = wide("Confirm bulk delete");
+    let msg = wide(&t!("message.bulk_delete_confirm", count = count));
+    let title = wide(&t!("dialog.confirm_bulk_delete"));
     let r = unsafe {
         MessageBoxW(
             hwnd,
@@ -4237,11 +4189,11 @@ fn apply_skipuac_toggle(hwnd: HWND, state: &WndState, requested: bool) {
         eprintln!("amwall: settings: save skip_uac_warning failed: {e}");
     }
     let label = if actual {
-        "Skip UAC: enabled. Future launches won't show UAC for admin users."
+        t!("status.skip_uac_enabled")
     } else {
-        "Skip UAC: disabled. Future launches will show UAC for admin actions."
+        t!("status.skip_uac_disabled")
     };
-    set_status_text(state.status.get(), 0, label);
+    set_status_text(state.status.get(), 0, &label);
 }
 
 /// Re-enqueue every File-kind app's path on the signed worker so
@@ -4290,12 +4242,8 @@ fn on_enable_filters(hwnd: HWND) {
         None => return,
     };
     if !unsafe { IsUserAnAdmin() }.as_bool() {
-        let title = wide("Administrator required");
-        let body = wide(
-            "Filter management requires Administrator privileges.\n\n\
-             Close amwall and re-launch from an elevated shell\n\
-             (right-click \u{2192} \"Run as administrator\").",
-        );
+        let title = wide(&t!("dialog.admin_required"));
+        let body = wide(&t!("message.admin_required_body"));
         unsafe {
             MessageBoxW(
                 hwnd,
@@ -4311,7 +4259,7 @@ fn on_enable_filters(hwnd: HWND) {
         Ok(e) => e,
         Err(e) => {
             eprintln!("amwall: WfpEngine::open failed: {e}");
-            set_status_text(state.status.get(), 0, "Failed to open WFP engine.");
+            set_status_text(state.status.get(), 0, &t!("status.engine_failed"));
             return;
         }
     };
@@ -4321,20 +4269,17 @@ fn on_enable_filters(hwnd: HWND) {
         // ---- Disable path ----
         match crate::install::uninstall(&engine) {
             Ok(report) => {
-                set_status_text(state.status.get(), 0, "Filters are disabled.");
+                set_status_text(state.status.get(), 0, &t!("status.filters_disabled"));
                 set_status_text(
                     state.status.get(),
                     1,
-                    &format!(
-                        "{} filter(s) removed, {} sublayer(s) cleared.",
-                        report.filters_deleted, report.sublayers_deleted
-                    ),
+                    &t!("status.filters_removed", filters = report.filters_deleted, sublayers = report.sublayers_deleted),
                 );
                 new_active = false;
             }
             Err(e) => {
                 eprintln!("amwall: uninstall failed: {e:?}");
-                set_status_text(state.status.get(), 0, "Filter uninstall failed.");
+                set_status_text(state.status.get(), 0, &t!("status.uninstall_failed"));
                 return;
             }
         }
@@ -4370,7 +4315,7 @@ fn on_enable_filters(hwnd: HWND) {
             Ok(r) => r,
             Err(e) => {
                 eprintln!("amwall: install failed: {e}");
-                set_status_text(state.status.get(), 0, "Filter install failed.");
+                set_status_text(state.status.get(), 0, &t!("status.install_failed"));
                 return;
             }
         };
@@ -4378,14 +4323,11 @@ fn on_enable_filters(hwnd: HWND) {
         // honor exclude_blocklist / exclude_custom /
         // exclude_stealth without re-categorizing each event.
         *state.categorized_filter_ids.borrow_mut() = report.filter_ids.clone();
-        set_status_text(state.status.get(), 0, "Filters are enabled.");
+        set_status_text(state.status.get(), 0, &t!("status.filters_enabled"));
         set_status_text(
             state.status.get(),
             1,
-            &format!(
-                "{} filter(s) installed, {} skipped.",
-                report.filters_added, report.rules_skipped
-            ),
+            &t!("status.filters_installed", added = report.filters_added, skipped = report.rules_skipped),
         );
         new_active = true;
     }
@@ -4512,10 +4454,7 @@ fn set_menu_check(hwnd: HWND, id: u16, checked: bool) {
 /// just the label without touching the popup handle hanging off
 /// the position. `DrawMenuBar` forces the title strip to repaint
 /// at the new widths.
-fn localize_top_menu(hwnd: HWND, state: &WndState) {
-    use crate::locale::ids::{
-        IDS_EDIT, IDS_FILE, IDS_HELP, IDS_SETTINGS, IDS_TRAY_BLOCKLIST_RULES, IDS_VIEW,
-    };
+fn localize_top_menu(hwnd: HWND, _state: &WndState) {
     use windows::Win32::UI::WindowsAndMessaging::{
         DrawMenuBar, MENUITEMINFOW, MIIM_STRING, SetMenuItemInfoW,
     };
@@ -4524,20 +4463,18 @@ fn localize_top_menu(hwnd: HWND, state: &WndState) {
     if menu.0 == 0 {
         return;
     }
-    let locale = &state.app.locale;
-
-    let entries: [(u32, u32, &str); 6] = [
-        (0, IDS_FILE, "&File"),
-        (1, IDS_EDIT, "&Edit"),
-        (2, IDS_VIEW, "&View"),
-        (3, IDS_SETTINGS, "&Settings"),
-        (4, IDS_TRAY_BLOCKLIST_RULES, "&Blocklist"),
-        (5, IDS_HELP, "&Help"),
+    let entries: [(u32, &str); 6] = [
+        (0, "menu.file"),
+        (1, "menu.edit"),
+        (2, "menu.view"),
+        (3, "menu.settings"),
+        (4, "menu.blocklist"),
+        (5, "menu.help"),
     ];
 
-    for (pos, ids, fallback) in entries {
-        let text = locale.lookup(ids).unwrap_or(fallback);
-        let mut wbuf = wide(text);
+    for (pos, key) in entries {
+        let text = t!(key);
+        let mut wbuf = wide(&text);
         let info = MENUITEMINFOW {
             cbSize: std::mem::size_of::<MENUITEMINFOW>() as u32,
             fMask: MIIM_STRING,
@@ -4682,7 +4619,7 @@ fn on_add_app(hwnd: HWND) {
     {
         let profile = state.app.profile.borrow();
         if profile.apps.iter().any(|a| a.path == path) {
-            set_status_text(state.status.get(), 0, "App already in profile.");
+            set_status_text(state.status.get(), 0, &t!("status.app_exists"));
             return;
         }
     }
@@ -4706,7 +4643,7 @@ fn on_add_app(hwnd: HWND) {
     save_profile_to_disk(state);
     populate_apps_tab(state);
     on_tab_change(hwnd);
-    set_status_text(state.status.get(), 0, "App added.");
+    set_status_text(state.status.get(), 0, &t!("status.app_added"));
 }
 
 /// File → Settings / toolbar Settings: open the multi-tab modal
@@ -4719,10 +4656,12 @@ fn on_open_settings(hwnd: HWND) {
         None => return,
     };
     let snapshot = state.app.settings.borrow().clone();
+    let old_language = snapshot.language.clone();
     let updated = match super::settings_dialog::open(hwnd, &snapshot) {
         Some(s) => s,
         None => return, // Close
     };
+    let language_changed = updated.language != old_language;
     state.app.settings.replace(updated.clone());
     let path = state.app.settings_path.borrow().clone();
     if let Err(e) = updated.save(&path) {
@@ -4731,8 +4670,20 @@ fn on_open_settings(hwnd: HWND) {
             path.display()
         );
     }
-    // Re-apply effects whose window state we manage directly.
+
+    if language_changed {
+        restart_self();
+        return;
+    }
+
     apply_initial_settings(hwnd, state);
+}
+
+fn restart_self() {
+    if let Ok(exe) = std::env::current_exe() {
+        let _ = std::process::Command::new(exe).arg("--show").spawn();
+    }
+    std::process::exit(0);
 }
 
 /// Toolbar "Create rule" / Edit menu equivalent: open the rule
@@ -4752,7 +4703,7 @@ fn on_create_rule(hwnd: HWND) {
     save_profile_to_disk(state);
     populate_user_rules(state);
     on_tab_change(hwnd);
-    set_status_text(state.status.get(), 0, "Rule added.");
+    set_status_text(state.status.get(), 0, &t!("status.rule_added"));
 }
 
 /// Double-click handler for the User rules listview — opens the
@@ -4800,7 +4751,7 @@ fn on_edit_selected_rule(hwnd: HWND) {
     save_profile_to_disk(state);
     populate_user_rules(state);
     on_tab_change(hwnd);
-    set_status_text(state.status.get(), 0, "Rule updated.");
+    set_status_text(state.status.get(), 0, &t!("status.rule_updated"));
 }
 
 /// Delete-key handler for the User rules listview — confirm,
@@ -4829,7 +4780,7 @@ fn on_delete_selected_rule(hwnd: HWND) {
     }
     let idx = idx as usize;
 
-    let title = wide("Delete rule");
+    let title = wide(&t!("dialog.delete_rule"));
     let rule_name = state
         .app
         .profile
@@ -4838,7 +4789,7 @@ fn on_delete_selected_rule(hwnd: HWND) {
         .get(idx)
         .map(|r| r.name.clone())
         .unwrap_or_default();
-    let body = wide(&format!("Delete the rule \"{rule_name}\"?"));
+    let body = wide(&t!("message.delete_rule_confirm", name = &rule_name));
     let answer = unsafe {
         MessageBoxW(
             hwnd,
@@ -4860,7 +4811,7 @@ fn on_delete_selected_rule(hwnd: HWND) {
     save_profile_to_disk(state);
     populate_user_rules(state);
     on_tab_change(hwnd);
-    set_status_text(state.status.get(), 0, "Rule deleted.");
+    set_status_text(state.status.get(), 0, &t!("status.rule_deleted"));
 }
 
 /// Serialise the current in-memory profile back to its source
@@ -4890,7 +4841,7 @@ fn save_profile_to_disk(state: &WndState) {
             "amwall: profile auto-save failed for {}: {e}",
             path.display()
         );
-        set_status_text(state.status.get(), 0, "Auto-save failed.");
+        set_status_text(state.status.get(), 0, &t!("status.autosave_failed"));
     }
 }
 
@@ -4950,9 +4901,9 @@ fn update_hashes_if_enabled(state: &WndState) {
     drop(profile);
     if !drifted.is_empty() {
         let msg = if drifted.len() == 1 {
-            format!("Hash drift: {}", drifted[0])
+            t!("status.hash_drift_one", name = &drifted[0])
         } else {
-            format!("Hash drift on {} apps (see log)", drifted.len())
+            t!("status.hash_drift_many", count = drifted.len())
         };
         set_status_text(state.status.get(), 0, &msg);
     }
@@ -4976,7 +4927,7 @@ fn on_import(hwnd: HWND) {
                 "amwall: import: read failed for {}: {e}",
                 path.display()
             );
-            set_status_text(state.status.get(), 0, "Import failed: read error.");
+            set_status_text(state.status.get(), 0, &t!("status.import_read_error"));
             return;
         }
     };
@@ -4984,7 +4935,7 @@ fn on_import(hwnd: HWND) {
         Ok(p) => p,
         Err(e) => {
             eprintln!("amwall: import: parse failed: {e}");
-            set_status_text(state.status.get(), 0, "Import failed: parse error.");
+            set_status_text(state.status.get(), 0, &t!("status.import_parse_error"));
             return;
         }
     };
@@ -4994,7 +4945,7 @@ fn on_import(hwnd: HWND) {
     populate_user_rules(state);
     on_tab_change(hwnd);
     set_window_title(hwnd, &path);
-    set_status_text(state.status.get(), 0, "Imported.");
+    set_status_text(state.status.get(), 0, &t!("status.imported"));
 }
 
 /// File → Export: pick a destination, serialize the current
@@ -5024,12 +4975,12 @@ fn on_export(hwnd: HWND) {
             "amwall: export: write failed for {}: {e}",
             target.display()
         );
-        set_status_text(state.status.get(), 0, "Export failed: write error.");
+        set_status_text(state.status.get(), 0, &t!("status.export_write_error"));
         return;
     }
     state.app.profile_path.replace(target.clone());
     set_window_title(hwnd, &target);
-    set_status_text(state.status.get(), 0, "Exported.");
+    set_status_text(state.status.get(), 0, &t!("status.exported"));
 }
 
 /// Reload the current profile from disk and re-populate the
@@ -5050,7 +5001,7 @@ fn on_refresh(hwnd: HWND) {
                 "amwall: refresh: read failed for {}: {e}",
                 path.display(),
             );
-            set_status_text(state.status.get(), 0, "Refresh failed: read error.");
+            set_status_text(state.status.get(), 0, &t!("status.refresh_read_error"));
             return;
         }
     };
@@ -5058,7 +5009,7 @@ fn on_refresh(hwnd: HWND) {
         Ok(p) => p,
         Err(e) => {
             eprintln!("amwall: refresh: parse failed: {e}");
-            set_status_text(state.status.get(), 0, "Refresh failed: parse error.");
+            set_status_text(state.status.get(), 0, &t!("status.refresh_parse_error"));
             return;
         }
     };
@@ -5071,7 +5022,7 @@ fn on_refresh(hwnd: HWND) {
     populate_uwp_tab(state);
     populate_user_rules(state);
     on_tab_change(hwnd); // refresh status-bar item count
-    set_status_text(state.status.get(), 0, "Profile reloaded.");
+    set_status_text(state.status.get(), 0, &t!("status.profile_reloaded"));
 }
 
 /// Fill in the tooltip text for a toolbar button. The toolbar
@@ -5082,20 +5033,18 @@ fn on_refresh(hwnd: HWND) {
 /// then falls back to the button label).
 fn fill_toolbar_tooltip(info: &mut NMTBGETINFOTIPW) {
     let text = match info.iItem as u16 {
-        IDM_TRAY_START => "Enable filters (Ctrl+T)",
-        IDM_OPENRULESEDITOR => "Create a new user rule",
-        IDM_TRAY_ENABLENOTIFICATIONS_CHK => "Enable notifications for blocked traffic",
-        IDM_TRAY_ENABLELOG_CHK => "Log blocked traffic to a file",
-        IDM_TRAY_ENABLEUILOG_CHK => "Show packets log in the UI",
-        IDM_REFRESH => "Reload the profile from disk (F5)",
-        IDM_SETTINGS => "Open Settings",
-        IDM_TRAY_LOGSHOW => "Open the packets log file",
-        IDM_TRAY_LOGCLEAR => "Clear the packets log",
-        IDM_RELEASES => "Open the GitHub releases page",
+        IDM_TRAY_START => t!("tooltip.enable_filters"),
+        IDM_OPENRULESEDITOR => t!("tooltip.new_rule"),
+        IDM_TRAY_ENABLENOTIFICATIONS_CHK => t!("tooltip.enable_notifications"),
+        IDM_TRAY_ENABLELOG_CHK => t!("tooltip.enable_log"),
+        IDM_TRAY_ENABLEUILOG_CHK => t!("tooltip.enable_ui_log"),
+        IDM_REFRESH => t!("tooltip.reload"),
+        IDM_SETTINGS => t!("tooltip.open_settings"),
+        IDM_TRAY_LOGSHOW => t!("tooltip.open_log_file"),
+        IDM_TRAY_LOGCLEAR => t!("tooltip.clear_log"),
+        IDM_RELEASES => t!("tooltip.open_releases"),
         _ => return,
     };
-    // Win32 caller already allocated the buffer; we just memcpy
-    // up to cchTextMax-1 wide chars + a trailing NUL.
     if info.pszText.is_null() || info.cchTextMax <= 0 {
         return;
     }
@@ -5135,12 +5084,8 @@ fn on_exit(hwnd: HWND) {
         let s = state.app.settings.borrow();
         if s.confirm_exit && state.filters_active.get() {
             drop(s);
-            let body = wide(
-                "Filters are currently enabled. Quitting amwall \
-                 will leave them in place (they survive process \
-                 exit). Continue?",
-            );
-            let title = wide("Exit amwall?");
+            let body = wide(&t!("message.exit_body"));
+            let title = wide(&t!("dialog.exit"));
             let answer = unsafe {
                 MessageBoxW(
                     hwnd,
@@ -5177,7 +5122,7 @@ fn on_purge_unused(hwnd: HWND) {
         before - profile.apps.len()
     };
     if removed == 0 {
-        set_status_text(state.status.get(), 0, "No unused apps to purge.");
+        set_status_text(state.status.get(), 0, &t!("status.no_unused"));
         return;
     }
     save_profile_to_disk(state);
@@ -5185,11 +5130,7 @@ fn on_purge_unused(hwnd: HWND) {
     on_tab_change(hwnd);
     force_active_apps_listview_jiggle(hwnd, state);
     reinstall_filters_if_active(state);
-    set_status_text(
-        state.status.get(),
-        0,
-        &format!("Purged {removed} unused app(s)."),
-    );
+    set_status_text(state.status.get(), 0, &t!("status.purged_apps", count = removed));
 }
 
 /// Edit → Purge timers. Clears every app's expiration timer
@@ -5215,7 +5156,7 @@ fn on_purge_timers(hwnd: HWND) {
         count
     };
     if cleared == 0 {
-        set_status_text(state.status.get(), 0, "No active timers.");
+        set_status_text(state.status.get(), 0, &t!("status.no_timers"));
         return;
     }
     save_profile_to_disk(state);
@@ -5223,11 +5164,7 @@ fn on_purge_timers(hwnd: HWND) {
     on_tab_change(hwnd);
     force_active_apps_listview_jiggle(hwnd, state);
     reinstall_filters_if_active(state);
-    set_status_text(
-        state.status.get(),
-        0,
-        &format!("Cleared {cleared} app timer(s)."),
-    );
+    set_status_text(state.status.get(), 0, &t!("status.cleared_timers", count = cleared));
 }
 
 /// Edit → Clear log (also reachable via the toolbar's "Clear
@@ -5242,12 +5179,8 @@ fn on_log_clear(hwnd: HWND) {
         None => return,
     };
     if state.app.settings.borrow().confirm_log_clear {
-        let body = wide(
-            "Clear the packets log? This empties the in-memory log \
-             tab and truncates the on-disk log file. The action \
-             can't be undone.",
-        );
-        let title = wide("Clear log");
+        let body = wide(&t!("message.clear_log_body"));
+        let title = wide(&t!("dialog.clear_log"));
         let answer = unsafe {
             MessageBoxW(
                 hwnd,
@@ -5264,7 +5197,7 @@ fn on_log_clear(hwnd: HWND) {
     state.event_log_writer.borrow_mut().truncate();
     populate_log_tab(state);
     on_tab_change(hwnd);
-    set_status_text(state.status.get(), 0, "Log cleared.");
+    set_status_text(state.status.get(), 0, &t!("status.log_cleared"));
 }
 
 /// Toolbar "Show log" button. Opens the log file in the
@@ -5507,7 +5440,7 @@ fn on_pick_font(hwnd: HWND) {
     let new_font = match super::font::load_named_font(&new_face, new_height) {
         Some(f) => f,
         None => {
-            set_status_text(state.status.get(), 0, "Font load failed; reverted.");
+            set_status_text(state.status.get(), 0, &t!("status.font_failed"));
             return;
         }
     };
@@ -5532,7 +5465,7 @@ fn on_pick_font(hwnd: HWND) {
     if let Err(e) = state.app.settings.borrow().save(&path) {
         eprintln!("amwall: settings: save font choice failed: {e}");
     }
-    set_status_text(state.status.get(), 0, "Font updated.");
+    set_status_text(state.status.get(), 0, &t!("status.font_updated"));
 }
 
 /// Modal yes/no for the right-click Allow path when the target
@@ -5547,22 +5480,12 @@ fn confirm_allow_traffic(hwnd: HWND, paths: &[std::path::PathBuf]) -> bool {
             .file_name()
             .map(|s| s.to_string_lossy().into_owned())
             .unwrap_or_else(|| paths[0].display().to_string());
-        format!(
-            "{} is currently blocked. Allowing it will let it \
-             reach the network the next time it tries.\n\n\
-             Continue?",
-            name
-        )
+        t!("message.allow_one_body", name = name)
     } else {
-        format!(
-            "{} previously-blocked apps will be set to Allow. \
-             They will reach the network the next time they try.\n\n\
-             Continue?",
-            paths.len()
-        )
+        t!("message.allow_many_body", count = paths.len())
     };
     let body = wide(&body_str);
-    let title = wide("Allow previously-blocked traffic?");
+    let title = wide(&t!("dialog.allow_blocked"));
     let answer = unsafe {
         MessageBoxW(
             hwnd,
@@ -5585,18 +5508,8 @@ fn on_emergency_reset(hwnd: HWND) {
         None => return,
     };
 
-    let body = wide(
-        "Emergency reset will:\n\
-         \n\
-         \u{2022} Remove every WFP filter amwall has installed\n\
-         \u{2022} Empty the Apps Profile and User rules lists\n\
-         \u{2022} Turn off Enable filters\n\
-         \n\
-         Use this if amwall is blocking something you can't \
-         identify and you need to restore the OS-default \
-         networking behaviour. The change is immediate. Continue?",
-    );
-    let title = wide("Emergency WFP reset");
+    let body = wide(&t!("message.emergency_reset_body"));
+    let title = wide(&t!("dialog.emergency_reset"));
     let answer = unsafe {
         MessageBoxW(
             hwnd,
@@ -5643,7 +5556,7 @@ fn on_emergency_reset(hwnd: HWND) {
     populate_user_rules(state);
     on_tab_change(hwnd);
 
-    set_status_text(state.status.get(), 0, "Emergency reset complete.");
+    set_status_text(state.status.get(), 0, &t!("status.emergency_done"));
     set_status_text(state.status.get(), 1, "");
 }
 
@@ -5653,8 +5566,8 @@ fn on_about(hwnd: HWND) {
         TDCBF_OK_BUTTON, TDF_ENABLE_HYPERLINKS, TaskDialogIndirect,
     };
 
-    let title = wide("About amwall");
-    let main_instr = wide("amwall");
+    let title = wide(&t!("dialog.about_title"));
+    let main_instr = wide(&t!("dialog.about_app"));
     let version = env!("CARGO_PKG_VERSION");
     let content_str = format!(
         concat!(
@@ -5775,17 +5688,15 @@ fn create_tab_control(parent: HWND) -> Result<HWND, String> {
 }
 
 fn insert_tabs(tab: HWND) -> Result<(), String> {
-    // Same order + labels as upstream `_app_addwindowtabs`. Hardcoded
-    // English now; M8 will route through a localization table.
-    let labels: [(i32, &str); 8] = [
-        (IDC_APPS_PROFILE, "Apps"),
-        (IDC_APPS_SERVICE, "Services"),
-        (IDC_APPS_UWP, "UWP apps"),
-        (IDC_RULES_BLOCKLIST, "Blocklist"),
-        (IDC_RULES_SYSTEM, "System rules"),
-        (IDC_RULES_CUSTOM, "User rules"),
-        (IDC_NETWORK, "Connections"),
-        (IDC_LOG, "Packets log"),
+    let labels: [(i32, String); 8] = [
+        (IDC_APPS_PROFILE, t!("tab.apps").into()),
+        (IDC_APPS_SERVICE, t!("tab.services").into()),
+        (IDC_APPS_UWP, t!("tab.uwp").into()),
+        (IDC_RULES_BLOCKLIST, t!("tab.blocklist").into()),
+        (IDC_RULES_SYSTEM, t!("tab.system_rules").into()),
+        (IDC_RULES_CUSTOM, t!("tab.user_rules").into()),
+        (IDC_NETWORK, t!("tab.connections").into()),
+        (IDC_LOG, t!("tab.packets_log").into()),
     ];
     for (idx, (_id, label)) in labels.iter().enumerate() {
         let mut buf = wide(label);
@@ -5866,9 +5777,9 @@ fn configure_listview(lv: HWND, id: i32, dpi: u32) -> Result<(), String> {
     // Columns. Per upstream messages.c:385-465.
     match id {
         IDC_APPS_PROFILE | IDC_APPS_SERVICE | IDC_APPS_UWP => {
-            add_column(lv, 0, "Name", scale_dpi(APPS_COL_WIDTHS[0], dpi), false)?;
-            add_column(lv, 1, "Added", scale_dpi(APPS_COL_WIDTHS[1], dpi), true)?;
-            add_column(lv, 2, "Path", scale_dpi(APPS_COL_WIDTHS[2], dpi), false)?;
+            add_column(lv, 0, &t!("column.name"), scale_dpi(APPS_COL_WIDTHS[0], dpi), false)?;
+            add_column(lv, 1, &t!("column.added"), scale_dpi(APPS_COL_WIDTHS[1], dpi), true)?;
+            add_column(lv, 2, &t!("column.path"), scale_dpi(APPS_COL_WIDTHS[2], dpi), false)?;
 
             // Attach the system small-icon imagelist so per-row
             // LVITEMW.iImage indices resolve to whatever icon the
@@ -5892,33 +5803,21 @@ fn configure_listview(lv: HWND, id: i32, dpi: u32) -> Result<(), String> {
             }
         }
         IDC_RULES_BLOCKLIST | IDC_RULES_SYSTEM | IDC_RULES_CUSTOM => {
-            add_column(lv, 0, "Name", scale_dpi(RULES_COL_WIDTHS[0], dpi), false)?;
-            add_column(
-                lv,
-                1,
-                "Protocol",
-                scale_dpi(RULES_COL_WIDTHS[1], dpi),
-                true,
-            )?;
-            add_column(
-                lv,
-                2,
-                "Direction",
-                scale_dpi(RULES_COL_WIDTHS[2], dpi),
-                true,
-            )?;
+            add_column(lv, 0, &t!("column.name"), scale_dpi(RULES_COL_WIDTHS[0], dpi), false)?;
+            add_column(lv, 1, &t!("column.protocol"), scale_dpi(RULES_COL_WIDTHS[1], dpi), true)?;
+            add_column(lv, 2, &t!("column.direction"), scale_dpi(RULES_COL_WIDTHS[2], dpi), true)?;
         }
         IDC_NETWORK => {
-            let cols = [
-                "Name",
-                "Address (Source)",
-                "Host (Source)",
-                "Port (Source)",
-                "Address (Destination)",
-                "Host (Destination)",
-                "Port (Destination)",
-                "Protocol",
-                "State",
+            let cols: [String; 9] = [
+                t!("column.name").into(),
+                t!("column.address_src").into(),
+                t!("column.host_src").into(),
+                t!("column.port_src").into(),
+                t!("column.address_dst").into(),
+                t!("column.host_dst").into(),
+                t!("column.port_dst").into(),
+                t!("column.protocol").into(),
+                t!("column.state").into(),
             ];
             for (i, label) in cols.iter().enumerate() {
                 let right = matches!(i, 3 | 6 | 7 | 8);
@@ -5926,19 +5825,19 @@ fn configure_listview(lv: HWND, id: i32, dpi: u32) -> Result<(), String> {
             }
         }
         IDC_LOG => {
-            let cols = [
-                "#",
-                "Name",
-                "Date",
-                "Address (Source)",
-                "Host (Source)",
-                "Port (Source)",
-                "Address (Destination)",
-                "Host (Destination)",
-                "Port (Destination)",
-                "Protocol",
-                "Direction",
-                "Filter",
+            let cols: [String; 12] = [
+                t!("column.index").into(),
+                t!("column.name").into(),
+                t!("column.date").into(),
+                t!("column.address_src").into(),
+                t!("column.host_src").into(),
+                t!("column.port_src").into(),
+                t!("column.address_dst").into(),
+                t!("column.host_dst").into(),
+                t!("column.port_dst").into(),
+                t!("column.protocol").into(),
+                t!("column.direction").into(),
+                t!("column.filter").into(),
             ];
             for (i, label) in cols.iter().enumerate() {
                 let right = matches!(i, 0 | 5 | 8);
@@ -5978,25 +5877,25 @@ fn insert_apps_groups(lv: HWND) {
     // Insert order is cosmetic — Win32 sorts groups by iGroupId
     // for display. Listed in display order here for readability:
     // Blocked first, then Allowed last.
-    for (gid, title) in [
-        (GROUP_APP_BLOCKED, "Blocked"),
-        (GROUP_APP_BLOCKED_SILENT, "Blocked (silent)"),
-        (GROUP_APP_TIMER, "Timer"),
-        (GROUP_APP_SPECIAL, "Special apps"),
-        (GROUP_APP_ALLOWED, "Allowed"),
+    for (gid, key) in [
+        (GROUP_APP_BLOCKED, "group.blocked"),
+        (GROUP_APP_BLOCKED_SILENT, "group.blocked_silent"),
+        (GROUP_APP_TIMER, "group.timer"),
+        (GROUP_APP_SPECIAL, "group.special"),
+        (GROUP_APP_ALLOWED, "group.allowed"),
     ] {
-        let mut wtitle = wide(title);
+        let mut wtitle = wide(&t!(key));
         insert(lv, gid, &mut wtitle);
     }
 }
 
 fn insert_rules_groups(lv: HWND) {
     use super::listview_groups::{GROUP_RULE_DISABLED, GROUP_RULE_ENABLED, insert};
-    for (gid, title) in [
-        (GROUP_RULE_ENABLED, "Enabled"),
-        (GROUP_RULE_DISABLED, "Disabled"),
+    for (gid, key) in [
+        (GROUP_RULE_ENABLED, "group.enabled"),
+        (GROUP_RULE_DISABLED, "group.disabled"),
     ] {
-        let mut wtitle = wide(title);
+        let mut wtitle = wide(&t!(key));
         insert(lv, gid, &mut wtitle);
     }
 }
@@ -6023,13 +5922,14 @@ fn refresh_apps_group_headers(lv: HWND) {
         }
     }
     let labels = [
-        (GROUP_APP_BLOCKED, "Blocked"),
-        (GROUP_APP_BLOCKED_SILENT, "Blocked (silent)"),
-        (GROUP_APP_TIMER, "Timer"),
-        (GROUP_APP_SPECIAL, "Special apps"),
-        (GROUP_APP_ALLOWED, "Allowed"),
+        (GROUP_APP_BLOCKED, "group.blocked"),
+        (GROUP_APP_BLOCKED_SILENT, "group.blocked_silent"),
+        (GROUP_APP_TIMER, "group.timer"),
+        (GROUP_APP_SPECIAL, "group.special"),
+        (GROUP_APP_ALLOWED, "group.allowed"),
     ];
-    for (gid, base) in labels {
+    for (gid, key) in labels {
+        let base = t!(key);
         let n = counts[gid as usize];
         let mut wtitle = wide(&format!("{base} ({n}/{total})"));
         set_header(lv, gid, &mut wtitle);
@@ -6052,8 +5952,8 @@ fn refresh_rules_group_headers(lv: HWND) {
             _ => {}
         }
     }
-    let mut w_enabled = wide(&format!("Enabled ({enabled}/{total})"));
-    let mut w_disabled = wide(&format!("Disabled ({disabled}/{total})"));
+    let mut w_enabled = wide(&format!("{} ({enabled}/{total})", t!("group.enabled")));
+    let mut w_disabled = wide(&format!("{} ({disabled}/{total})", t!("group.disabled")));
     set_header(lv, GROUP_RULE_ENABLED, &mut w_enabled);
     set_header(lv, GROUP_RULE_DISABLED, &mut w_disabled);
 }
@@ -6232,28 +6132,28 @@ fn populate_user_rules(state: &WndState) {
         };
 
         let protocol = match rule.protocol {
-            Some(1) => "ICMP".to_string(),
-            Some(6) => "TCP".to_string(),
-            Some(17) => "UDP".to_string(),
-            Some(58) => "ICMPv6".to_string(),
+            Some(1) => t!("protocol.icmp").into_owned(),
+            Some(6) => t!("protocol.tcp").into_owned(),
+            Some(17) => t!("protocol.udp").into_owned(),
+            Some(58) => t!("protocol.icmpv6").into_owned(),
             Some(other) => other.to_string(),
-            None => "Any".to_string(),
+            None => t!("protocol.any").into_owned(),
         };
         let direction = match rule.direction {
-            Direction::Outbound => "Outbound",
-            Direction::Inbound => "Inbound",
-            Direction::Any => "Both",
-            Direction::Other(_) => "Other",
+            Direction::Outbound => t!("direction.outbound"),
+            Direction::Inbound => t!("direction.inbound"),
+            Direction::Any => t!("direction.both"),
+            Direction::Other(_) => t!("direction.other"),
         };
         // M5.2 doesn't surface action in the columns (matches upstream's
         // 3-column layout), but a future tooltip / detail pane can use it.
         let _ = match rule.action {
-            Action::Permit => "Permit",
-            Action::Block => "Block",
+            Action::Permit => t!("action.permit"),
+            Action::Block => t!("action.block"),
         };
 
         set_subitem(lv, idx as i32, 1, &protocol);
-        set_subitem(lv, idx as i32, 2, direction);
+        set_subitem(lv, idx as i32, 2, &direction);
     }
     drop(profile);
     refresh_rules_group_headers(lv);
@@ -6830,7 +6730,7 @@ fn populate_log_tab(state: &WndState) {
                 .unwrap_or_default(),
         );
         set_subitem(lv, i, 9, &log_protocol_label(details.protocol));
-        set_subitem(lv, i, 10, log_direction_label(details.direction));
+        set_subitem(lv, i, 10, &log_direction_label(details.direction));
         set_subitem(
             lv,
             i,
@@ -6857,20 +6757,20 @@ fn log_basename(path: &str) -> &str {
 /// render as their decimal form (`"47"` for GRE etc.).
 fn log_protocol_label(p: Option<u8>) -> String {
     match p {
-        Some(1) => "ICMPv4".to_string(),
-        Some(6) => "TCP".to_string(),
-        Some(17) => "UDP".to_string(),
-        Some(58) => "ICMPv6".to_string(),
+        Some(1) => t!("protocol.icmpv4").into_owned(),
+        Some(6) => t!("protocol.tcp").into_owned(),
+        Some(17) => t!("protocol.udp").into_owned(),
+        Some(58) => t!("protocol.icmpv6").into_owned(),
         Some(n) => n.to_string(),
         None => String::new(),
     }
 }
 
-fn log_direction_label(d: Option<crate::wfp::events::NetDirection>) -> &'static str {
+fn log_direction_label(d: Option<crate::wfp::events::NetDirection>) -> String {
     match d {
-        Some(crate::wfp::events::NetDirection::Inbound) => "Inbound",
-        Some(crate::wfp::events::NetDirection::Outbound) => "Outbound",
-        None => "",
+        Some(crate::wfp::events::NetDirection::Inbound) => t!("direction.inbound").into_owned(),
+        Some(crate::wfp::events::NetDirection::Outbound) => t!("direction.outbound").into_owned(),
+        None => String::new(),
     }
 }
 
@@ -7029,21 +6929,21 @@ fn populate_internal_rules(state: &WndState, id: i32) {
         };
 
         let protocol = match rule.protocol {
-            Some(1) => "ICMP".to_string(),
-            Some(6) => "TCP".to_string(),
-            Some(17) => "UDP".to_string(),
-            Some(58) => "ICMPv6".to_string(),
+            Some(1) => t!("protocol.icmp").into_owned(),
+            Some(6) => t!("protocol.tcp").into_owned(),
+            Some(17) => t!("protocol.udp").into_owned(),
+            Some(58) => t!("protocol.icmpv6").into_owned(),
             Some(other) => other.to_string(),
-            None => "Any".to_string(),
+            None => t!("protocol.any").into_owned(),
         };
         let direction = match rule.direction {
-            Direction::Outbound => "Outbound",
-            Direction::Inbound => "Inbound",
-            Direction::Any => "Both",
-            Direction::Other(_) => "Other",
+            Direction::Outbound => t!("direction.outbound"),
+            Direction::Inbound => t!("direction.inbound"),
+            Direction::Any => t!("direction.both"),
+            Direction::Other(_) => t!("direction.other"),
         };
         set_subitem(lv, idx as i32, 1, &protocol);
-        set_subitem(lv, idx as i32, 2, direction);
+        set_subitem(lv, idx as i32, 2, &direction);
     }
     refresh_rules_group_headers(lv);
     end_listview_refill(lv, saved, row);

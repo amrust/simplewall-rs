@@ -1,0 +1,398 @@
+# amwall — Localizare în limba română.
+# Adăugați limbi noi copiind acest fișier în, de exemplu, locales/de.toml
+# și traducând valorile. rust-i18n încorporează toate localizările la
+# compilare; setați localizarea activă cu rust_i18n::set_locale().
+
+# --- Titluri bară de meniu ---
+[menu]
+file = "&Fișier"
+edit = "&Editare"
+view = "&Vizualizare"
+settings = "&Setări"
+rules = "&Reguli"
+blocklist = "&Listă de blocare"
+help = "&Ajutor"
+
+# --- Elemente meniu Fișier ---
+[file]
+settings = "&Setări\tCtrl+P"
+add_app = "&Adăugare aplicație…\tCtrl+O"
+import = "&Importare…"
+export = "&Exportare…"
+exit = "Ie&șire"
+
+# --- Elemente meniu Editare ---
+[edit]
+purge_unused = "Eliminare aplicații ne&utilizate"
+purge_timers = "Eliminare &cronometre"
+clear_log = "&Curățare jurnal"
+refresh = "&Reîmprospătare\tF5"
+
+# --- Elemente meniu Vizualizare ---
+[view]
+always_on_top = "Mereu &deasupra"
+dark_theme = "Temă &întunecată"
+autosize_columns = "&Autodimensionare coloane"
+filenames_only = "Afișare doar &nume de fișiere"
+show_search = "Afișare bară de &căutare"
+layout_details = "Aspect: &Detalii"
+layout_icons = "Aspect: &Pictograme"
+layout_tiles = "Aspect: &Dale"
+icon_small = "Dimensiune pictograme: &Mică"
+icon_large = "Dimensiune pictograme: Ma&re"
+icon_extralarge = "Dimensiune pictograme: &Extra-mare"
+font = "&Font…"
+
+# --- Elemente meniu Setări ---
+[settings]
+load_on_startup = "&Încărcare la pornirea sistemului"
+start_minimized = "Pornire &minimizată"
+skip_uac = "Omitere avertisment UAC"
+check_updates = "Verificare &actualizări"
+auto_allow_microsoft = "Permitere automată programe semnate &Microsoft"
+check_signatures = "Verificare &semnături digitale ale aplicațiilor"
+check_hashes = "Verificare &hash SHA-256 al aplicațiilor"
+
+# --- Submeniu Reguli ---
+[rules]
+block_outbound = "Blocare &ieșire pentru toți"
+block_inbound = "Blocare &intrare pentru toți"
+allow_loopback = "Permitere &loopback"
+allow_6to4 = "Permitere IPv6 (&6to4)"
+allow_windows_update = "Permitere &Windows Update"
+
+# --- Submeniu Listă de blocare ---
+[blocklist]
+disable = "&Dezactivare"
+allow = "&Permitere"
+block = "&Blocare"
+spy_telemetry = "&Spionaj și telemetrie Microsoft"
+ms_update = "Microsoft &Update"
+ms_apps = "&Aplicații Microsoft"
+
+# --- Elemente meniu Ajutor ---
+[help]
+website = "&Site web"
+check_updates = "&Verificare actualizări"
+about = "&Despre"
+emergency_reset = "&Resetare de urgență WFP..."
+
+# --- Etichete file ---
+[tab]
+apps = "Aplicații"
+services = "Servicii"
+uwp = "Aplicații UWP"
+blocklist = "Listă de blocare"
+system_rules = "Reguli de sistem"
+user_rules = "Reguli utilizator"
+connections = "Conexiuni"
+packets_log = "Jurnal pachete"
+
+# --- Anteturi coloane ---
+[column]
+name = "Nume"
+added = "Adăugat"
+path = "Cale"
+date = "Dată"
+protocol = "Protocol"
+direction = "Direcție"
+address_src = "Adresă (Sursă)"
+host_src = "Gazdă (Sursă)"
+port_src = "Port (Sursă)"
+address_dst = "Adresă (Destinație)"
+host_dst = "Gazdă (Destinație)"
+port_dst = "Port (Destinație)"
+state = "Stare"
+filter = "Filtru"
+index = "#"
+
+# --- Anteturi grupuri ---
+[group]
+blocked = "Blocat"
+blocked_silent = "Blocat (silențios)"
+timer = "Cronometru"
+special = "Aplicații speciale"
+allowed = "Permis"
+enabled = "Activat"
+disabled = "Dezactivat"
+
+# --- Indicii bară de instrumente ---
+[tooltip]
+enable_filters = "Activare filtre (Ctrl+T)"
+new_rule = "Creează o regulă de utilizator nouă"
+enable_notifications = "Activare notificări pentru traficul blocat"
+enable_log = "Înregistrare trafic blocat într-un fișier"
+enable_ui_log = "Afișare jurnal pachete în interfață"
+reload = "Reîncărcare profil de pe disc (F5)"
+open_settings = "Deschide setările"
+open_log_file = "Deschide fișierul jurnal de pachete"
+clear_log = "Curățare jurnal pachete"
+open_releases = "Deschide pagina de lansări GitHub"
+
+# --- Etichete butoane bară de instrumente ---
+[toolbar]
+enable_filters = "Activare filtre"
+disable_filters = "Dezactivare filtre"
+
+# --- Mesaje bară de stare ---
+[status]
+filters_enabled = "Filtrele sunt activate."
+filters_disabled = "Filtrele sunt dezactivate."
+imported_simplewall = "Profil simplewall importat."
+checking_updates = "Se verifică actualizările..."
+up_to_date = "La zi."
+update_check_failed = "Verificarea actualizărilor a eșuat."
+nothing_to_remove = "Nimic de eliminat din profil."
+engine_failed = "Deschiderea motorului WFP a eșuat."
+uninstall_failed = "Dezinstalarea filtrelor a eșuat."
+install_failed = "Instalarea filtrelor a eșuat."
+app_exists = "Aplicația există deja în profil."
+app_added = "Aplicație adăugată."
+rule_added = "Regulă adăugată."
+rule_updated = "Regulă actualizată."
+rule_deleted = "Regulă ștearsă."
+autosave_failed = "Salvarea automată a eșuat."
+import_read_error = "Importul a eșuat: eroare de citire."
+import_parse_error = "Importul a eșuat: eroare de parsare."
+imported = "Importat."
+export_write_error = "Exportul a eșuat: eroare de scriere."
+exported = "Exportat."
+refresh_read_error = "Reîmprospătarea a eșuat: eroare de citire."
+refresh_parse_error = "Reîmprospătarea a eșuat: eroare de parsare."
+profile_reloaded = "Profil reîncărcat."
+no_unused = "Nicio aplicație neutilizată de eliminat."
+no_timers = "Niciun cronometru activ."
+log_cleared = "Jurnal curățat."
+font_failed = "Încărcarea fontului a eșuat; revenit."
+font_updated = "Font actualizat."
+emergency_done = "Resetare de urgență finalizată."
+auto_allowed_one = "Permis automat 1 aplicație semnată Microsoft"
+auto_allowed_many = "Permise automat %{count} aplicații semnate Microsoft"
+silenced = "Redus la tăcere: %{name}"
+allowed_count = "Permis: %{name}"
+connecting = "Se conectează la %{remote}"
+removed_entries = "%{count} intrări eliminate din profil."
+purged_apps = "%{count} aplicație/aplicații neutilizate eliminate."
+cleared_timers = "%{count} cronometru/cronometre de aplicații curățate."
+skip_uac_enabled = "Omitere UAC: activată. Lansările viitoare nu vor afișa UAC pentru utilizatorii administrator."
+skip_uac_disabled = "Omitere UAC: dezactivată. Lansările viitoare vor afișa UAC pentru acțiunile de administrator."
+hash_drift_one = "Derivă hash: %{name}"
+hash_drift_many = "Derivă hash la %{count} aplicații (vedeți jurnalul)"
+filters_removed = "%{filters} filtru/filtre eliminate, %{sublayers} substrat/substraturi curățate."
+filters_installed = "%{added} filtru/filtre instalate, %{skipped} omise."
+tray_blocked = "amwall - blocat: %{name}"
+
+# --- Titluri dialoguri ---
+[dialog]
+update_available = "amwall - actualizare disponibilă"
+check_updates = "amwall - Verificare actualizări"
+confirm_bulk_delete = "Confirmare ștergere în masă"
+admin_required = "Administrator necesar"
+delete_rule = "Ștergere regulă"
+exit = "Ieșire din amwall?"
+clear_log = "Curățare jurnal"
+allow_blocked = "Permiteți traficul blocat anterior?"
+emergency_reset = "Resetare de urgență WFP"
+about_title = "Despre amwall"
+about_app = "amwall"
+settings_title = "Setări"
+properties_signed = "amwall - Proprietăți (semnat de %{signer})"
+
+# --- Mesaje corp dialog ---
+[message]
+update_available_body = "amwall %{latest} este disponibil (rulați %{current}).\n\nDeschideți pagina de lansări în browser?"
+update_uptodate_body = "Versiunea curentă: %{current}\nUltima versiune: %{latest}\n\nDeja la zi."
+update_error_body = "Nu s-a putut contacta GitHub pentru a verifica actualizările.\n\nCauze posibile: lipsă internet, firewall-ul blochează amwall de la HTTPS de ieșire sau limita de rate a API-ului GitHub (60 de cereri anonime pe oră). Încercați din nou mai târziu."
+admin_required_body = "Gestionarea filtrelor necesită privilegii de Administrator.\n\nÎnchideți amwall și relansați dintr-un shell cu drepturi ridicate\n(clic dreapta → \"Rulare ca administrator\")."
+delete_rule_confirm = "Ștergeți regula \"%{name}\"?"
+bulk_delete_confirm = "Eliminați %{count} intrări din profil?\n\nAceastă acțiune nu poate fi anulată."
+exit_body = "Filtrele sunt activate în prezent. Închiderea amwall le va lăsa active (supraviețuiesc ieșirii din proces). Continuați?"
+clear_log_body = "Curățați jurnalul de pachete? Aceasta golește fila de jurnal din memorie și trunchiază fișierul jurnal de pe disc. Acțiunea nu poate fi anulată."
+emergency_reset_body = "Resetarea de urgență va:\n\n• Elimina fiecare filtru WFP instalat de amwall\n• Goli listele de profil al aplicațiilor și regulile utilizatorului\n• Dezactiva Activare filtre\n\nUtilizați aceasta dacă amwall blochează ceva ce nu puteți identifica și trebuie să restaurați comportamentul implicit de rețea al sistemului de operare. Modificarea este imediată. Continuați?"
+allow_one_body = "%{name} este blocat în prezent. Permiterea va permite accesul la rețea la următoarea încercare.\n\nContinuați?"
+allow_many_body = "%{count} aplicații blocate anterior vor fi setate la Permitere. Vor accesa rețeaua la următoarea încercare.\n\nContinuați?"
+blocked_notification = "Blocat: %{app}"
+
+# --- Meniu contextual ---
+[context]
+allow = "Permitere"
+block = "Blocare"
+copy_details = "&Copiere detalii"
+properties = "Proprietăți\tEnter"
+remove_from_profile = "Eliminare din profil\tDel"
+explore = "Explorare (deschide dosar)\tCtrl+E"
+copy = "Copiere nume\tCtrl+C"
+
+# --- Meniu tavă ---
+[tray]
+show = "Afișare amwall"
+enable_filters = "Activare filtre"
+disable_filters = "Dezactivare filtre"
+settings = "Setări..."
+exit = "Ieșire din amwall"
+
+# --- Asistent prima rulare ---
+[wizard]
+title = "Bine ați venit în amwall"
+subtitle = "Importare configurație simplewall?"
+import_btn = "Importare"
+start_fresh_btn = "Pornire de la zero"
+body = """amwall a găsit o configurație simplewall existentă:
+
+• Cale: %{path}
+• %{apps} aplicație/aplicații cu reguli
+• %{rules} regulă/reguli personalizate
+
+Importarea copiază profile.xml din simplewall în amwall și îl folosește ca punct de pornire. simplewall rămâne instalat și filtrele sale de kernel existente rămân active — dezactivați simplewall înainte de a face clic pe „Activare filtre" în amwall pentru a evita aplicarea de reguli suprapuse de ambele firewall-uri.
+
+Puteți rula Fișier → Importare mai târziu dacă omiteți acum."""
+
+# --- File dialog setări ---
+[settings_tab]
+general = "General"
+interface = "Interfață"
+highlighting = "Evidențiere"
+rules = "Reguli"
+blocklist = "Listă de blocare"
+notifications = "Notificări"
+logging = "Jurnalizare"
+exclude = "Excludere"
+
+# --- File editor reguli ---
+[rule_editor]
+general = "General"
+rule = "Regulă"
+apps = "Aplicații"
+
+# --- Etichete protocoale ---
+[protocol]
+any = "Oricare"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Etichete familie de adrese ---
+[version]
+any = "Oricare"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Etichete direcție ---
+[direction]
+outbound = "Ieșire"
+inbound = "Intrare"
+both = "Ambele"
+other = "Altul"
+
+# --- Etichete acțiuni ---
+[action]
+allow = "Permitere"
+block = "Blocare"
+permit = "Permitere"
+
+# --- Pagina setări: General ---
+[rc_general]
+group_config = "Configurare generală"
+always_on_top = "Mereu deasupra"
+load_on_startup = "Încărcare la pornirea sistemului"
+start_minimized = "Pornire minimizată"
+skip_uac = "Omitere avertisment „Control cont utilizator”"
+check_updates = "Verificare periodică a actualizărilor (recomandat)"
+group_language = "Limbă"
+select_language = "Selectare limbă:"
+
+# --- Pagina setări: Interfață ---
+[rc_interface]
+group_confirm = "Confirmări"
+confirm_exit = "Afișare dialog de confirmare la ieșire"
+confirm_exit_timer = "Afișare dialog de confirmare la ieșire când cronometrele sunt active"
+confirm_log_clear = "Confirmare la curățarea fișierului jurnal"
+confirm_allow = "Confirmare la permiterea traficului blocat anterior"
+group_tray = "Pictogramă tavă"
+tray_single_click = "Clic simplu pe pictograma tăvii pentru a deschide"
+
+# --- Pagina setări: Evidențiere ---
+[rc_highlight]
+group = "Evidențiere"
+hint = "Dublu clic pe un element pentru a-l modifica."
+
+# --- Pagina setări: Reguli ---
+[rc_rules]
+group_connections = "Conexiuni"
+block_outbound = "Blocare conexiuni de ieșire pentru toți"
+block_inbound = "Blocare conexiuni de intrare pentru toți"
+allow_loopback = "Permitere conexiuni loopback pentru toți"
+allow_6to4 = "Permitere redirecționări IPv6 (6to4) pentru toți"
+group_security = "Securitate"
+stealth_mode = "Prevenire scanare porturi (mod invizibil)"
+boottime_filters = "Activare filtre la pornire"
+group_advanced = "Avansat"
+check_signatures = "Verificare semnături digitale ale aplicațiilor"
+use_hashes = "Utilizare hash-uri de fișiere pentru identificarea aplicațiilor"
+resolve_addresses = "Rezolvare adrese de rețea"
+
+# --- Pagina setări: Listă de blocare ---
+[rc_blocklist]
+group_spy = "Spionaj și telemetrie Microsoft"
+group_update = "Microsoft Update"
+group_apps = "Aplicații Microsoft"
+
+# --- Pagina setări: Notificări ---
+[rc_notifications]
+group = "Notificări"
+enable = "Activare notificări pachete"
+sound = "Activare sunet notificări"
+fullscreen = "Activare mod silențios când o aplicație pe tot ecranul este în prim-plan"
+on_tray = "Afișare fereastră de notificare la tavă"
+timeout = "Interval între notificări similare (sec.):"
+
+# --- Pagina setări: Jurnalizare ---
+[rc_logging]
+group_log = "Jurnal pachete"
+enable = "Activare jurnalizare pachete într-un fișier"
+max_size = "Dimensiune maximă jurnal (kB):"
+group_viewer = "Vizualizator jurnal"
+group_ui = "Interfață"
+enable_ui = "Activare jurnalizare pachete în interfață"
+
+# --- Pagina setări: Excludere ---
+[rc_exclude]
+group_notif = "Notificări: nu notifica despre …"
+blocklist = "listă de blocare"
+user_rules = "reguli utilizator"
+group_log = "Jurnalizare: nu înregistra …"
+stealth = "conexiuni scanare porturi"
+allowed = "conexiuni permise"
+
+# --- Dialog proprietăți aplicație ---
+[rc_properties]
+title = "Proprietăți aplicație"
+path = "Cale:"
+comment = "Comentariu:"
+group_settings = "Setări:"
+enabled = "Activat (permite traficul acestei aplicații)"
+silent = "Silențios (fără notificări)"
+save = "Salvare"
+close = "Închidere"
+
+# --- Dialog cerere conexiune ---
+[rc_prompt]
+title = "amwall - cerere de conexiune aplicație"
+header = "O aplicație încearcă să se conecteze:"
+question = "Permiteți traficul acestei aplicații sau îl mențineți blocat?"
+allow = "Permitere"
+block = "Blocare"
+
+# --- Dialog editor reguli ---
+[rc_editor]
+add_rule_title = "Intrare regulă"
+save = "Salvare"
+close = "Închidere"
+
+# --- Filtre dialog fișiere ---
+[filter]
+xml_profile = "Profil XML (*.xml)"
+all_files = "Toate fișierele (*.*)"
+executable = "Executabil (*.exe)"

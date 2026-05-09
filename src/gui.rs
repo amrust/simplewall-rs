@@ -65,7 +65,7 @@ use app::App;
 /// `default_profile_path` is the same `%APPDATA%\amwall\profile.xml`
 /// path the CLI uses; if the file isn't present yet, the GUI starts
 /// with an empty `Profile`.
-pub fn run(default_profile_path: PathBuf) -> ExitCode {
+pub fn run(default_profile_path: PathBuf, force_show: bool) -> ExitCode {
     // Log elevation up front so the user can tell at a glance
     // whether filter-management actions will succeed (admin) or
     // bounce off ERROR_ACCESS_DENIED (user-mode). `IsUserAnAdmin`
@@ -142,20 +142,15 @@ pub fn run(default_profile_path: PathBuf) -> ExitCode {
     };
 
     let settings_path = settings::default_settings_path();
-    let settings = settings::Settings::load(&settings_path);
+    let mut settings = settings::Settings::load(&settings_path);
 
-    // Locale (M8): loaded from `<exe_dir>/i18n/<language>.ini` first
-    // (portable layout), then `%APPDATA%\amwall\i18n\<language>.ini`,
-    // then `<exe_dir>/simplewall.lng` / `<appdata>/simplewall.lng`
-    // for the bundled multi-language form. Empty selection or any
-    // load failure falls back to English baked into the source —
-    // the GUI's `lookup(...).unwrap_or("English")` pattern absorbs
-    // both cleanly.
-    let locale = if settings.language.is_empty() {
-        crate::locale::Locale::empty()
-    } else {
-        load_locale(&settings.language)
-    };
+    if !settings.language.is_empty() {
+        rust_i18n::set_locale(&settings.language);
+    } else if let Some(detected) = detect_system_locale() {
+        rust_i18n::set_locale(&detected);
+        settings.language = detected;
+        let _ = settings.save(&settings_path);
+    }
 
     // Bundled internal profile — `<rules_system>` + `<rules_blocklist>`
     // shipped with the binary. Same XML format as the user profile
@@ -180,10 +175,9 @@ pub fn run(default_profile_path: PathBuf) -> ExitCode {
         internal_profile,
         settings: std::cell::RefCell::new(settings),
         settings_path: std::cell::RefCell::new(settings_path),
-        locale,
     });
 
-    let hwnd = match main_window::create(app) {
+    let hwnd = match main_window::create(app, force_show) {
         Ok(h) => h,
         Err(e) => {
             eprintln!("amwall: failed to create main window: {e}");
@@ -227,50 +221,32 @@ pub fn run(default_profile_path: PathBuf) -> ExitCode {
     ExitCode::from(msg.wParam.0 as u8)
 }
 
-/// Walk the candidate paths for a localization file and return
-/// the first successful parse. `language` is the section name
-/// (e.g. "French", "Russian") matching upstream's i18n directory
-/// + bundled `simplewall.lng` section header.
-fn load_locale(language: &str) -> crate::locale::Locale {
-    let exe_dir = std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|p| p.to_path_buf()));
-    let appdata_dir = std::env::var_os("APPDATA")
-        .map(|p| std::path::PathBuf::from(p).join("amwall"));
-
-    let mut candidates: Vec<std::path::PathBuf> = Vec::new();
-    if let Some(d) = &exe_dir {
-        candidates.push(d.join("i18n").join(format!("{language}.ini")));
-        candidates.push(d.join("simplewall.lng"));
+fn detect_system_locale() -> Option<String> {
+    let mut buf = [0u16; 85];
+    let len = unsafe {
+        windows::Win32::Globalization::GetUserDefaultLocaleName(&mut buf)
+    };
+    if len <= 0 {
+        return None;
     }
-    if let Some(d) = &appdata_dir {
-        candidates.push(d.join("i18n").join(format!("{language}.ini")));
-        candidates.push(d.join("simplewall.lng"));
+    let name = String::from_utf16_lossy(&buf[..(len as usize).saturating_sub(1)]);
+    let available: Vec<&str> = rust_i18n::available_locales!().to_vec();
+    // Try exact match first (e.g. "pt-BR", "zh-CN", "sr-Latn")
+    if available.contains(&name.as_str()) {
+        return Some(name);
     }
-
-    for path in &candidates {
-        if !path.is_file() {
-            continue;
-        }
-        match crate::locale::Locale::load(path, language) {
-            Ok(loc) if !loc.is_empty() => {
-                eprintln!(
-                    "amwall: locale: loaded {} string(s) for {} from {}",
-                    loc.len(),
-                    loc.language(),
-                    path.display()
-                );
-                return loc;
-            }
-            Ok(_) => {} // file existed but didn't have the right section
-            Err(e) => eprintln!(
-                "amwall: locale: load failed for {}: {e}",
-                path.display()
-            ),
+    // Try base language (e.g. "pt-BR" from "pt-BR-something", "de" from "de-DE")
+    let base = name.split('-').next().unwrap_or(&name);
+    if available.contains(&base) {
+        return Some(base.to_string());
+    }
+    // Try matching a regional variant (e.g. system says "zh-SG" → we have "zh-CN")
+    for loc in &available {
+        if loc.starts_with(base) {
+            return Some(loc.to_string());
         }
     }
-    eprintln!("amwall: locale: no `{language}` translation found, using English");
-    crate::locale::Locale::empty()
+    None
 }
 
 fn try_load_profile(path: &std::path::Path) -> Result<Profile, Box<dyn std::error::Error>> {

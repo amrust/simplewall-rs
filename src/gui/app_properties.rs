@@ -45,6 +45,9 @@ const IDC_APPPROP_ENABLED_CHK: i32 = 1102;
 const IDC_APPPROP_SILENT_CHK: i32 = 1103;
 const IDC_SAVE: i32 = 1; // IDOK
 const IDC_CLOSE: i32 = 2; // IDCANCEL
+const IDC_GRP_APPPROP_PATH: i32 = 1104;
+const IDC_GRP_APPPROP_COMMENT: i32 = 1105;
+const IDC_GRP_APPPROP_SETTINGS: i32 = 1106;
 
 /// Dialog state pointed to by GWLP_USERDATA. Holds the original
 /// app, an optional signer display name (M12.1 — surfaced in the
@@ -109,15 +112,19 @@ unsafe extern "system" fn dialog_proc(
             // its App Properties UI; we route through the title
             // bar to avoid touching the .rc dialog template.
             if let Some(signer) = state.signer.as_deref() {
-                let title = format!("amwall - Properties (signed by {signer})");
+                let title = rust_i18n::t!("dialog.properties_signed", signer = signer);
+                let mut wtitle = wide(&title);
+                unsafe {
+                    let _ = SetWindowTextW(hwnd, PCWSTR(wtitle.as_mut_ptr()));
+                }
+            } else {
+                let title = rust_i18n::t!("rc_properties.title");
                 let mut wtitle = wide(&title);
                 unsafe {
                     let _ = SetWindowTextW(hwnd, PCWSTR(wtitle.as_mut_ptr()));
                 }
             }
 
-            // Path: read-only edit, single-line. Show the full path;
-            // truncation is handled by the edit's horizontal scroll.
             set_dlg_text(hwnd, IDC_APPPROP_PATH_ID, &state.initial.path.display().to_string());
             set_dlg_text(
                 hwnd,
@@ -127,7 +134,24 @@ unsafe extern "system" fn dialog_proc(
             set_dlg_check(hwnd, IDC_APPPROP_ENABLED_CHK, state.initial.is_enabled);
             set_dlg_check(hwnd, IDC_APPPROP_SILENT_CHK, state.initial.is_silent);
 
-            1 // TRUE — let the dialog manager pick the default focus.
+            let set_item = |id: i32, key: &str| {
+                let s = rust_i18n::t!(key);
+                let w = wide(&s);
+                unsafe {
+                    let _ = windows::Win32::UI::WindowsAndMessaging::SetDlgItemTextW(
+                        hwnd, id, PCWSTR(w.as_ptr()),
+                    );
+                }
+            };
+            set_item(IDC_GRP_APPPROP_PATH, "rc_properties.path");
+            set_item(IDC_GRP_APPPROP_COMMENT, "rc_properties.comment");
+            set_item(IDC_GRP_APPPROP_SETTINGS, "rc_properties.group_settings");
+            set_item(IDC_APPPROP_ENABLED_CHK, "rc_properties.enabled");
+            set_item(IDC_APPPROP_SILENT_CHK, "rc_properties.silent");
+            set_item(IDC_SAVE, "rc_properties.save");
+            set_item(IDC_CLOSE, "rc_properties.close");
+
+            1
         }
         WM_COMMAND => {
             let id = (wparam.0 & 0xFFFF) as i32;

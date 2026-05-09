@@ -62,6 +62,8 @@ const IDC_PROMPT_BLOCK: i32 = 2;
 /// so a stray click never conflicts with the dialog's own
 /// controls. Returned via TPM_RETURNCMD so the menu's value lives
 /// only inside `dialog_proc`'s WM_CONTEXTMENU branch.
+const IDC_PROMPT_HEADER: i32 = 1203;
+const IDC_PROMPT_QUESTION: i32 = 1204;
 const IDM_PROMPT_COPY_DETAILS: i32 = 4001;
 
 /// Safety timer — buttons are visibly disabled (greyed) for this
@@ -223,6 +225,10 @@ unsafe extern "system" fn dialog_proc(
             set_text(hwnd, IDC_PROMPT_PATH, &state.path_text);
             set_text(hwnd, IDC_PROMPT_REMOTE, &state.remote);
             set_text(hwnd, IDC_PROMPT_COUNTDOWN, &countdown_label(state.remaining_ms.get()));
+            set_text(hwnd, IDC_PROMPT_HEADER, &rust_i18n::t!("rc_prompt.header"));
+            set_text(hwnd, IDC_PROMPT_QUESTION, &rust_i18n::t!("rc_prompt.question"));
+            let title_w = wide(&rust_i18n::t!("rc_prompt.title"));
+            unsafe { let _ = SetWindowTextW(hwnd, PCWSTR(title_w.as_ptr())); }
             // Start the safety countdown. Buttons render greyed
             // (paint_action_button reads state.armed) until the
             // timer ticks down.
@@ -365,7 +371,7 @@ unsafe extern "system" fn dialog_proc(
                 Ok(m) => m,
                 Err(_) => return 0,
             };
-            let mut wlabel = super::wide("&Copy details");
+            let mut wlabel = super::wide(&rust_i18n::t!("context.copy_details"));
             unsafe {
                 let _ = AppendMenuW(
                     menu,

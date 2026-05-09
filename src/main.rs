@@ -53,7 +53,9 @@ mod cli {
     #[derive(Debug, PartialEq, Eq)]
     pub enum Command {
         /// No arguments — launch the GUI.
-        Gui,
+        /// `force_show`: when true, override `start_minimized` and
+        /// show the window (used by the language-change restart).
+        Gui { force_show: bool },
         /// `-h` / `--help` — print usage and exit 0.
         Help,
         /// `-install [path] [-temp] [-silent]`.
@@ -87,9 +89,10 @@ mod cli {
     pub fn parse_args(args: Vec<String>) -> Command {
         // args[0] is the program name; subcommand is args[1].
         if args.len() < 2 {
-            return Command::Gui;
+            return Command::Gui { force_show: false };
         }
         match args[1].as_str() {
+            "--show" => Command::Gui { force_show: true },
             "-h" | "--help" => Command::Help,
             "-install" => parse_install_flags(&args[2..]),
             "-uninstall" => parse_uninstall_flags(&args[2..]),
@@ -160,17 +163,13 @@ mod cli {
         // parent-console attach so operation output reaches the
         // calling shell. Sending those messages to a log file
         // would surprise scripted callers who pipe stderr.
-        if matches!(parsed, Command::Gui) {
+        if matches!(parsed, Command::Gui { .. }) {
             amwall::logging::init_debug_log();
         } else {
             attach_to_parent_console();
         }
         match parsed {
-            // No CLI subcommand → launch the GUI. The GUI doesn't
-            // require admin to start (admin is only needed for the
-            // install/uninstall actions, which the GUI routes
-            // through the same code paths the CLI uses).
-            Command::Gui => amwall::gui::run(default_profile_path()),
+            Command::Gui { force_show } => amwall::gui::run(default_profile_path(), force_show),
             Command::Help => {
                 print_usage();
                 ExitCode::from(0)
@@ -520,7 +519,7 @@ mod cli {
 
         #[test]
         fn no_args_launches_gui() {
-            assert_eq!(parse_args(args(&[])), Command::Gui);
+            assert_eq!(parse_args(args(&[])), Command::Gui { force_show: false });
         }
 
         #[test]

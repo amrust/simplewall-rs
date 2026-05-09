@@ -34,6 +34,8 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 use windows::core::PCWSTR;
 
+use rust_i18n::t;
+
 use super::ids::{IDM_EXIT, IDM_SETTINGS, IDM_TRAY_SHOW, IDM_TRAY_START};
 use super::wide;
 
@@ -185,14 +187,18 @@ pub fn show_context_menu(hwnd: HWND, filters_active: bool) {
         Err(_) => return,
     };
 
-    let show_label = wide("Show amwall");
-    let toggle_label = wide(if filters_active {
-        "Disable filters"
+    let show_text = t!("tray.show");
+    let show_label = wide(&show_text);
+    let toggle_text = if filters_active {
+        t!("tray.disable_filters")
     } else {
-        "Enable filters"
-    });
-    let settings_label = wide("Settings...");
-    let exit_label = wide("Exit amwall");
+        t!("tray.enable_filters")
+    };
+    let toggle_label = wide(&toggle_text);
+    let settings_text = t!("tray.settings");
+    let settings_label = wide(&settings_text);
+    let exit_text = t!("tray.exit");
+    let exit_label = wide(&exit_text);
 
     unsafe {
         let _ = AppendMenuW(

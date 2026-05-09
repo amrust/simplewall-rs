@@ -1,0 +1,396 @@
+# amwall — الترجمة العربية.
+# منسوخ من en.toml ومترجم إلى اللغة العربية.
+
+# --- عناوين شريط القوائم ---
+[menu]
+file = "&ملف"
+edit = "&تحرير"
+view = "&عرض"
+settings = "&إعدادات"
+rules = "&قواعد"
+blocklist = "&قائمة الحظر"
+help = "&مساعدة"
+
+# --- عناصر قائمة ملف ---
+[file]
+settings = "&إعدادات\tCtrl+P"
+add_app = "&إضافة تطبيق…\tCtrl+O"
+import = "&استيراد…"
+export = "&تصدير…"
+exit = "&خروج"
+
+# --- عناصر قائمة تحرير ---
+[edit]
+purge_unused = "حذف التطبيقات &غير المستخدمة"
+purge_timers = "حذف &المؤقتات"
+clear_log = "&مسح السجل"
+refresh = "&تحديث\tF5"
+
+# --- عناصر قائمة عرض ---
+[view]
+always_on_top = "دائماً في ال&أعلى"
+dark_theme = "استخدام ال&سمة الداكنة"
+autosize_columns = "ضبط حجم الأ&عمدة تلقائياً"
+filenames_only = "عرض أ&سماء الملفات فقط"
+show_search = "عرض شريط ال&بحث"
+layout_details = "التخطيط: &تفاصيل"
+layout_icons = "التخطيط: &أيقونات"
+layout_tiles = "التخطيط: &بلاطات"
+icon_small = "حجم الأيقونة: &صغير"
+icon_large = "حجم الأيقونة: &كبير"
+icon_extralarge = "حجم الأيقونة: كبير &جداً"
+font = "&خط…"
+
+# --- عناصر قائمة إعدادات ---
+[settings]
+load_on_startup = "&تحميل عند بدء النظام"
+start_minimized = "بدء &مصغّر"
+skip_uac = "تخطي تحذير UAC"
+check_updates = "التحقق من ال&تحديثات"
+auto_allow_microsoft = "السماح تلقائياً بالبرامج الموقعة من &Microsoft"
+check_signatures = "التحقق من التوقيعات ال&رقمية للتطبيقات"
+check_hashes = "التحقق من &hash SHA-256 للتطبيقات"
+
+# --- القائمة الفرعية للقواعد ---
+[rules]
+block_outbound = "حظر الاتصالات ال&صادرة للجميع"
+block_inbound = "حظر الاتصالات ال&واردة للجميع"
+allow_loopback = "السماح بـ &loopback"
+allow_6to4 = "السماح بـ IPv6 (&6to4)"
+allow_windows_update = "السماح بـ &Windows Update"
+
+# --- القائمة الفرعية لقائمة الحظر ---
+[blocklist]
+disable = "&تعطيل"
+allow = "&سماح"
+block = "&حظر"
+spy_telemetry = "&تجسس وقياس عن بُعد من Microsoft"
+ms_update = "&تحديث Microsoft"
+ms_apps = "&تطبيقات Microsoft"
+
+# --- عناصر قائمة مساعدة ---
+[help]
+website = "ال&موقع"
+check_updates = "ال&تحقق من التحديثات"
+about = "&حول"
+emergency_reset = "&إعادة تعيين WFP طارئة..."
+
+# --- تسميات التبويب ---
+[tab]
+apps = "التطبيقات"
+services = "الخدمات"
+uwp = "تطبيقات UWP"
+blocklist = "قائمة الحظر"
+system_rules = "قواعد النظام"
+user_rules = "قواعد المستخدم"
+connections = "الاتصالات"
+packets_log = "سجل الحزم"
+
+# --- رؤوس الأعمدة ---
+[column]
+name = "الاسم"
+added = "تمت الإضافة"
+path = "المسار"
+date = "التاريخ"
+protocol = "البروتوكول"
+direction = "الاتجاه"
+address_src = "العنوان (المصدر)"
+host_src = "المضيف (المصدر)"
+port_src = "المنفذ (المصدر)"
+address_dst = "العنوان (الوجهة)"
+host_dst = "المضيف (الوجهة)"
+port_dst = "المنفذ (الوجهة)"
+state = "الحالة"
+filter = "المرشح"
+index = "#"
+
+# --- رؤوس المجموعات ---
+[group]
+blocked = "محظور"
+blocked_silent = "محظور (صامت)"
+timer = "مؤقت"
+special = "تطبيقات خاصة"
+allowed = "مسموح"
+enabled = "مفعّل"
+disabled = "معطّل"
+
+# --- تلميحات شريط الأدوات ---
+[tooltip]
+enable_filters = "تفعيل المرشحات (Ctrl+T)"
+new_rule = "إنشاء قاعدة مستخدم جديدة"
+enable_notifications = "تفعيل الإشعارات لحركة المرور المحظورة"
+enable_log = "تسجيل حركة المرور المحظورة في ملف"
+enable_ui_log = "عرض سجل الحزم في واجهة المستخدم"
+reload = "إعادة تحميل الملف الشخصي من القرص (F5)"
+open_settings = "فتح الإعدادات"
+open_log_file = "فتح ملف سجل الحزم"
+clear_log = "مسح سجل الحزم"
+open_releases = "فتح صفحة الإصدارات على GitHub"
+
+# --- تسميات أزرار شريط الأدوات ---
+[toolbar]
+enable_filters = "تفعيل المرشحات"
+disable_filters = "تعطيل المرشحات"
+
+# --- رسائل شريط الحالة ---
+[status]
+filters_enabled = "المرشحات مفعّلة."
+filters_disabled = "المرشحات معطّلة."
+imported_simplewall = "تم استيراد ملف simplewall."
+checking_updates = "جارٍ التحقق من التحديثات..."
+up_to_date = "محدّث."
+update_check_failed = "فشل التحقق من التحديثات."
+nothing_to_remove = "لا يوجد شيء لإزالته من الملف الشخصي."
+engine_failed = "فشل فتح WFP engine."
+uninstall_failed = "فشل إلغاء تثبيت المرشح."
+install_failed = "فشل تثبيت المرشح."
+app_exists = "التطبيق موجود بالفعل في الملف الشخصي."
+app_added = "تمت إضافة التطبيق."
+rule_added = "تمت إضافة القاعدة."
+rule_updated = "تم تحديث القاعدة."
+rule_deleted = "تم حذف القاعدة."
+autosave_failed = "فشل الحفظ التلقائي."
+import_read_error = "فشل الاستيراد: خطأ في القراءة."
+import_parse_error = "فشل الاستيراد: خطأ في التحليل."
+imported = "تم الاستيراد."
+export_write_error = "فشل التصدير: خطأ في الكتابة."
+exported = "تم التصدير."
+refresh_read_error = "فشل التحديث: خطأ في القراءة."
+refresh_parse_error = "فشل التحديث: خطأ في التحليل."
+profile_reloaded = "تمت إعادة تحميل الملف الشخصي."
+no_unused = "لا توجد تطبيقات غير مستخدمة للحذف."
+no_timers = "لا توجد مؤقتات نشطة."
+log_cleared = "تم مسح السجل."
+font_failed = "فشل تحميل الخط؛ تمت الاستعادة."
+font_updated = "تم تحديث الخط."
+emergency_done = "اكتملت إعادة التعيين الطارئة."
+auto_allowed_one = "تم السماح تلقائياً بتطبيق واحد موقع من Microsoft"
+auto_allowed_many = "تم السماح تلقائياً بـ %{count} تطبيقات موقعة من Microsoft"
+silenced = "تم الإسكات: %{name}"
+allowed_count = "مسموح: %{name}"
+connecting = "جارٍ الاتصال بـ %{remote}"
+removed_entries = "تمت إزالة %{count} إدخال من الملف الشخصي."
+purged_apps = "تم حذف %{count} تطبيقات غير مستخدمة."
+cleared_timers = "تم مسح %{count} مؤقت تطبيق."
+skip_uac_enabled = "تخطي UAC: مفعّل. عمليات التشغيل المستقبلية لن تعرض UAC للمستخدمين المسؤولين."
+skip_uac_disabled = "تخطي UAC: معطّل. عمليات التشغيل المستقبلية ستعرض UAC للإجراءات الإدارية."
+hash_drift_one = "تغيير hash: %{name}"
+hash_drift_many = "تغيير hash على %{count} تطبيق (انظر السجل)"
+filters_removed = "تمت إزالة %{filters} مرشح، تم مسح %{sublayers} طبقة فرعية."
+filters_installed = "تم تثبيت %{added} مرشح، تم تخطي %{skipped}."
+tray_blocked = "amwall - محظور: %{name}"
+
+# --- عناوين مربعات الحوار ---
+[dialog]
+update_available = "amwall - تحديث متاح"
+check_updates = "amwall - التحقق من التحديثات"
+confirm_bulk_delete = "تأكيد الحذف الجماعي"
+admin_required = "مطلوب صلاحيات المسؤول"
+delete_rule = "حذف القاعدة"
+exit = "الخروج من amwall؟"
+clear_log = "مسح السجل"
+allow_blocked = "السماح بحركة المرور المحظورة سابقاً؟"
+emergency_reset = "إعادة تعيين WFP طارئة"
+about_title = "حول amwall"
+about_app = "amwall"
+settings_title = "الإعدادات"
+properties_signed = "amwall - الخصائص (موقع بواسطة %{signer})"
+
+# --- نصوص رسائل مربعات الحوار ---
+[message]
+update_available_body = "amwall %{latest} متاح (أنت تستخدم %{current}).\n\nهل تريد فتح صفحة الإصدارات في المتصفح؟"
+update_uptodate_body = "الإصدار الحالي: %{current}\nأحدث إصدار: %{latest}\n\nمحدّث بالفعل."
+update_error_body = "تعذر الوصول إلى GitHub للتحقق من التحديثات.\n\nالأسباب المحتملة: لا يوجد اتصال بالإنترنت، أو جدار الحماية يمنع amwall من HTTPS الصادر، أو حد معدل API الخاص بـ GitHub (60 طلب مجهول في الساعة). حاول مرة أخرى لاحقاً."
+admin_required_body = "إدارة المرشحات تتطلب صلاحيات المسؤول.\n\nأغلق amwall وأعد تشغيله من سطر أوامر مرتفع الصلاحيات\n(انقر بزر الماوس الأيمن → \"تشغيل كمسؤول\")."
+delete_rule_confirm = "هل تريد حذف القاعدة \"%{name}\"؟"
+bulk_delete_confirm = "هل تريد إزالة %{count} إدخال من الملف الشخصي؟\n\nلا يمكن التراجع عن هذا الإجراء."
+exit_body = "المرشحات مفعّلة حالياً. الخروج من amwall سيبقيها مطبّقة (تبقى فعّالة بعد إغلاق البرنامج). هل تريد المتابعة؟"
+clear_log_body = "مسح سجل الحزم؟ سيتم إفراغ تبويب السجل في الذاكرة واقتطاع ملف السجل على القرص. لا يمكن التراجع عن هذا الإجراء."
+emergency_reset_body = "إعادة التعيين الطارئة ستقوم بـ:\n\n• إزالة كل مرشح WFP قام amwall بتثبيته\n• إفراغ قائمة ملف التطبيقات وقواعد المستخدم\n• إيقاف تفعيل المرشحات\n\nاستخدم هذا إذا كان amwall يحظر شيئاً لا يمكنك تحديده وتحتاج إلى استعادة سلوك الشبكة الافتراضي لنظام التشغيل. التغيير فوري. هل تريد المتابعة؟"
+allow_one_body = "%{name} محظور حالياً. السماح به سيمكّنه من الوصول إلى الشبكة في المرة القادمة.\n\nهل تريد المتابعة؟"
+allow_many_body = "سيتم تعيين %{count} تطبيق محظور سابقاً إلى مسموح. ستتمكن من الوصول إلى الشبكة في المرة القادمة.\n\nهل تريد المتابعة؟"
+blocked_notification = "محظور: %{app}"
+
+# --- قائمة السياق ---
+[context]
+allow = "سماح"
+block = "حظر"
+copy_details = "&نسخ التفاصيل"
+properties = "الخصائص\tEnter"
+remove_from_profile = "إزالة من الملف الشخصي\tDel"
+explore = "استكشاف (فتح المجلد)\tCtrl+E"
+copy = "نسخ الاسم\tCtrl+C"
+
+# --- قائمة علبة النظام ---
+[tray]
+show = "عرض amwall"
+enable_filters = "تفعيل المرشحات"
+disable_filters = "تعطيل المرشحات"
+settings = "الإعدادات..."
+exit = "الخروج من amwall"
+
+# --- معالج التشغيل الأول ---
+[wizard]
+title = "مرحباً بك في amwall"
+subtitle = "استيراد إعدادات simplewall؟"
+import_btn = "استيراد"
+start_fresh_btn = "بداية جديدة"
+body = """عثر amwall على إعدادات simplewall موجودة:
+
+• المسار: %{path}
+• %{apps} تطبيق مع قواعد
+• %{rules} قاعدة مخصصة
+
+الاستيراد سينسخ profile.xml الخاص بـ simplewall إلى amwall ويستخدمه كنقطة بداية. simplewall يبقى مثبتاً ومرشحات kernel الحالية تبقى نشطة — قم بتعطيل simplewall قبل النقر على "تفعيل المرشحات" في amwall لتجنب تطبيق كلا الجدارين لقواعد متداخلة.
+
+يمكنك تشغيل ملف → استيراد لاحقاً إذا تخطيت الآن."""
+
+# --- تبويبات مربع حوار الإعدادات ---
+[settings_tab]
+general = "عام"
+interface = "الواجهة"
+highlighting = "التمييز"
+rules = "القواعد"
+blocklist = "قائمة الحظر"
+notifications = "الإشعارات"
+logging = "التسجيل"
+exclude = "الاستثناء"
+
+# --- تبويبات محرر القواعد ---
+[rule_editor]
+general = "عام"
+rule = "القاعدة"
+apps = "التطبيقات"
+
+# --- تسميات البروتوكول ---
+[protocol]
+any = "الكل"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- تسميات عائلة العناوين ---
+[version]
+any = "الكل"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- تسميات الاتجاه ---
+[direction]
+outbound = "صادر"
+inbound = "وارد"
+both = "كلاهما"
+other = "أخرى"
+
+# --- تسميات الإجراء ---
+[action]
+allow = "سماح"
+block = "حظر"
+permit = "إذن"
+
+# --- صفحة الإعدادات: عام ---
+[rc_general]
+group_config = "الإعدادات العامة"
+always_on_top = "دائماً في الأعلى"
+load_on_startup = "التحميل عند بدء النظام"
+start_minimized = "البدء مصغّراً"
+skip_uac = "تخطي تحذير \"User Account Control\""
+check_updates = "التحقق من التحديثات دورياً (مُوصى به)"
+group_language = "اللغة"
+select_language = "اختر اللغة:"
+
+# --- صفحة الإعدادات: الواجهة ---
+[rc_interface]
+group_confirm = "التأكيدات"
+confirm_exit = "عرض مربع حوار التأكيد عند الخروج"
+confirm_exit_timer = "عرض مربع حوار التأكيد عند الخروج أثناء وجود مؤقتات نشطة"
+confirm_log_clear = "التأكيد عند مسح ملف السجل"
+confirm_allow = "التأكيد عند السماح بحركة المرور المحظورة سابقاً"
+group_tray = "أيقونة علبة النظام"
+tray_single_click = "نقرة واحدة على أيقونة علبة النظام للفتح"
+
+# --- صفحة الإعدادات: التمييز ---
+[rc_highlight]
+group = "التمييز"
+hint = "انقر نقراً مزدوجاً على عنصر لتغييره."
+
+# --- صفحة الإعدادات: القواعد ---
+[rc_rules]
+group_connections = "الاتصالات"
+block_outbound = "حظر الاتصالات الصادرة للجميع"
+block_inbound = "حظر الاتصالات الواردة للجميع"
+allow_loopback = "السماح باتصالات loopback للجميع"
+allow_6to4 = "السماح بإعادة توجيه IPv6 (6to4) للجميع"
+group_security = "الأمان"
+stealth_mode = "منع فحص المنافذ (وضع التخفي)"
+boottime_filters = "تفعيل المرشحات عند الإقلاع"
+group_advanced = "متقدم"
+check_signatures = "التحقق من التوقيعات الرقمية للتطبيقات"
+use_hashes = "استخدام hash الملفات لتحديد التطبيقات"
+resolve_addresses = "حل عناوين الشبكة"
+
+# --- صفحة الإعدادات: قائمة الحظر ---
+[rc_blocklist]
+group_spy = "تجسس وقياس عن بُعد من Microsoft"
+group_update = "تحديث Microsoft"
+group_apps = "تطبيقات Microsoft"
+
+# --- صفحة الإعدادات: الإشعارات ---
+[rc_notifications]
+group = "الإشعارات"
+enable = "تفعيل إشعارات الحزم"
+sound = "تفعيل صوت الإشعارات"
+fullscreen = "تفعيل الوضع الصامت عند وجود تطبيق بملء الشاشة"
+on_tray = "عرض نافذة الإشعارات عند علبة النظام"
+timeout = "المهلة بين الإشعارات المتشابهة (ثانية):"
+
+# --- صفحة الإعدادات: التسجيل ---
+[rc_logging]
+group_log = "سجل الحزم"
+enable = "تفعيل تسجيل الحزم في ملف"
+max_size = "الحد الأقصى لحجم السجل (كيلوبايت):"
+group_viewer = "عارض السجل"
+group_ui = "الواجهة"
+enable_ui = "تفعيل تسجيل الحزم في الواجهة"
+
+# --- صفحة الإعدادات: الاستثناء ---
+[rc_exclude]
+group_notif = "الإشعارات: لا تُنبّه بشأن ..."
+blocklist = "قائمة الحظر"
+user_rules = "قواعد المستخدم"
+group_log = "التسجيل: لا تسجل ..."
+stealth = "اتصالات فحص المنافذ"
+allowed = "الاتصالات المسموحة"
+
+# --- مربع حوار خصائص التطبيق ---
+[rc_properties]
+title = "خصائص التطبيق"
+path = "المسار:"
+comment = "تعليق:"
+group_settings = "الإعدادات:"
+enabled = "مفعّل (السماح بحركة مرور هذا التطبيق)"
+silent = "صامت (بدون إشعارات)"
+save = "حفظ"
+close = "إغلاق"
+
+# --- مربع حوار طلب الاتصال ---
+[rc_prompt]
+title = "amwall - طلب اتصال تطبيق"
+header = "تطبيق يحاول الاتصال:"
+question = "هل تسمح بحركة مرور هذا التطبيق، أم تبقيه محظوراً؟"
+allow = "سماح"
+block = "حظر"
+
+# --- مربع حوار محرر القواعد ---
+[rc_editor]
+add_rule_title = "إدخال قاعدة"
+save = "حفظ"
+close = "إغلاق"
+
+# --- مرشحات مربع حوار الملفات ---
+[filter]
+xml_profile = "ملف XML (*.xml)"
+all_files = "جميع الملفات (*.*)"
+executable = "ملف تنفيذي (*.exe)"

@@ -79,7 +79,7 @@ pub fn show(hwnd: HWND, target: &ContextTarget) -> Option<u16> {
     // (bolded). Only meaningful for entries that have or could have
     // an App backing them; for UWP we'd need the package-family-
     // name path, so gray it out for now.
-    append_string(menu, IDM_PROPERTIES, "Properties\tEnter", target.in_profile && !is_uwp);
+    append_string(menu, IDM_PROPERTIES, &rust_i18n::t!("context.properties"), target.in_profile && !is_uwp);
 
     append_separator(menu);
 
@@ -91,12 +91,12 @@ pub fn show(hwnd: HWND, target: &ContextTarget) -> Option<u16> {
         (true, false) => (MF_UNCHECKED.0, MF_CHECKED.0),
         _ => (MF_UNCHECKED.0, MF_UNCHECKED.0),
     };
-    append_string_with_state(menu, IDM_ALLOW, "Allow", MF_STRING.0 | allow_check, !is_uwp);
-    append_string_with_state(menu, IDM_BLOCK, "Block", MF_STRING.0 | block_check, !is_uwp);
+    append_string_with_state(menu, IDM_ALLOW, &rust_i18n::t!("context.allow"), MF_STRING.0 | allow_check, !is_uwp);
+    append_string_with_state(menu, IDM_BLOCK, &rust_i18n::t!("context.block"), MF_STRING.0 | block_check, !is_uwp);
 
     if target.in_profile {
         append_separator(menu);
-        append_string(menu, IDM_REMOVE_FROM_PROFILE, "Remove from profile\tDel", true);
+        append_string(menu, IDM_REMOVE_FROM_PROFILE, &rust_i18n::t!("context.remove_from_profile"), true);
     }
 
     append_separator(menu);
@@ -106,9 +106,9 @@ pub fn show(hwnd: HWND, target: &ContextTarget) -> Option<u16> {
     // entry point, or a service that QueryServiceConfig couldn't
     // resolve).
     let can_explore = !target.binary_path.as_os_str().is_empty();
-    append_string(menu, IDM_EXPLORE, "Explore (open folder)\tCtrl+E", can_explore);
+    append_string(menu, IDM_EXPLORE, &rust_i18n::t!("context.explore"), can_explore);
 
-    append_string(menu, IDM_COPY, "Copy name\tCtrl+C", true);
+    append_string(menu, IDM_COPY, &rust_i18n::t!("context.copy"), true);
 
     let mut pt = POINT::default();
     unsafe {

@@ -1,0 +1,398 @@
+# amwall — Magyar fordítás (Magyar).
+# Új nyelveket a fájl másolásával adhat hozzá, pl. locales/de.toml,
+# és az értékek lefordításával. A rust-i18n az összes nyelvet
+# beágyazza fordításkor; az aktív nyelvet a rust_i18n::set_locale() állítja be.
+
+# --- Menüsáv címek ---
+[menu]
+file = "&Fájl"
+edit = "S&zerkesztés"
+view = "&Nézet"
+settings = "&Beállítások"
+rules = "&Szabályok"
+blocklist = "&Tiltólista"
+help = "&Súgó"
+
+# --- Fájl menüelemek ---
+[file]
+settings = "&Beállítások\tCtrl+P"
+add_app = "&Alkalmazás hozzáadása…\tCtrl+O"
+import = "&Importálás…"
+export = "&Exportálás…"
+exit = "&Kilépés"
+
+# --- Szerkesztés menüelemek ---
+[edit]
+purge_unused = "&Nem használt alkalmazások törlése"
+purge_timers = "&Időzítők törlése"
+clear_log = "&Napló törlése"
+refresh = "&Frissítés\tF5"
+
+# --- Nézet menüelemek ---
+[view]
+always_on_top = "Mindig &legfelül"
+dark_theme = "&Sötét téma"
+autosize_columns = "&Automatikus oszlopszélesség"
+filenames_only = "Csak &fájlnevek megjelenítése"
+show_search = "&Keresősáv megjelenítése"
+layout_details = "Elrendezés: &Részletek"
+layout_icons = "Elrendezés: &Ikonok"
+layout_tiles = "Elrendezés: &Csempék"
+icon_small = "Ikonméret: &Kicsi"
+icon_large = "Ikonméret: &Nagy"
+icon_extralarge = "Ikonméret: &Extra nagy"
+font = "&Betűtípus…"
+
+# --- Beállítások menüelemek ---
+[settings]
+load_on_startup = "&Betöltés a rendszer indításakor"
+start_minimized = "Indítás &kis méretben"
+skip_uac = "UAC figyelmeztetés kihagyása"
+check_updates = "&Frissítések keresése"
+auto_allow_microsoft = "&Microsoft által aláírt programok automatikus engedélyezése"
+check_signatures = "&Digitális aláírások ellenőrzése"
+check_hashes = "SHA-256 &hash ellenőrzése"
+
+# --- Szabályok almenü ---
+[rules]
+block_outbound = "&Kimenő blokkolása mindenkinél"
+block_inbound = "&Bejövő blokkolása mindenkinél"
+allow_loopback = "&loopback engedélyezése"
+allow_6to4 = "IPv6 (&6to4) engedélyezése"
+allow_windows_update = "&Windows Update engedélyezése"
+
+# --- Tiltólista almenü ---
+[blocklist]
+disable = "&Letiltás"
+allow = "&Engedélyezés"
+block = "&Blokkolás"
+spy_telemetry = "Microsoft &kémkedés és telemetria"
+ms_update = "Microsoft &Update"
+ms_apps = "Microsoft &alkalmazások"
+
+# --- Súgó menüelemek ---
+[help]
+website = "&Weboldal"
+check_updates = "Frissítések &keresése"
+about = "&Névjegy"
+emergency_reset = "&Vészhelyzeti WFP visszaállítás..."
+
+# --- Fülcímkék ---
+[tab]
+apps = "Alkalmazások"
+services = "Szolgáltatások"
+uwp = "UWP alkalmazások"
+blocklist = "Tiltólista"
+system_rules = "Rendszerszabályok"
+user_rules = "Felhasználói szabályok"
+connections = "Kapcsolatok"
+packets_log = "Csomagnapló"
+
+# --- Oszlopfejlécek ---
+[column]
+name = "Név"
+added = "Hozzáadva"
+path = "Elérési út"
+date = "Dátum"
+protocol = "Protokoll"
+direction = "Irány"
+address_src = "Cím (forrás)"
+host_src = "Gazdagép (forrás)"
+port_src = "Port (forrás)"
+address_dst = "Cím (cél)"
+host_dst = "Gazdagép (cél)"
+port_dst = "Port (cél)"
+state = "Állapot"
+filter = "Szűrő"
+index = "#"
+
+# --- Csoportfejlécek ---
+[group]
+blocked = "Blokkolt"
+blocked_silent = "Blokkolt (csendes)"
+timer = "Időzítő"
+special = "Speciális alkalmazások"
+allowed = "Engedélyezett"
+enabled = "Engedélyezve"
+disabled = "Letiltva"
+
+# --- Eszköztár buboréksúgók ---
+[tooltip]
+enable_filters = "Szűrők engedélyezése (Ctrl+T)"
+new_rule = "Új felhasználói szabály létrehozása"
+enable_notifications = "Értesítések engedélyezése blokkolt forgalomról"
+enable_log = "Blokkolt forgalom naplózása fájlba"
+enable_ui_log = "Csomagnapló megjelenítése a felületen"
+reload = "Profil újratöltése lemezről (F5)"
+open_settings = "Beállítások megnyitása"
+open_log_file = "Csomagnaplófájl megnyitása"
+clear_log = "Csomagnapló törlése"
+open_releases = "GitHub kiadások oldal megnyitása"
+
+# --- Eszköztár gombcímkék ---
+[toolbar]
+enable_filters = "Szűrők engedélyezése"
+disable_filters = "Szűrők letiltása"
+
+# --- Állapotsor üzenetek ---
+[status]
+filters_enabled = "A szűrők engedélyezve vannak."
+filters_disabled = "A szűrők le vannak tiltva."
+imported_simplewall = "simplewall profil importálva."
+checking_updates = "Frissítések keresése..."
+up_to_date = "Naprakész."
+update_check_failed = "Frissítés-ellenőrzés sikertelen."
+nothing_to_remove = "Nincs mit eltávolítani a profilból."
+engine_failed = "Nem sikerült megnyitni a WFP motort."
+uninstall_failed = "Szűrők eltávolítása sikertelen."
+install_failed = "Szűrők telepítése sikertelen."
+app_exists = "Az alkalmazás már szerepel a profilban."
+app_added = "Alkalmazás hozzáadva."
+rule_added = "Szabály hozzáadva."
+rule_updated = "Szabály frissítve."
+rule_deleted = "Szabály törölve."
+autosave_failed = "Automatikus mentés sikertelen."
+import_read_error = "Importálás sikertelen: olvasási hiba."
+import_parse_error = "Importálás sikertelen: elemzési hiba."
+imported = "Importálva."
+export_write_error = "Exportálás sikertelen: írási hiba."
+exported = "Exportálva."
+refresh_read_error = "Frissítés sikertelen: olvasási hiba."
+refresh_parse_error = "Frissítés sikertelen: elemzési hiba."
+profile_reloaded = "Profil újratöltve."
+no_unused = "Nincsenek nem használt alkalmazások a törléshez."
+no_timers = "Nincsenek aktív időzítők."
+log_cleared = "Napló törölve."
+font_failed = "Betűtípus betöltése sikertelen; visszaállítva."
+font_updated = "Betűtípus frissítve."
+emergency_done = "Vészhelyzeti visszaállítás kész."
+auto_allowed_one = "Automatikusan engedélyezve 1 Microsoft által aláírt alkalmazás"
+auto_allowed_many = "Automatikusan engedélyezve %{count} Microsoft által aláírt alkalmazás"
+silenced = "Elnémítva: %{name}"
+allowed_count = "Engedélyezve: %{name}"
+connecting = "Csatlakozás a következőhöz: %{remote}"
+removed_entries = "%{count} bejegyzés eltávolítva a profilból."
+purged_apps = "%{count} nem használt alkalmazás törölve."
+cleared_timers = "%{count} alkalmazás-időzítő törölve."
+skip_uac_enabled = "UAC kihagyása: engedélyezve. A jövőbeli indítások nem mutatják az UAC-t rendszergazdáknak."
+skip_uac_disabled = "UAC kihagyása: letiltva. A jövőbeli indítások mutatják az UAC-t adminisztratív műveletekhez."
+hash_drift_one = "Hash-eltérés: %{name}"
+hash_drift_many = "Hash-eltérés %{count} alkalmazásnál (lásd napló)"
+filters_removed = "%{filters} szűrő eltávolítva, %{sublayers} alréteg törölve."
+filters_installed = "%{added} szűrő telepítve, %{skipped} kihagyva."
+tray_blocked = "amwall - blokkolt: %{name}"
+
+# --- Párbeszédablak címek ---
+[dialog]
+update_available = "amwall - frissítés elérhető"
+check_updates = "amwall - Frissítések keresése"
+confirm_bulk_delete = "Tömeges törlés megerősítése"
+admin_required = "Rendszergazda szükséges"
+delete_rule = "Szabály törlése"
+exit = "Kilépés az amwall-ból?"
+clear_log = "Napló törlése"
+allow_blocked = "Korábban blokkolt forgalom engedélyezése?"
+emergency_reset = "Vészhelyzeti WFP visszaállítás"
+about_title = "Az amwall névjegye"
+about_app = "amwall"
+settings_title = "Beállítások"
+properties_signed = "amwall - Tulajdonságok (aláírta: %{signer})"
+
+# --- Párbeszédablak üzenetek ---
+[message]
+update_available_body = "Az amwall %{latest} elérhető (jelenleg a %{current} verziót futtatja).\n\nMegnyitja a kiadások oldalát a böngészőben?"
+update_uptodate_body = "Jelenlegi verzió: %{current}\nLegújabb verzió: %{latest}\n\nMár naprakész."
+update_error_body = "Nem sikerült elérni a GitHubot a frissítések ellenőrzéséhez.\n\nLehetséges okok: nincs internet, a tűzfal blokkolja az amwall kimenő HTTPS-forgalmát, vagy a GitHub API korlátja (60 névtelen kérés óránként). Próbálja újra később."
+admin_required_body = "A szűrőkezelés rendszergazdai jogosultságot igényel.\n\nZárja be az amwall-t és indítsa újra emelt jogosultságú parancssorból\n(jobb klikk → \"Futtatás rendszergazdaként\")."
+delete_rule_confirm = "Törli a(z) \"%{name}\" szabályt?"
+bulk_delete_confirm = "Eltávolít %{count} bejegyzést a profilból?\n\nEz nem vonható vissza."
+exit_body = "A szűrők jelenleg engedélyezve vannak. Az amwall bezárása a helyükön hagyja őket (túlélik a folyamat leállását). Folytatja?"
+clear_log_body = "Törli a csomagnaplót? Ez kiüríti a memóriában lévő naplófület és csonkítja a lemezen lévő naplófájlt. A művelet nem vonható vissza."
+emergency_reset_body = "A vészhelyzeti visszaállítás:\n\n• Eltávolítja az amwall által telepített összes WFP szűrőt\n• Kiüríti az alkalmazásprofilt és a felhasználói szabályok listáját\n• Kikapcsolja a „Szűrők engedélyezése” lehetőséget\n\nHasználja ezt, ha az amwall blokkol valamit, amit nem tud azonosítani, és vissza kell állítania az operációs rendszer alapértelmezett hálózati viselkedését. A változás azonnali. Folytatja?"
+allow_one_body = "A(z) %{name} jelenleg blokkolt. Az engedélyezés lehetővé teszi a hálózati hozzáférést a következő próbálkozáskor.\n\nFolytatja?"
+allow_many_body = "%{count} korábban blokkolt alkalmazás Engedélyezés állapotba kerül. A következő próbálkozáskor hozzáférhetnek a hálózathoz.\n\nFolytatja?"
+blocked_notification = "Blokkolt: %{app}"
+
+# --- Helyi menü ---
+[context]
+allow = "Engedélyezés"
+block = "Blokkolás"
+copy_details = "&Részletek másolása"
+properties = "Tulajdonságok\tEnter"
+remove_from_profile = "Eltávolítás a profilból\tDel"
+explore = "Megnyitás mappában\tCtrl+E"
+copy = "Név másolása\tCtrl+C"
+
+# --- Tálcamenü ---
+[tray]
+show = "amwall megjelenítése"
+enable_filters = "Szűrők engedélyezése"
+disable_filters = "Szűrők letiltása"
+settings = "Beállítások..."
+exit = "Kilépés az amwall-ból"
+
+# --- Első indítási varázsló ---
+[wizard]
+title = "Üdvözli az amwall"
+subtitle = "simplewall konfiguráció importálása?"
+import_btn = "Importálás"
+start_fresh_btn = "Újrakezdés"
+body = """Az amwall talált egy meglévő simplewall konfigurációt:
+
+• Elérési út: %{path}
+• %{apps} alkalmazás szabályokkal
+• %{rules} egyéni szabály
+
+Az importálás átmásolja a simplewall profile.xml fájlját az amwall-ba, és kiindulópontként használja. A simplewall telepítve marad, és kernelszűrői aktívak maradnak — tiltsa le a simplewall-t, mielőtt az amwall-ban a „Szűrők engedélyezése" gombra kattint, hogy elkerülje a két tűzfal átfedő szabályait.
+
+A Fájl → Importálás menüponttal később is elvégezheti, ha most kihagyja."""
+
+# --- Beállítások párbeszédablak fülei ---
+[settings_tab]
+general = "Általános"
+interface = "Felület"
+highlighting = "Kiemelés"
+rules = "Szabályok"
+blocklist = "Tiltólista"
+notifications = "Értesítések"
+logging = "Naplózás"
+exclude = "Kizárás"
+
+# --- Szabályszerkesztő fülei ---
+[rule_editor]
+general = "Általános"
+rule = "Szabály"
+apps = "Alkalmazások"
+
+# --- Protokollcímkék ---
+[protocol]
+any = "Bármely"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Címcsalád-címkék ---
+[version]
+any = "Bármely"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Iránycímkék ---
+[direction]
+outbound = "Kimenő"
+inbound = "Bejövő"
+both = "Mindkettő"
+other = "Egyéb"
+
+# --- Műveletcímkék ---
+[action]
+allow = "Engedélyezés"
+block = "Blokkolás"
+permit = "Engedélyezés"
+
+# --- Beállítások oldal: Általános ---
+[rc_general]
+group_config = "Általános beállítások"
+always_on_top = "Mindig legfelül"
+load_on_startup = "Betöltés a rendszer indításakor"
+start_minimized = "Indítás kis méretben"
+skip_uac = "A \"Felhasználói fiókok felügyelete\" figyelmeztetés kihagyása"
+check_updates = "Rendszeres frissítés-ellenőrzés (ajánlott)"
+group_language = "Nyelv"
+select_language = "Nyelv kiválasztása:"
+
+# --- Beállítások oldal: Felület ---
+[rc_interface]
+group_confirm = "Megerősítések"
+confirm_exit = "Megerősítő párbeszédablak megjelenítése kilépéskor"
+confirm_exit_timer = "Megerősítő párbeszédablak megjelenítése kilépéskor aktív időzítők esetén"
+confirm_log_clear = "Megerősítés a naplófájl törlésekor"
+confirm_allow = "Megerősítés korábban blokkolt forgalom engedélyezésekor"
+group_tray = "Tálcaikon"
+tray_single_click = "Egyszeri kattintás a tálcaikonra a megnyitáshoz"
+
+# --- Beállítások oldal: Kiemelés ---
+[rc_highlight]
+group = "Kiemelés"
+hint = "Kattintson duplán egy elemre a módosításhoz."
+
+# --- Beállítások oldal: Szabályok ---
+[rc_rules]
+group_connections = "Kapcsolatok"
+block_outbound = "Kimenő kapcsolatok blokkolása mindenkinél"
+block_inbound = "Bejövő kapcsolatok blokkolása mindenkinél"
+allow_loopback = "loopback kapcsolatok engedélyezése mindenkinél"
+allow_6to4 = "IPv6 átirányítás (6to4) engedélyezése mindenkinél"
+group_security = "Biztonság"
+stealth_mode = "Portkeresés megakadályozása (rejtett mód)"
+boottime_filters = "Szűrők engedélyezése rendszerindításkor"
+group_advanced = "Speciális"
+check_signatures = "Alkalmazások digitális aláírásának ellenőrzése"
+use_hashes = "Fájl-hash-ek használata az alkalmazások azonosításához"
+resolve_addresses = "Hálózati címek feloldása"
+
+# --- Beállítások oldal: Tiltólista ---
+[rc_blocklist]
+group_spy = "Microsoft kémkedés és telemetria"
+group_update = "Microsoft Update"
+group_apps = "Microsoft alkalmazások"
+
+# --- Beállítások oldal: Értesítések ---
+[rc_notifications]
+group = "Értesítések"
+enable = "Csomagértesítések engedélyezése"
+sound = "Értesítési hang engedélyezése"
+fullscreen = "Csendes mód engedélyezése teljes képernyős alkalmazás előtérben"
+on_tray = "Értesítési ablak megjelenítése a tálcánál"
+timeout = "Hasonló értesítések közötti időköz (mp):"
+
+# --- Beállítások oldal: Naplózás ---
+[rc_logging]
+group_log = "Csomagnapló"
+enable = "Csomagnaplózás engedélyezése fájlba"
+max_size = "Maximális naplóméret (kB):"
+group_viewer = "Naplómegtekintő"
+group_ui = "Felület"
+enable_ui = "Csomagnaplózás engedélyezése a felületen"
+
+# --- Beállítások oldal: Kizárás ---
+[rc_exclude]
+group_notif = "Értesítések: ne értesítsen erről ..."
+blocklist = "tiltólista"
+user_rules = "felhasználói szabályok"
+group_log = "Naplózás: ne naplózza ..."
+stealth = "portkeresési kapcsolatok"
+allowed = "engedélyezett kapcsolatok"
+
+# --- Alkalmazás tulajdonságai párbeszédablak ---
+[rc_properties]
+title = "Alkalmazás tulajdonságai"
+path = "Elérési út:"
+comment = "Megjegyzés:"
+group_settings = "Beállítások:"
+enabled = "Engedélyezve (alkalmazás forgalmának engedélyezése)"
+silent = "Csendes (nincs értesítés)"
+save = "Mentés"
+close = "Bezárás"
+
+# --- Kapcsolódási kérelem párbeszédablak ---
+[rc_prompt]
+title = "amwall - alkalmazás kapcsolódási kérelme"
+header = "Egy alkalmazás megpróbál csatlakozni:"
+question = "Engedélyezi az alkalmazás forgalmát, vagy blokkolva maradjon?"
+allow = "Engedélyezés"
+block = "Blokkolás"
+
+# --- Szabályszerkesztő párbeszédablak ---
+[rc_editor]
+add_rule_title = "Szabálybejegyzés"
+save = "Mentés"
+close = "Bezárás"
+
+# --- Fájlpárbeszéd szűrők ---
+[filter]
+xml_profile = "XML profil (*.xml)"
+all_files = "Minden fájl (*.*)"
+executable = "Futtatható fájl (*.exe)"

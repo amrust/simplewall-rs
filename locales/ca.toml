@@ -1,0 +1,397 @@
+# amwall — Localització al Català.
+# Traducció de locales/en.toml. Mantingueu les claus sense canvis,
+# traduïu només els valors. Els marcadors %{…} han de romandre intactes.
+
+# --- Títols de la barra de menús ---
+[menu]
+file = "&Fitxer"
+edit = "&Edita"
+view = "&Visualitza"
+settings = "&Configuració"
+rules = "&Regles"
+blocklist = "Llista de &bloqueig"
+help = "&Ajuda"
+
+# --- Elements del menú Fitxer ---
+[file]
+settings = "&Configuració\tCtrl+P"
+add_app = "&Afegeix aplicació…\tCtrl+O"
+import = "&Importa…"
+export = "&Exporta…"
+exit = "&Surt"
+
+# --- Elements del menú Edita ---
+[edit]
+purge_unused = "Elimina aplicacions &no utilitzades"
+purge_timers = "Elimina &temporitzadors"
+clear_log = "&Esborra el registre"
+refresh = "&Actualitza\tF5"
+
+# --- Elements del menú Visualitza ---
+[view]
+always_on_top = "Sempre al da&vant"
+dark_theme = "Usar tema &fosc"
+autosize_columns = "&Ajustar mida de columnes"
+filenames_only = "Mostra només noms de &fitxers"
+show_search = "Mostra barra de &cerca"
+layout_details = "Disposició: &Detalls"
+layout_icons = "Disposició: &Icones"
+layout_tiles = "Disposició: &Rajoles"
+icon_small = "Mida d'icona: &Petita"
+icon_large = "Mida d'icona: &Gran"
+icon_extralarge = "Mida d'icona: &Extra-gran"
+font = "&Tipus de lletra…"
+
+# --- Elements del menú Configuració ---
+[settings]
+load_on_startup = "&Carregar a l'inici del sistema"
+start_minimized = "Iniciar &minimitzat"
+skip_uac = "Ometre l'avís del UAC"
+check_updates = "Comprovar &actualitzacions"
+auto_allow_microsoft = "Permetre automaticament programes signats per &Microsoft"
+check_signatures = "Comprovar signatures &digitals de les aplicacions"
+check_hashes = "Comprovar &hash SHA-256 de les aplicacions"
+
+# --- Submenú Regles ---
+[rules]
+block_outbound = "Bloquejar connexions de &sortida per a tots"
+block_inbound = "Bloquejar connexions d'&entrada per a tots"
+allow_loopback = "Permetre &loopback"
+allow_6to4 = "Permetre IPv6 (&6to4)"
+allow_windows_update = "Permetre &Windows Update"
+
+# --- Submenú Blocklist ---
+[blocklist]
+disable = "&Desactiva"
+allow = "&Permet"
+block = "&Bloqueja"
+spy_telemetry = "&Espionatge i telemetria de Microsoft"
+ms_update = "Microsoft &Update"
+ms_apps = "&Aplicacions de Microsoft"
+
+# --- Elements del menú Ajuda ---
+[help]
+website = "&Lloc web"
+check_updates = "&Comprovar actualitzacions"
+about = "&Quant a"
+emergency_reset = "&Reinici d'emergència del WFP..."
+
+# --- Etiquetes de pestanyes ---
+[tab]
+apps = "Aplicacions"
+services = "Serveis"
+uwp = "Aplicacions UWP"
+blocklist = "Llista de bloqueig"
+system_rules = "Regles del sistema"
+user_rules = "Regles de l'usuari"
+connections = "Connexions"
+packets_log = "Registre de paquets"
+
+# --- Capçaleres de columnes ---
+[column]
+name = "Nom"
+added = "Afegit"
+path = "Camí"
+date = "Data"
+protocol = "Protocol"
+direction = "Direcció"
+address_src = "Adreça (Origen)"
+host_src = "Host (Origen)"
+port_src = "Port (Origen)"
+address_dst = "Adreça (Destinació)"
+host_dst = "Host (Destinació)"
+port_dst = "Port (Destinació)"
+state = "Estat"
+filter = "Filtre"
+index = "#"
+
+# --- Capçaleres de grups ---
+[group]
+blocked = "Bloquejat"
+blocked_silent = "Bloquejat (silenciós)"
+timer = "Temporitzador"
+special = "Aplicacions especials"
+allowed = "Permès"
+enabled = "Activat"
+disabled = "Desactivat"
+
+# --- Consells de la barra d'eines ---
+[tooltip]
+enable_filters = "Activar filtres (Ctrl+T)"
+new_rule = "Crear una nova regla d'usuari"
+enable_notifications = "Activar notificacions per al trànsit bloquejat"
+enable_log = "Registrar trànsit bloquejat en un fitxer"
+enable_ui_log = "Mostrar registre de paquets a la interfície"
+reload = "Recarregar el perfil des del disc (F5)"
+open_settings = "Obrir Configuració"
+open_log_file = "Obrir el fitxer de registre de paquets"
+clear_log = "Esborrar el registre de paquets"
+open_releases = "Obrir la pàgina de versions a GitHub"
+
+# --- Etiquetes dels botons de la barra d'eines ---
+[toolbar]
+enable_filters = "Activar filtres"
+disable_filters = "Desactivar filtres"
+
+# --- Missatges de la barra d'estat ---
+[status]
+filters_enabled = "Els filtres estan activats."
+filters_disabled = "Els filtres estan desactivats."
+imported_simplewall = "Perfil de simplewall importat."
+checking_updates = "Comprovant actualitzacions..."
+up_to_date = "Actualitzat."
+update_check_failed = "Error en comprovar actualitzacions."
+nothing_to_remove = "No hi ha res per eliminar del perfil."
+engine_failed = "Error en obrir el motor WFP."
+uninstall_failed = "Error en desinstal·lar filtres."
+install_failed = "Error en instal·lar filtres."
+app_exists = "L'aplicació ja és al perfil."
+app_added = "Aplicació afegida."
+rule_added = "Regla afegida."
+rule_updated = "Regla actualitzada."
+rule_deleted = "Regla eliminada."
+autosave_failed = "Error en desar automàticament."
+import_read_error = "Error d'importació: error de lectura."
+import_parse_error = "Error d'importació: error d'anàlisi."
+imported = "Importat."
+export_write_error = "Error d'exportació: error d'escriptura."
+exported = "Exportat."
+refresh_read_error = "Error d'actualització: error de lectura."
+refresh_parse_error = "Error d'actualització: error d'anàlisi."
+profile_reloaded = "Perfil recarregat."
+no_unused = "No hi ha aplicacions no utilitzades per eliminar."
+no_timers = "No hi ha temporitzadors actius."
+log_cleared = "Registre esborrat."
+font_failed = "Error en carregar el tipus de lletra; revertit."
+font_updated = "Tipus de lletra actualitzat."
+emergency_done = "Reinici d'emergència completat."
+auto_allowed_one = "1 aplicació signada per Microsoft permesa automàticament"
+auto_allowed_many = "%{count} aplicacions signades per Microsoft permeses automàticament"
+silenced = "Silenciat: %{name}"
+allowed_count = "Permès: %{name}"
+connecting = "Connectant a %{remote}"
+removed_entries = "%{count} entrades eliminades del perfil."
+purged_apps = "%{count} aplicació/ns no utilitzada/es eliminada/es."
+cleared_timers = "%{count} temporitzador(s) d'aplicació eliminat(s)."
+skip_uac_enabled = "Ometre UAC: activat. Les properes execucions no mostraran UAC per als usuaris administradors."
+skip_uac_disabled = "Ometre UAC: desactivat. Les properes execucions mostraran UAC per a accions administratives."
+hash_drift_one = "Canvi de hash: %{name}"
+hash_drift_many = "Canvi de hash en %{count} aplicacions (vegeu el registre)"
+filters_removed = "%{filters} filtre(s) eliminat(s), %{sublayers} subcapa/es esborrada/es."
+filters_installed = "%{added} filtre(s) instal·lat(s), %{skipped} omès/esos."
+tray_blocked = "amwall - bloquejat: %{name}"
+
+# --- Títols dels diàlegs ---
+[dialog]
+update_available = "amwall - actualització disponible"
+check_updates = "amwall - Comprovar actualitzacions"
+confirm_bulk_delete = "Confirmar eliminació massiva"
+admin_required = "Administrador necessari"
+delete_rule = "Eliminar regla"
+exit = "Sortir d'amwall?"
+clear_log = "Esborrar registre"
+allow_blocked = "Permetre trànsit prèviament bloquejat?"
+emergency_reset = "Reinici d'emergència del WFP"
+about_title = "Quant a amwall"
+about_app = "amwall"
+settings_title = "Configuració"
+properties_signed = "amwall - Propietats (signat per %{signer})"
+
+# --- Cos dels missatges dels diàlegs ---
+[message]
+update_available_body = "amwall %{latest} està disponible (esteu executant %{current}).\n\nObrir la pàgina de versions al navegador?"
+update_uptodate_body = "Versió actual: %{current}\nDarrera versió: %{latest}\n\nJa esteu actualitzat."
+update_error_body = "No s'ha pogut accedir a GitHub per comprovar actualitzacions.\n\nPossibles causes: sense internet, el tallafocs bloquejant amwall de HTTPS de sortida, o el límit de peticions de l'API de GitHub (60 peticions anònimes per hora). Torneu-ho a intentar més tard."
+admin_required_body = "La gestió de filtres requereix privilegis d'Administrador.\n\nTanqueu amwall i torneu-lo a obrir des d'un terminal elevat\n(clic dret → \"Executa com a administrador\")."
+delete_rule_confirm = "Eliminar la regla \"%{name}\"?"
+bulk_delete_confirm = "Eliminar %{count} entrades del perfil?\n\nAquesta acció no es pot desfer."
+exit_body = "Els filtres estan activats. Sortir d'amwall els deixarà en vigor (sobreviuen a la finalització del procés). Voleu continuar?"
+clear_log_body = "Esborrar el registre de paquets? Això buida la pestanya de registre en memòria i trunca el fitxer de registre al disc. L'acció no es pot desfer."
+emergency_reset_body = "El reinici d'emergència farà:\n\n• Eliminar tots els filtres WFP instal·lats per amwall\n• Buidar el Perfil d'Aplicacions i la llista de Regles de l'usuari\n• Desactivar Activar filtres\n\nUtilitzeu això si amwall està bloquejant alguna cosa que no podeu identificar i necessiteu restaurar el comportament de xarxa per defecte del sistema. El canvi és immediat. Voleu continuar?"
+allow_one_body = "%{name} està bloquejat. Permetre-ho farà que pugui accedir a la xarxa la propera vegada que ho intenti.\n\nVoleu continuar?"
+allow_many_body = "%{count} aplicacions prèviament bloquejades es configuraran com a Permeses. Accediran a la xarxa la propera vegada que ho intentin.\n\nVoleu continuar?"
+blocked_notification = "Bloquejat: %{app}"
+
+# --- Menú contextual ---
+[context]
+allow = "Permet"
+block = "Bloqueja"
+copy_details = "&Copia detalls"
+properties = "Propietats\tEnter"
+remove_from_profile = "Elimina del perfil\tDel"
+explore = "Explora (obre carpeta)\tCtrl+E"
+copy = "Copia nom\tCtrl+C"
+
+# --- Menú de la safata ---
+[tray]
+show = "Mostra amwall"
+enable_filters = "Activa filtres"
+disable_filters = "Desactiva filtres"
+settings = "Configuració..."
+exit = "Surt d'amwall"
+
+# --- Assistent de primera execució ---
+[wizard]
+title = "Us donem la benvinguda a amwall"
+subtitle = "Importar configuració de simplewall?"
+import_btn = "Importa"
+start_fresh_btn = "Comença de nou"
+body = """amwall ha trobat una configuració existent de simplewall:
+
+• Camí: %{path}
+• %{apps} aplicació/ns amb regles
+• %{rules} regla/es personalitzada/es
+
+La importació copia el profile.xml de simplewall a amwall i l'utilitza com a punt de partida. simplewall es manté instal·lat i els seus filtres de kernel existents romanen actius — desactiveu simplewall abans de fer clic a \"Activar filtres\" a amwall per evitar que ambdós tallafocs apliquin regles superposades.
+
+Podeu executar Fitxer → Importa més tard si ho ometeu ara."""
+
+# --- Pestanyes del diàleg de Configuració ---
+[settings_tab]
+general = "General"
+interface = "Interfície"
+highlighting = "Ressaltat"
+rules = "Regles"
+blocklist = "Llista de bloqueig"
+notifications = "Notificacions"
+logging = "Registre"
+exclude = "Exclou"
+
+# --- Pestanyes de l'editor de regles ---
+[rule_editor]
+general = "General"
+rule = "Regla"
+apps = "Aplicacions"
+
+# --- Etiquetes de protocol ---
+[protocol]
+any = "Qualsevol"
+tcp = "TCP"
+udp = "UDP"
+icmp = "ICMP"
+icmpv4 = "ICMPv4"
+icmpv6 = "ICMPv6"
+
+# --- Etiquetes de família d'adreça ---
+[version]
+any = "Qualsevol"
+ipv4 = "IPv4"
+ipv6 = "IPv6"
+
+# --- Etiquetes de direcció ---
+[direction]
+outbound = "Sortida"
+inbound = "Entrada"
+both = "Ambdós"
+other = "Altre"
+
+# --- Etiquetes d'acció ---
+[action]
+allow = "Permet"
+block = "Bloqueja"
+permit = "Autoritza"
+
+# --- Pàgina de configuració: General ---
+[rc_general]
+group_config = "Configuració general"
+always_on_top = "Sempre al davant"
+load_on_startup = "Carregar a l'inici del sistema"
+start_minimized = "Iniciar minimitzat"
+skip_uac = "Ometre l'avís del \"Control de comptes d'usuari\""
+check_updates = "Comprovar actualitzacions periòdicament (recomanat)"
+group_language = "Idioma"
+select_language = "Seleccionar idioma:"
+
+# --- Pàgina de configuració: Interfície ---
+[rc_interface]
+group_confirm = "Confirmacions"
+confirm_exit = "Mostrar diàleg de confirmació en sortir"
+confirm_exit_timer = "Mostrar diàleg de confirmació en sortir amb temporitzadors actius"
+confirm_log_clear = "Confirmar en esborrar el fitxer de registre"
+confirm_allow = "Confirmar en permetre trànsit prèviament bloquejat"
+group_tray = "Icona de la safata"
+tray_single_click = "Un sol clic a la icona de la safata per obrir"
+
+# --- Pàgina de configuració: Ressaltat ---
+[rc_highlight]
+group = "Ressaltat"
+hint = "Feu doble clic en un element per canviar-lo."
+
+# --- Pàgina de configuració: Regles ---
+[rc_rules]
+group_connections = "Connexions"
+block_outbound = "Bloquejar connexions de sortida per a tots"
+block_inbound = "Bloquejar connexions d'entrada per a tots"
+allow_loopback = "Permetre connexions loopback per a tots"
+allow_6to4 = "Permetre redireccionaments IPv6 (6to4) per a tots"
+group_security = "Seguretat"
+stealth_mode = "Impedir l'escaneig de ports (mode ocult)"
+boottime_filters = "Activar filtres a l'arrencada del sistema"
+group_advanced = "Avançat"
+check_signatures = "Comprovar signatures digitals de les aplicacions"
+use_hashes = "Utilitzar hashes de fitxer per a la identificació d'aplicacions"
+resolve_addresses = "Resoldre adreces de xarxa"
+
+# --- Pàgina de configuració: Blocklist ---
+[rc_blocklist]
+group_spy = "Espionatge i telemetria de Microsoft"
+group_update = "Microsoft Update"
+group_apps = "Aplicacions de Microsoft"
+
+# --- Pàgina de configuració: Notificacions ---
+[rc_notifications]
+group = "Notificacions"
+enable = "Activar notificacions de paquets"
+sound = "Activar so de notificacions"
+fullscreen = "Activar mode silenciós amb aplicació a pantalla completa"
+on_tray = "Mostrar finestra de notificació a la safata"
+timeout = "Temps entre notificacions similars (seg.):"
+
+# --- Pàgina de configuració: Registre ---
+[rc_logging]
+group_log = "Registre de paquets"
+enable = "Activar registre de paquets en un fitxer"
+max_size = "Mida màxima del registre (kB):"
+group_viewer = "Visualitzador de registre"
+group_ui = "Interfície"
+enable_ui = "Activar registre de paquets a la interfície"
+
+# --- Pàgina de configuració: Exclou ---
+[rc_exclude]
+group_notif = "Notificacions: no notificar sobre ..."
+blocklist = "llista de bloqueig"
+user_rules = "regles de l'usuari"
+group_log = "Registre: no registrar ..."
+stealth = "connexions d'escaneig de ports"
+allowed = "connexions permeses"
+
+# --- Diàleg de propietats de l'aplicació ---
+[rc_properties]
+title = "Propietats de l'aplicació"
+path = "Camí:"
+comment = "Comentari:"
+group_settings = "Configuració:"
+enabled = "Activat (permetre el trànsit d'aquesta aplicació)"
+silent = "Silenciós (sense notificacions)"
+save = "Desa"
+close = "Tanca"
+
+# --- Diàleg de sol·licitud de connexió ---
+[rc_prompt]
+title = "amwall - sol·licitud de connexió d'aplicació"
+header = "Una aplicació està intentant connectar-se:"
+question = "Permetre el trànsit d'aquesta aplicació o mantenir-la bloquejada?"
+allow = "Permet"
+block = "Bloqueja"
+
+# --- Diàleg de l'editor de regles ---
+[rc_editor]
+add_rule_title = "Entrada de regla"
+save = "Desa"
+close = "Tanca"
+
+# --- Filtres de diàleg de fitxers ---
+[filter]
+xml_profile = "Perfil XML (*.xml)"
+all_files = "Tots els fitxers (*.*)"
+executable = "Executable (*.exe)"
