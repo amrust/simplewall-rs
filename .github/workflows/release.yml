@@ -107,7 +107,10 @@ jobs:
           New-Item -ItemType Directory -Path $langDir -Force | Out-Null
 
           # Compile main.wxs once — the same .wixobj is linked per culture.
+          # -arch x64 sets the platform so the Template summary lists x64
+          # (required by ICE80 because main.wxs has Win64="yes" components).
           candle.exe -nologo `
+            -arch x64 `
             "-dVersion=$version" `
             "-dCargoTargetBinDir=$targetBin" `
             -ext WixUIExtension `

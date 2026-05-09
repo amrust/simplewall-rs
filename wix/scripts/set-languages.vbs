@@ -6,6 +6,9 @@
 '   <lcid-csv> example: "1033,1031,1036,1041,2052"
 '
 ' The Template summary property has the form "<platform>;<lcid-csv>".
+' Platform is hardcoded to x64 because amwall is 64-bit only and the
+' base MSI is built with `candle.exe -arch x64`; ICE80 would reject
+' an "Intel" template against Win64="yes" components anyway.
 ' Listing every LCID whose .mst transform was embedded by
 ' embed-transform.vbs is what makes Windows Installer treat the package
 ' as multilingual and auto-apply the matching transform at install time.
@@ -32,7 +35,7 @@ Set installer = CreateObject("WindowsInstaller.Installer")
 Set database  = installer.OpenDatabase(msiPath, msiOpenDatabaseModeTransact)
 Set sumInfo   = database.SummaryInformation(20)
 
-template = "Intel;" & lcidsCsv
+template = "x64;" & lcidsCsv
 sumInfo.Property(PID_TEMPLATE) = template
 sumInfo.Persist
 database.Commit
