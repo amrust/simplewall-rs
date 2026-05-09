@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1252"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!--
   amwall WiX installer template.
   Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
@@ -32,7 +32,7 @@
     Name="amwall"
     UpgradeCode="A8F3E2C1-9B4D-4C7E-8F1A-3D2C5B6E7F81"
     Language="1033"
-    Codepage="1252"
+    Codepage="65001"
     Version="$(var.Version)"
     Manufacturer="amwall contributors">
 
@@ -45,7 +45,7 @@
       Languages="1033"
       Compressed="yes"
       InstallScope="perMachine"
-      SummaryCodepage="1252" />
+      SummaryCodepage="65001" />
 
     <MajorUpgrade
       Schedule="afterInstallInitialize"
