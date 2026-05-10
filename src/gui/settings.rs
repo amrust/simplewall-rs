@@ -149,6 +149,15 @@ pub struct Settings {
     pub check_updates: bool,
     /// Selected language code (e.g. "en", "ru"). Empty = system default.
     pub language: String,
+    /// Last `[ProductLanguage]` LCID we saw written by the MSI installer
+    /// to `HKLM\Software\amwall\InstallLcid`. When the install LCID
+    /// changes (fresh install, upgrade, or reinstall after a transform
+    /// change), startup overrides `language` with the install LCID's
+    /// culture so the user sees the language they installed in. 0 = no
+    /// install ever recorded — first launch under the multilingual MSI
+    /// will trigger a one-time override even when settings.txt already
+    /// has a stale `language=en` from a pre-multilingual install.
+    pub install_lcid_seen: u32,
 
     // ---- View → Font ----
     /// Custom font face name (e.g. "Consolas"). Empty falls back
@@ -244,6 +253,7 @@ impl Default for Settings {
             skip_uac_warning: false,
             check_updates: true,
             language: String::new(),
+            install_lcid_seen: 0,
             font_face: String::new(),
             font_height: 0,
             confirm_exit: true,
@@ -353,6 +363,7 @@ impl Settings {
         kv(&mut buf, "skip_uac_warning", self.skip_uac_warning);
         kv(&mut buf, "check_updates", self.check_updates);
         kv_str(&mut buf, "language", &self.language);
+        kv_u32(&mut buf, "install_lcid_seen", self.install_lcid_seen);
         kv_str(&mut buf, "font_face", &self.font_face);
         kv_i32(&mut buf, "font_height", self.font_height);
         kv(&mut buf, "confirm_exit", self.confirm_exit);
@@ -448,6 +459,12 @@ fn apply_kv(s: &mut Settings, key: &str, value: &str) {
         "notification_timeout" => {
             if let Ok(n) = value.parse::<u32>() {
                 s.notification_timeout = n;
+            }
+            return;
+        }
+        "install_lcid_seen" => {
+            if let Ok(n) = value.parse::<u32>() {
+                s.install_lcid_seen = n;
             }
             return;
         }

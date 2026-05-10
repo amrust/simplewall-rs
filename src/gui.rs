@@ -144,6 +144,24 @@ pub fn run(default_profile_path: PathBuf, force_show: bool) -> ExitCode {
     let settings_path = settings::default_settings_path();
     let mut settings = settings::Settings::load(&settings_path);
 
+    // Install-time language override. The MSI writes the auto-applied
+    // transform's LCID to HKLM\Software\amwall\InstallLcid. When that
+    // value differs from `install_lcid_seen` in settings.txt — fresh
+    // install, upgrade, or reinstall under a different system locale —
+    // overwrite `language` with the install LCID's culture so the user
+    // sees the language they installed in. Without this, a user who
+    // upgrades from a pre-multilingual MSI keeps their old `language=en`
+    // even though they just installed under e.g. Russian Windows.
+    if let Some(install_lcid) = install_lcid_from_registry()
+        && install_lcid != settings.install_lcid_seen
+    {
+        if let Some(locale) = lcid_to_available_locale(install_lcid) {
+            settings.language = locale;
+        }
+        settings.install_lcid_seen = install_lcid;
+        let _ = settings.save(&settings_path);
+    }
+
     if !settings.language.is_empty() {
         rust_i18n::set_locale(&settings.language);
     } else if let Some(detected) = detect_system_locale() {
@@ -230,23 +248,94 @@ fn detect_system_locale() -> Option<String> {
         return None;
     }
     let name = String::from_utf16_lossy(&buf[..(len as usize).saturating_sub(1)]);
+    match_available_locale(&name)
+}
+
+/// Find the closest locale we ship for a BCP-47 name like "ru-RU".
+/// Tries exact match, then base language, then any regional variant
+/// of the base. Used by both system-locale detection and the MSI
+/// install-LCID override path.
+fn match_available_locale(name: &str) -> Option<String> {
     let available: Vec<&str> = rust_i18n::available_locales!().to_vec();
-    // Try exact match first (e.g. "pt-BR", "zh-CN", "sr-Latn")
-    if available.contains(&name.as_str()) {
-        return Some(name);
+    if available.contains(&name) {
+        return Some(name.to_string());
     }
-    // Try base language (e.g. "pt-BR" from "pt-BR-something", "de" from "de-DE")
-    let base = name.split('-').next().unwrap_or(&name);
+    let base = name.split('-').next().unwrap_or(name);
     if available.contains(&base) {
         return Some(base.to_string());
     }
-    // Try matching a regional variant (e.g. system says "zh-SG" → we have "zh-CN")
     for loc in &available {
         if loc.starts_with(base) {
             return Some(loc.to_string());
         }
     }
     None
+}
+
+/// Read `HKLM\Software\amwall\InstallLcid` (REG_DWORD) — the LCID of
+/// the language transform Windows Installer auto-applied at install
+/// time. Returns None when the value is missing (portable mode,
+/// pre-multilingual install, or admin scrubbed it). The key lives
+/// under HKLM because the MSI is per-machine; any user can read it
+/// without elevation.
+fn install_lcid_from_registry() -> Option<u32> {
+    use windows::Win32::System::Registry::{
+        HKEY, HKEY_LOCAL_MACHINE, KEY_READ, REG_VALUE_TYPE, RegCloseKey, RegOpenKeyExW,
+        RegQueryValueExW,
+    };
+
+    let subkey = wide(r"Software\amwall");
+    let value_name = wide("InstallLcid");
+    let mut hkey = HKEY::default();
+    let status = unsafe {
+        RegOpenKeyExW(
+            HKEY_LOCAL_MACHINE,
+            PCWSTR(subkey.as_ptr()),
+            0,
+            KEY_READ,
+            &mut hkey,
+        )
+    };
+    if status.is_err() {
+        return None;
+    }
+    let mut data: u32 = 0;
+    let mut data_size: u32 = std::mem::size_of::<u32>() as u32;
+    let mut value_type = REG_VALUE_TYPE(0);
+    let result = unsafe {
+        RegQueryValueExW(
+            hkey,
+            PCWSTR(value_name.as_ptr()),
+            None,
+            Some(&mut value_type),
+            Some(&mut data as *mut u32 as *mut u8),
+            Some(&mut data_size),
+        )
+    };
+    unsafe {
+        let _ = RegCloseKey(hkey);
+    }
+    if result.is_ok() && data > 0 {
+        Some(data)
+    } else {
+        None
+    }
+}
+
+/// Map a Windows LCID (e.g. 1049) to the closest BCP-47 culture name
+/// we ship a translation for (e.g. "ru" or "ru-RU"). Uses the system
+/// `LCIDToLocaleName` for the LCID→name conversion, then runs the
+/// same fuzzy match as system-locale detection.
+fn lcid_to_available_locale(lcid: u32) -> Option<String> {
+    let mut buf = [0u16; 85];
+    let len = unsafe {
+        windows::Win32::Globalization::LCIDToLocaleName(lcid, Some(&mut buf), 0)
+    };
+    if len <= 0 {
+        return None;
+    }
+    let name = String::from_utf16_lossy(&buf[..(len as usize).saturating_sub(1)]);
+    match_available_locale(&name)
 }
 
 fn try_load_profile(path: &std::path::Path) -> Result<Profile, Box<dyn std::error::Error>> {

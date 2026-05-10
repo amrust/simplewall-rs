@@ -69,6 +69,23 @@
                   Source="LICENSE"
                   KeyPath="yes" />
           </Component>
+          <!-- Records the LCID of the language transform Windows
+               Installer auto-applied at install time. amwall reads
+               this on startup; when it differs from the LCID stored
+               in settings.txt (install_lcid_seen), the saved
+               `language` is overwritten with the install language so
+               the user sees the language they installed in. Without
+               this, a user who upgrades from an English install on a
+               Russian machine keeps `language=en` even though the
+               Russian transform was just applied. -->
+          <Component Id="InstallLanguageMarker" Guid="7C4E1F8A-2B3D-4F6E-9A1C-5D8B3E7C2F0A" Win64="yes">
+            <RegistryKey Root="HKLM" Key="Software\amwall">
+              <RegistryValue Name="InstallLcid"
+                             Type="integer"
+                             Value="[ProductLanguage]"
+                             KeyPath="yes" />
+            </RegistryKey>
+          </Component>
         </Directory>
       </Directory>
 
@@ -104,6 +121,7 @@
              ConfigurableDirectory="APPLICATIONFOLDER">
       <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="LicenseFile" />
+      <ComponentRef Id="InstallLanguageMarker" />
       <ComponentRef Id="ApplicationShortcut" />
     </Feature>
 
