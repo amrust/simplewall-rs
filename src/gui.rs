@@ -284,32 +284,36 @@ fn match_available_locale(name: &str) -> Option<String> {
     None
 }
 
-/// Read `%APPDATA%\amwall\installerlocale.txt` — written by the MSI's
-/// WriteInstallerLocale custom action, contains the LCID of the
-/// language transform Windows Installer auto-applied at install time
-/// as plain decimal text. Returns None when the file is missing
-/// (portable mode, pre-multilingual install, or user deleted it) or
-/// unparseable.
+/// Read `<exe_dir>\installerlocale.txt` — installed alongside
+/// amwall.exe by the MSI's InstallerLocaleFile component. Contains
+/// the LCID of the language transform Windows Installer auto-applied
+/// at install time as plain decimal text. Returns None when the file
+/// is missing (portable mode, pre-multilingual install, or user
+/// deleted it) or unparseable.
 ///
-/// File rather than registry because per-machine MSIs cannot easily
-/// write to per-user `%APPDATA%`; the deferred CA with
-/// Impersonate="yes" runs as the installing user and gets the right
-/// path. amwall reads it on every startup and overrides
-/// `settings.language` whenever the value differs from
-/// `install_lcid_seen`, so a v1.1.2 → v1.1.4 upgrade picks up the
-/// install-time language even if settings.txt has a stale
-/// `language=en`.
+/// Lives next to the exe rather than in %APPDATA% because per-machine
+/// MSIs can drop a file into INSTALLDIR with a single File component
+/// and the WiX language-transform mechanism naturally swaps the
+/// content per culture — no Custom Action required. amwall reads it
+/// on every startup and overrides `settings.language` whenever the
+/// value differs from `install_lcid_seen`, so a v1.1.2 → v1.1.4
+/// upgrade picks up the install-time language even if settings.txt
+/// has a stale `language=en`.
 fn install_lcid_from_file() -> Option<u32> {
-    let appdata = match std::env::var("APPDATA") {
-        Ok(s) if !s.is_empty() => s,
-        _ => {
-            eprintln!("amwall: install-lcid: %APPDATA% not set, skipping override");
+    let exe = match std::env::current_exe() {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("amwall: install-lcid: current_exe() failed: {e}");
             return None;
         }
     };
-    let path = std::path::PathBuf::from(appdata)
-        .join("amwall")
-        .join("installerlocale.txt");
+    let path = match exe.parent() {
+        Some(dir) => dir.join("installerlocale.txt"),
+        None => {
+            eprintln!("amwall: install-lcid: exe has no parent dir, skipping override");
+            return None;
+        }
+    };
     let content = match std::fs::read_to_string(&path) {
         Ok(s) => s,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {

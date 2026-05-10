@@ -69,6 +69,23 @@
                   Source="LICENSE"
                   KeyPath="yes" />
           </Component>
+          <!-- Marks which language transform Windows Installer applied
+               at install time. scripts/build-msi.ps1 writes the LCID
+               (e.g. "1033" / "1049") into target\wix\installerlocale.txt
+               before each per-culture light.exe run, so the file content
+               differs per culture and torch picks up the diff as part
+               of the language transform. amwall reads this file on
+               every startup and overrides settings.language whenever
+               its value differs from settings.install_lcid_seen, so a
+               user upgrading from a pre-multilingual MSI still lands in
+               the install language even if their old settings.txt has
+               a stale `language=en`. -->
+          <Component Id="InstallerLocaleFile" Guid="9B5D2E8C-4A1F-4E3D-B6F7-1C8E2A9D5B4C" Win64="yes">
+            <File Id="installerlocale_txt"
+                  Name="installerlocale.txt"
+                  Source="target\wix\installerlocale.txt"
+                  KeyPath="yes" />
+          </Component>
         </Directory>
       </Directory>
 
@@ -104,6 +121,7 @@
              ConfigurableDirectory="APPLICATIONFOLDER">
       <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="LicenseFile" />
+      <ComponentRef Id="InstallerLocaleFile" />
       <ComponentRef Id="ApplicationShortcut" />
     </Feature>
 
@@ -169,40 +187,5 @@
     <Property Id="ARPCONTACT" Value="https://github.com/amrust/amwall" />
     <Property Id="ARPHELPLINK" Value="https://github.com/amrust/amwall/issues" />
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/amrust/amwall" />
-
-    <!-- Install-time language marker. The MSI runs as Administrator
-         (perMachine), but `Impersonate="yes"` on the deferred CA makes
-         it run as the original installing user so %APPDATA% resolves
-         correctly. The script writes the auto-applied transform's
-         LCID (passed in via CustomActionData, set by the immediate CA
-         that runs immediately before) to
-         %APPDATA%\amwall\installerlocale.txt. amwall reads that file
-         on every startup; when its content differs from the LCID
-         already recorded in settings.txt (install_lcid_seen), the
-         saved `language` is overwritten with the install language so
-         users land in whatever locale they installed in — including
-         users upgrading from a pre-multilingual MSI whose old
-         settings.txt has a stale `language=en`.
-
-         CA returns are ignored — a failed write must never block
-         install; amwall simply falls back to system-locale auto-detect. -->
-    <Binary Id="WriteInstallerLocaleScript"
-            SourceFile="wix\scripts\write-installer-locale.vbs" />
-
-    <CustomAction Id="SetWriteInstallerLocaleData"
-                  Property="WriteInstallerLocale"
-                  Value="[ProductLanguage]" />
-
-    <CustomAction Id="WriteInstallerLocale"
-                  BinaryKey="WriteInstallerLocaleScript"
-                  VBScriptCall="WriteInstallerLocale"
-                  Execute="deferred"
-                  Impersonate="yes"
-                  Return="ignore" />
-
-    <InstallExecuteSequence>
-      <Custom Action="SetWriteInstallerLocaleData" Before="WriteInstallerLocale">NOT REMOVE</Custom>
-      <Custom Action="WriteInstallerLocale" After="InstallFiles">NOT REMOVE</Custom>
-    </InstallExecuteSequence>
   </Product>
 </Wix>
