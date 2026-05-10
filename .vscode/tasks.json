@@ -89,27 +89,35 @@
             }
         },
         {
-            // Default build task — what Ctrl+Shift+B runs.
-            // Chains the two prep tasks above (`dependsOrder:
-            // sequence` forces sequential, not parallel), then
-            // invokes `cargo wix`. --no-build skips a redundant
-            // rebuild since the previous task already produced
-            // the release binary.
+            // Builds the same multilingual MSI as the GitHub release
+            // workflow by calling scripts/build-msi.ps1 — the workflow
+            // calls the same script, so local Ctrl+Shift+B output and
+            // tag-driven release output stay byte-identical (modulo
+            // the embedded amwall.exe build host).
             //
-            // Output: target\wix\amwall-<version>-x86_64.msi
+            // Output: target\wix\amwall-<version>-x86_64.msi (with
+            // every wix/lang/*.wxl transform embedded as a substorage
+            // keyed by LCID; Windows Installer auto-selects the
+            // matching transform at install time).
             //
-            // Prerequisite the task can't auto-install: WiX
-            // Toolset 3.x (candle.exe / light.exe). The
-            // PowerShell wrapper detects its absence and prints
-            // install instructions instead of failing with a
-            // cryptic "command not found".
+            // dependsOn first builds the release exe so the MSI has
+            // something to ship. The script itself rejects loudly if
+            // the exe is missing.
+            //
+            // Prerequisite the task can't auto-install: WiX Toolset
+            // 3.x (candle.exe / light.exe / torch.exe). The script
+            // detects its absence and prints choco install
+            // instructions instead of failing with "command not
+            // found".
             "label": "Build MSI installer",
             "type": "shell",
             "command": "powershell",
             "args": [
                 "-NoProfile",
-                "-Command",
-                "if (-not (Get-Command candle.exe -ErrorAction SilentlyContinue)) { Write-Error 'WiX Toolset 3.x not found on PATH. Install via:`n  choco install wixtoolset -y  (run from an elevated shell)`nor download from https://github.com/wixtoolset/wix3/releases'; exit 1 }; $v = (Select-String -Path Cargo.toml -Pattern '^version = \"(.+)\"').Matches[0].Groups[1].Value; $tb = 'target\\x86_64-pc-windows-msvc\\release'; New-Item -ItemType Directory -Path target\\wix -Force | Out-Null; candle.exe -nologo \"-dVersion=$v\" \"-dCargoTargetBinDir=$tb\" -ext WixUIExtension -out target\\wix\\main.wixobj wix\\main.wxs; if ($LASTEXITCODE -ne 0) { exit 1 }; $locs = Get-ChildItem wix\\lang\\*.wxl | ForEach-Object { '-loc'; $_.FullName }; $cultures = (Get-ChildItem wix\\lang\\*.wxl | ForEach-Object { $_.BaseName }) -join ';'; light.exe -nologo -ext WixUIExtension -out \"target\\wix\\amwall-$v-x86_64.msi\" \"-cultures:$cultures\" @locs target\\wix\\main.wixobj; if ($LASTEXITCODE -eq 0) { $msi = Get-ChildItem -Path target/wix -Filter *.msi | Select-Object -Last 1; if ($msi) { Write-Host \"`nMSI built: $($msi.FullName)\" -ForegroundColor Green } }"
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "scripts/build-msi.ps1"
             ],
             "dependsOrder": "sequence",
             "dependsOn": [
