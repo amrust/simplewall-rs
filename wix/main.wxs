@@ -69,29 +69,6 @@
                   Source="LICENSE"
                   KeyPath="yes" />
           </Component>
-          <!-- Records the LCID of the language transform Windows
-               Installer auto-applied at install time. amwall reads
-               this on startup; when it differs from the LCID stored
-               in settings.txt (install_lcid_seen), the saved
-               `language` is overwritten with the install language so
-               the user sees the language they installed in. Without
-               this, a user who upgrades from an English install on a
-               Russian machine keeps `language=en` even though the
-               Russian transform was just applied.
-
-               REG_SZ (Type="string") rather than REG_DWORD because
-               WiX's Type="integer" wants a literal integer Value;
-               the Formatted-string property reference [ProductLanguage]
-               only reliably evaluates at install time when written
-               as a string. amwall parses the string back to u32. -->
-          <Component Id="InstallLanguageMarker" Guid="7C4E1F8A-2B3D-4F6E-9A1C-5D8B3E7C2F0A" Win64="yes">
-            <RegistryKey Root="HKLM" Key="Software\amwall">
-              <RegistryValue Name="InstallLcid"
-                             Type="string"
-                             Value="[ProductLanguage]"
-                             KeyPath="yes" />
-            </RegistryKey>
-          </Component>
         </Directory>
       </Directory>
 
@@ -127,7 +104,6 @@
              ConfigurableDirectory="APPLICATIONFOLDER">
       <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="LicenseFile" />
-      <ComponentRef Id="InstallLanguageMarker" />
       <ComponentRef Id="ApplicationShortcut" />
     </Feature>
 
@@ -193,5 +169,40 @@
     <Property Id="ARPCONTACT" Value="https://github.com/amrust/amwall" />
     <Property Id="ARPHELPLINK" Value="https://github.com/amrust/amwall/issues" />
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/amrust/amwall" />
+
+    <!-- Install-time language marker. The MSI runs as Administrator
+         (perMachine), but `Impersonate="yes"` on the deferred CA makes
+         it run as the original installing user so %APPDATA% resolves
+         correctly. The script writes the auto-applied transform's
+         LCID (passed in via CustomActionData, set by the immediate CA
+         that runs immediately before) to
+         %APPDATA%\amwall\installerlocale.txt. amwall reads that file
+         on every startup; when its content differs from the LCID
+         already recorded in settings.txt (install_lcid_seen), the
+         saved `language` is overwritten with the install language so
+         users land in whatever locale they installed in — including
+         users upgrading from a pre-multilingual MSI whose old
+         settings.txt has a stale `language=en`.
+
+         CA returns are ignored — a failed write must never block
+         install; amwall simply falls back to system-locale auto-detect. -->
+    <Binary Id="WriteInstallerLocaleScript"
+            SourceFile="wix\scripts\write-installer-locale.vbs" />
+
+    <CustomAction Id="SetWriteInstallerLocaleData"
+                  Property="WriteInstallerLocale"
+                  Value="[ProductLanguage]" />
+
+    <CustomAction Id="WriteInstallerLocale"
+                  BinaryKey="WriteInstallerLocaleScript"
+                  VBScriptCall="WriteInstallerLocale"
+                  Execute="deferred"
+                  Impersonate="yes"
+                  Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="SetWriteInstallerLocaleData" Before="WriteInstallerLocale">NOT REMOVE</Custom>
+      <Custom Action="WriteInstallerLocale" After="InstallFiles">NOT REMOVE</Custom>
+    </InstallExecuteSequence>
   </Product>
 </Wix>

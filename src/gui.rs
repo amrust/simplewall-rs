@@ -142,15 +142,16 @@ pub fn run(default_profile_path: PathBuf, force_show: bool) -> ExitCode {
     let settings_path = settings::default_settings_path();
     let mut settings = settings::Settings::load(&settings_path);
 
-    // Install-time language override. The MSI writes the auto-applied
-    // transform's LCID to HKLM\Software\amwall\InstallLcid. When that
-    // value differs from `install_lcid_seen` in settings.txt — fresh
-    // install, upgrade, or reinstall under a different system locale —
-    // overwrite `language` with the install LCID's culture so the user
-    // sees the language they installed in. Without this, a user who
-    // upgrades from a pre-multilingual MSI keeps their old `language=en`
-    // even though they just installed under e.g. Russian Windows.
-    if let Some(install_lcid) = install_lcid_from_registry() {
+    // Install-time language override. The MSI's WriteInstallerLocale
+    // custom action writes the auto-applied transform's LCID to
+    // %APPDATA%\amwall\installerlocale.txt. When that value differs
+    // from `install_lcid_seen` in settings.txt — fresh install, upgrade,
+    // or reinstall under a different system locale — overwrite `language`
+    // with the install LCID's culture so the user sees the language they
+    // installed in. Without this, a user who upgrades from a pre-
+    // multilingual MSI keeps their old `language=en` even though they
+    // just installed under e.g. Russian Windows.
+    if let Some(install_lcid) = install_lcid_from_file() {
         if install_lcid != settings.install_lcid_seen {
             let mapped = lcid_to_available_locale(install_lcid);
             eprintln!(
@@ -283,99 +284,70 @@ fn match_available_locale(name: &str) -> Option<String> {
     None
 }
 
-/// Read `HKLM\Software\amwall\InstallLcid` (REG_SZ holding a decimal
-/// LCID like "1049") — the LCID of the language transform Windows
-/// Installer auto-applied at install time. Returns None when the
-/// value is missing (portable mode, pre-multilingual install, or
-/// admin scrubbed it) or unparseable. The key lives under HKLM
-/// because the MSI is per-machine; any user can read it without
-/// elevation.
+/// Read `%APPDATA%\amwall\installerlocale.txt` — written by the MSI's
+/// WriteInstallerLocale custom action, contains the LCID of the
+/// language transform Windows Installer auto-applied at install time
+/// as plain decimal text. Returns None when the file is missing
+/// (portable mode, pre-multilingual install, or user deleted it) or
+/// unparseable.
 ///
-/// Stored as a string rather than a DWORD because the MSI writes
-/// Value="[ProductLanguage]" — that Formatted-string reference only
-/// evaluates at install time when the RegistryValue Type is "string";
-/// Type="integer" would have written 0 instead.
-fn install_lcid_from_registry() -> Option<u32> {
-    use windows::Win32::System::Registry::{
-        HKEY, HKEY_LOCAL_MACHINE, KEY_READ, REG_VALUE_TYPE, RegCloseKey, RegOpenKeyExW,
-        RegQueryValueExW,
-    };
-
-    let subkey = wide(r"Software\amwall");
-    let value_name = wide("InstallLcid");
-    let mut hkey = HKEY::default();
-    let status = unsafe {
-        RegOpenKeyExW(
-            HKEY_LOCAL_MACHINE,
-            PCWSTR(subkey.as_ptr()),
-            0,
-            KEY_READ,
-            &mut hkey,
-        )
-    };
-    if status.is_err() {
-        eprintln!("amwall: install-lcid: HKLM\\Software\\amwall not present (skipping override)");
-        return None;
-    }
-
-    // First call with null buffer to discover the value's size.
-    let mut data_size: u32 = 0;
-    let mut value_type = REG_VALUE_TYPE(0);
-    let probe = unsafe {
-        RegQueryValueExW(
-            hkey,
-            PCWSTR(value_name.as_ptr()),
-            None,
-            Some(&mut value_type),
-            None,
-            Some(&mut data_size),
-        )
-    };
-    if probe.is_err() || data_size == 0 {
-        unsafe {
-            let _ = RegCloseKey(hkey);
+/// File rather than registry because per-machine MSIs cannot easily
+/// write to per-user `%APPDATA%`; the deferred CA with
+/// Impersonate="yes" runs as the installing user and gets the right
+/// path. amwall reads it on every startup and overrides
+/// `settings.language` whenever the value differs from
+/// `install_lcid_seen`, so a v1.1.2 → v1.1.4 upgrade picks up the
+/// install-time language even if settings.txt has a stale
+/// `language=en`.
+fn install_lcid_from_file() -> Option<u32> {
+    let appdata = match std::env::var("APPDATA") {
+        Ok(s) if !s.is_empty() => s,
+        _ => {
+            eprintln!("amwall: install-lcid: %APPDATA% not set, skipping override");
+            return None;
         }
-        eprintln!("amwall: install-lcid: HKLM\\Software\\amwall\\InstallLcid not present");
-        return None;
-    }
-
-    // data_size is in bytes. Allocate a u16 buffer big enough.
-    let wide_len = (data_size as usize).div_ceil(2);
-    let mut buf: Vec<u16> = vec![0; wide_len];
-    let result = unsafe {
-        RegQueryValueExW(
-            hkey,
-            PCWSTR(value_name.as_ptr()),
-            None,
-            Some(&mut value_type),
-            Some(buf.as_mut_ptr() as *mut u8),
-            Some(&mut data_size),
-        )
     };
-    unsafe {
-        let _ = RegCloseKey(hkey);
-    }
-    if result.is_err() {
-        eprintln!("amwall: install-lcid: RegQueryValueExW failed: {result:?}");
-        return None;
-    }
-
-    // Trim trailing null wide chars before decoding.
-    while buf.last() == Some(&0) {
-        buf.pop();
-    }
-    let s = String::from_utf16_lossy(&buf);
-    match s.trim().parse::<u32>() {
+    let path = std::path::PathBuf::from(appdata)
+        .join("amwall")
+        .join("installerlocale.txt");
+    let content = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            eprintln!(
+                "amwall: install-lcid: {} not present (skipping override)",
+                path.display()
+            );
+            return None;
+        }
+        Err(e) => {
+            eprintln!(
+                "amwall: install-lcid: read failed for {}: {e}",
+                path.display()
+            );
+            return None;
+        }
+    };
+    let trimmed = content.trim();
+    match trimmed.parse::<u32>() {
         Ok(n) if n > 0 => {
-            eprintln!("amwall: install-lcid: read {n} from HKLM\\Software\\amwall\\InstallLcid");
+            eprintln!(
+                "amwall: install-lcid: read {n} from {}",
+                path.display()
+            );
             Some(n)
         }
         Ok(_) => {
-            eprintln!("amwall: install-lcid: HKLM value is 0, skipping override");
+            eprintln!(
+                "amwall: install-lcid: {} contains 0, skipping override",
+                path.display()
+            );
             None
         }
         Err(e) => {
-            eprintln!("amwall: install-lcid: HKLM value `{s}` not parseable as u32: {e}");
+            eprintln!(
+                "amwall: install-lcid: {} content `{trimmed}` not parseable as u32: {e}",
+                path.display()
+            );
             None
         }
     }
