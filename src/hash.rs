@@ -17,7 +17,6 @@
 // user-mode shell can't resolve). Callers treat `None` as
 // "skip this app, don't try to drift-check".
 
-#![cfg(windows)]
 
 use std::path::Path;
 

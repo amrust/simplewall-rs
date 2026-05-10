@@ -20,7 +20,6 @@
 // sort on the timestamped filename). Bounded disk use; the user
 // can grab the latest few when reporting issues.
 
-#![cfg(windows)]
 
 use std::fs::{OpenOptions, create_dir_all};
 use std::io::Write;

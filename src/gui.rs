@@ -12,8 +12,6 @@
 // is sharp on hi-DPI displays (4K @ 200%+ scaling), then drives the
 // standard Win32 message loop until WM_QUIT.
 
-#![cfg(windows)]
-
 pub mod app;
 pub mod app_icons;
 pub mod app_properties;

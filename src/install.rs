@@ -14,7 +14,6 @@
 //
 // Windows-only because it sits on top of `wfp`.
 
-#![cfg(windows)]
 
 use std::path::PathBuf;
 

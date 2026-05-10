@@ -18,7 +18,6 @@
 // This is the same trick OS-level admin tools use (e.g.
 // Sysinternals' Autoruns "Run as administrator" registered task).
 
-#![cfg(windows)]
 
 use std::path::Path;
 
