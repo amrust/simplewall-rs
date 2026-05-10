@@ -77,11 +77,17 @@
                the user sees the language they installed in. Without
                this, a user who upgrades from an English install on a
                Russian machine keeps `language=en` even though the
-               Russian transform was just applied. -->
+               Russian transform was just applied.
+
+               REG_SZ (Type="string") rather than REG_DWORD because
+               WiX's Type="integer" wants a literal integer Value;
+               the Formatted-string property reference [ProductLanguage]
+               only reliably evaluates at install time when written
+               as a string. amwall parses the string back to u32. -->
           <Component Id="InstallLanguageMarker" Guid="7C4E1F8A-2B3D-4F6E-9A1C-5D8B3E7C2F0A" Win64="yes">
             <RegistryKey Root="HKLM" Key="Software\amwall">
               <RegistryValue Name="InstallLcid"
-                             Type="integer"
+                             Type="string"
                              Value="[ProductLanguage]"
                              KeyPath="yes" />
             </RegistryKey>
