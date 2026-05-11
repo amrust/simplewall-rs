@@ -3654,19 +3654,38 @@ cat <<EOF
   validation). Lands as a separate commit from a Windows session.
 EOF
 
-# ─── Drop the tee before handing the user an interactive shell ──────
+# ─── Drop the tee + dump the full log before interactive shell ──────
 #
-# Restore stdout/stderr to the original terminal fds so anything the
-# user types/runs at the bash prompt is NOT appended to the run log.
-# The tee subprocess receives EOF on its stdin pipe and exits.
+# Restore stdout/stderr to the original terminal fds so the cat below
+# (and anything the user types at the bash prompt) is NOT appended
+# to the run log. The tee subprocess gets EOF on its stdin pipe and
+# exits cleanly.
+#
+# Then re-print the entire log at the bottom of the terminal scroll-
+# back, bracketed by easy-to-spot markers, so the user can mass-
+# select everything between them and paste back. Without this, the
+# log content gets fragmented across scrollback (interleaved with
+# sudo prompts, the GUI launch detach, etc.).
 if [ -n "${AMWALL_LOGGING_ACTIVE:-}" ]; then
-    cat <<EOF
-
-  ─── Run log saved to: $AMWALL_LOG_FILE ───
-  Send to Claude:
-      cat $AMWALL_LOG_FILE
-EOF
+    # Give tee a moment to flush its last writes before we close its
+    # pipe. Without this, the final ~lines of in-flight output can
+    # be missing from the file when we cat it below.
+    sync
     exec 1>&3 2>&4 3>&- 4>&-
+    sleep 0.3
+
+    printf '\n'
+    printf '════════════════════════════════════════════════════════════\n'
+    printf '  ▼▼▼  BEGIN AMWALL RUN LOG  ▼▼▼   (%s)\n' "$AMWALL_LOG_FILE"
+    printf '════════════════════════════════════════════════════════════\n'
+    cat "$AMWALL_LOG_FILE"
+    printf '\n'
+    printf '════════════════════════════════════════════════════════════\n'
+    printf '  ▲▲▲  END AMWALL RUN LOG  ▲▲▲\n'
+    printf '  Select from "BEGIN AMWALL RUN LOG" up through "END AMWALL\n'
+    printf '  RUN LOG" and paste to Claude. Or:  cat %s\n' "$AMWALL_LOG_FILE"
+    printf '════════════════════════════════════════════════════════════\n'
+    printf '\n'
 fi
 
 exec bash
