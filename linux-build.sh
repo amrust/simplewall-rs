@@ -1158,7 +1158,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets DBus Network)
 
 # AMWALL_VERSION is baked into the binary so --version and the About
 # box show the same string the .deb is built with. Bumped per phase.
-add_compile_definitions(AMWALL_VERSION="0.1.0+phase6.4")
+add_compile_definitions(AMWALL_VERSION="0.1.0+phase6.5")
 
 add_executable(amwall-gui
     src/main.cpp
@@ -1176,6 +1176,8 @@ add_executable(amwall-gui
     src/userrulestab.h
     src/ruleeditor.cpp
     src/ruleeditor.h
+    src/connectionstab.cpp
+    src/connectionstab.h
 )
 
 target_link_libraries(amwall-gui PRIVATE
@@ -1280,6 +1282,7 @@ class DbusClient;
 class Dashboard;
 class PromptCoordinator;
 class UserRulesTab;
+class ConnectionsTab;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -1311,6 +1314,7 @@ private:
     QTabWidget        *m_tabs = nullptr;
     Dashboard         *m_dashboard = nullptr;
     UserRulesTab      *m_userRules = nullptr;
+    ConnectionsTab    *m_connections = nullptr;
 
     QLabel *m_statusDaemon = nullptr;   // permanent left widget
     QLabel *m_statusRefresh = nullptr;  // permanent right widget
@@ -1327,6 +1331,7 @@ EOF
 write_file linux/amwall-gui-qt/src/mainwindow.cpp <<'EOF'
 #include "mainwindow.h"
 
+#include "connectionstab.h"
 #include "dashboard.h"
 #include "dbusclient.h"
 #include "promptcoordinator.h"
@@ -1376,14 +1381,18 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 }
 
 void MainWindow::setupCentralWidget() {
-    // Tabbed central. Overview = the existing dashboard. User Rules
-    // = the rule list + add/edit/delete (Phase 6.4). 6.5 will append
-    // a "Connections" tab; 6.6 a "Packets log" tab; etc.
+    // Tabbed central. Overview = dashboard (informational). User
+    // Rules = rule list + add/edit/delete (Phase 6.4). Connections
+    // = live socket table (Phase 6.5). 6.6 will append a "Packets log"
+    // tab subscribed to the daemon's ConnectAttempt signal; 6.7 an
+    // Apps tab.
     m_tabs = new QTabWidget(this);
-    m_dashboard = new Dashboard(m_dbus, m_prompts, this);
-    m_userRules = new UserRulesTab(m_dbus, this);
-    m_tabs->addTab(m_dashboard, tr("&Overview"));
-    m_tabs->addTab(m_userRules, tr("&User Rules"));
+    m_dashboard   = new Dashboard(m_dbus, m_prompts, this);
+    m_userRules   = new UserRulesTab(m_dbus, this);
+    m_connections = new ConnectionsTab(this);
+    m_tabs->addTab(m_dashboard,   tr("&Overview"));
+    m_tabs->addTab(m_userRules,   tr("&User Rules"));
+    m_tabs->addTab(m_connections, tr("&Connections"));
     // Default to User Rules — that's the action surface; the
     // dashboard is informational and a click away.
     m_tabs->setCurrentWidget(m_userRules);
@@ -2908,6 +2917,222 @@ void UserRulesTab::onTableActivated() {
 }
 EOF
 
+write_file linux/amwall-gui-qt/src/connectionstab.h <<'EOF'
+// ConnectionsTab — Phase 6.5. Live view of the system's TCP socket
+// table (/proc/net/tcp + /proc/net/tcp6). Auto-refreshes every 5 s.
+//
+// Scope for 6.5 MVP:
+//   • TCP only (UDP is its own tab decision later)
+//   • No per-process resolution yet — resolving socket inode →
+//     owning PID needs walking /proc/<pid>/fd which is O(processes ×
+//     fds) and benefits from caching. Deferred to a follow-up so the
+//     basic plumbing lands first.
+//
+// Columns: Proto | Local | Remote | State
+
+#pragma once
+
+#include <QWidget>
+
+class QLabel;
+class QTableWidget;
+class QTimer;
+
+class ConnectionsTab : public QWidget {
+    Q_OBJECT
+
+public:
+    explicit ConnectionsTab(QWidget *parent = nullptr);
+
+public slots:
+    void refresh();
+
+private:
+    QTimer       *m_timer = nullptr;
+    QTableWidget *m_table = nullptr;
+    QLabel       *m_countLabel = nullptr;
+};
+EOF
+
+write_file linux/amwall-gui-qt/src/connectionstab.cpp <<'EOF'
+#include "connectionstab.h"
+
+#include <QFile>
+#include <QHBoxLayout>
+#include <QHeaderView>
+#include <QHostAddress>
+#include <QLabel>
+#include <QPushButton>
+#include <QRegularExpression>
+#include <QStyle>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+#include <QTextStream>
+#include <QTimer>
+#include <QVBoxLayout>
+
+namespace {
+
+QString tcpStateName(int hex) {
+    switch (hex) {
+    case 0x01: return QStringLiteral("ESTABLISHED");
+    case 0x02: return QStringLiteral("SYN_SENT");
+    case 0x03: return QStringLiteral("SYN_RECV");
+    case 0x04: return QStringLiteral("FIN_WAIT1");
+    case 0x05: return QStringLiteral("FIN_WAIT2");
+    case 0x06: return QStringLiteral("TIME_WAIT");
+    case 0x07: return QStringLiteral("CLOSE");
+    case 0x08: return QStringLiteral("CLOSE_WAIT");
+    case 0x09: return QStringLiteral("LAST_ACK");
+    case 0x0A: return QStringLiteral("LISTEN");
+    case 0x0B: return QStringLiteral("CLOSING");
+    default:   return QStringLiteral("?(0x%1)").arg(hex, 2, 16, QChar('0'));
+    }
+}
+
+// /proc/net/tcp address column: HEX_IP:HEX_PORT
+// IPv4: 8 hex chars (the kernel's host-endian u32 view of the network-
+//       order address bytes) + ':' + 4 hex chars (host-order port).
+// Example: "0100007F:0050"  →  127.0.0.1:80   (on x86 LE)
+QString formatV4Addr(const QString &s) {
+    const QStringList parts = s.split(':');
+    if (parts.size() != 2) return s;
+    bool ok = false;
+    const quint32 ip   = parts[0].toUInt(&ok, 16);   if (!ok) return s;
+    const quint16 port = parts[1].toUShort(&ok, 16); if (!ok) return s;
+    return QStringLiteral("%1.%2.%3.%4:%5")
+        .arg(ip & 0xff)
+        .arg((ip >> 8)  & 0xff)
+        .arg((ip >> 16) & 0xff)
+        .arg((ip >> 24) & 0xff)
+        .arg(port);
+}
+
+// IPv6: 32 hex chars = four u32 words (each in host-endian, but each
+// word's BYTES in increasing memory order = network byte order).
+// To reconstruct the 16 network-order bytes, extract little-endian
+// bytes of each word and append in order.
+QString formatV6Addr(const QString &s) {
+    const QStringList parts = s.split(':');
+    if (parts.size() != 2 || parts[0].length() != 32) return s;
+    Q_IPV6ADDR addr;
+    for (int g = 0; g < 4; ++g) {
+        bool ok = false;
+        const quint32 word = parts[0].mid(g * 8, 8).toUInt(&ok, 16);
+        if (!ok) return s;
+        addr.c[g * 4 + 0] = char(word & 0xff);
+        addr.c[g * 4 + 1] = char((word >> 8)  & 0xff);
+        addr.c[g * 4 + 2] = char((word >> 16) & 0xff);
+        addr.c[g * 4 + 3] = char((word >> 24) & 0xff);
+    }
+    bool ok = false;
+    const quint16 port = parts[1].toUShort(&ok, 16);
+    QHostAddress qaddr(addr);
+    return QStringLiteral("[%1]:%2").arg(qaddr.toString()).arg(ok ? port : 0);
+}
+
+struct Conn {
+    QString proto;
+    QString local;
+    QString remote;
+    QString state;
+};
+
+QList<Conn> readProcNetTcp(const QString &path, bool ipv6) {
+    QList<Conn> out;
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) return out;
+    QTextStream in(&f);
+    in.readLine();   // skip header
+    const QRegularExpression splitter("\\s+");
+    while (!in.atEnd()) {
+        const QString line = in.readLine().trimmed();
+        if (line.isEmpty()) continue;
+        const QStringList fields = line.split(splitter, Qt::SkipEmptyParts);
+        if (fields.size() < 4) continue;
+        bool ok = false;
+        const int stHex = fields[3].toInt(&ok, 16);
+        out.append(Conn{
+            ipv6 ? QStringLiteral("tcp6") : QStringLiteral("tcp4"),
+            ipv6 ? formatV6Addr(fields[1]) : formatV4Addr(fields[1]),
+            ipv6 ? formatV6Addr(fields[2]) : formatV4Addr(fields[2]),
+            ok   ? tcpStateName(stHex) : fields[3],
+        });
+    }
+    return out;
+}
+
+}  // namespace
+
+ConnectionsTab::ConnectionsTab(QWidget *parent) : QWidget(parent) {
+    auto *outer = new QVBoxLayout(this);
+    outer->setContentsMargins(8, 8, 8, 8);
+    outer->setSpacing(6);
+
+    auto *header = new QHBoxLayout;
+    auto *title = new QLabel(tr("<b>Connections</b>"), this);
+    title->setTextFormat(Qt::RichText);
+    header->addWidget(title);
+    m_countLabel = new QLabel(QStringLiteral("(0)"), this);
+    header->addWidget(m_countLabel);
+    header->addStretch(1);
+    auto *refreshBtn = new QPushButton(
+        style()->standardIcon(QStyle::SP_BrowserReload),
+        tr("Refresh"), this);
+    connect(refreshBtn, &QPushButton::clicked, this, &ConnectionsTab::refresh);
+    header->addWidget(refreshBtn);
+    outer->addLayout(header);
+
+    m_table = new QTableWidget(0, 4, this);
+    m_table->setHorizontalHeaderLabels({
+        tr("Proto"), tr("Local"), tr("Remote"), tr("State")
+    });
+    m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_table->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_table->setSortingEnabled(true);
+    m_table->verticalHeader()->setVisible(false);
+    m_table->horizontalHeader()->setStretchLastSection(false);
+    m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    m_table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    m_table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    m_table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    outer->addWidget(m_table, 1);
+
+    auto *hint = new QLabel(
+        tr("<i style='font-size: small;'>"
+           "Per-process resolution comes in a follow-up — needs walking "
+           "<code>/proc/&lt;pid&gt;/fd/*</code> to map socket inodes to PIDs."
+           "</i>"),
+        this);
+    hint->setTextFormat(Qt::RichText);
+    hint->setWordWrap(true);
+    outer->addWidget(hint);
+
+    m_timer = new QTimer(this);
+    connect(m_timer, &QTimer::timeout, this, &ConnectionsTab::refresh);
+    m_timer->start(5000);
+    refresh();
+}
+
+void ConnectionsTab::refresh() {
+    QList<Conn> rows = readProcNetTcp(QStringLiteral("/proc/net/tcp"), false);
+    rows.append(readProcNetTcp(QStringLiteral("/proc/net/tcp6"), true));
+
+    m_table->setSortingEnabled(false);
+    m_table->setRowCount(rows.size());
+    for (int i = 0; i < rows.size(); ++i) {
+        const Conn &c = rows[i];
+        m_table->setItem(i, 0, new QTableWidgetItem(c.proto));
+        m_table->setItem(i, 1, new QTableWidgetItem(c.local));
+        m_table->setItem(i, 2, new QTableWidgetItem(c.remote));
+        m_table->setItem(i, 3, new QTableWidgetItem(c.state));
+    }
+    m_table->setSortingEnabled(true);
+    m_countLabel->setText(QStringLiteral("(%1)").arg(rows.size()));
+}
+EOF
+
 
 # ─── amwall-ebpf — Phase 2 enforcement (unchanged in Phase 3) ───────
 
@@ -4293,16 +4518,21 @@ ALL_PASS=1
 [ "$TEST7" = PASS ] || ALL_PASS=0
 
 if [ "$ALL_PASS" = 1 ]; then
-    H "✓ PHASES 2 + 3 + 4 + 5 + 6.1 + 6.2 + 6.3 + 6.4 (User Rules tab) ALL CONFIRMED"
+    H "✓ PHASES 2 + 3 + 4 + 5 + 6.1 + 6.2 + 6.3 + 6.4 + 6.4.1 + 6.5 ALL CONFIRMED"
     OK "Default-deny / live reload / D-Bus methods / D-Bus signals all work."
     OK "Polkit gates Allow/Deny/Del; local-active session passes through."
     OK ".deb builds and contains all 9 expected files."
     OK "amwall-core hoisted to repo root; Linux workspace consumes it."
-    OK "amwall-gui (Qt6): tabbed central (Overview / User Rules) + connect-prompt + dashboard."
-    OK "Manually verify: User Rules tab lists rules, Add/Edit/Delete buttons work."
-    OK "Edit menu > Add rule (Ctrl+N) opens the editor on the User Rules tab."
+    OK "IPv6 is now ENFORCED (6.4.1): parallel RULES_V6 map + 4-way wildcard."
+    OK "Qt6 GUI tabs: Overview / User Rules / Connections + connect-prompt."
+    OK "Manually verify:"
+    OK "  • User Rules tab: Add/Edit/Delete work; rules appear within ~5s."
+    OK "  • Connections tab: live /proc/net/tcp + tcp6, auto-refreshes."
+    OK "  • Edit menu > Add rule (Ctrl+N) opens the editor on User Rules."
+    OK "  • Try connecting to an IPv6 destination from an unknown app —"
+    OK "    you should now get a prompt (was silently allowed pre-6.4.1)."
 else
-    H "✗ Some Phase 2/3/4/5/6.1/6.2/6.3/6.4 tests had failures"
+    H "✗ Some Phase 2/3/4/5/6.1/6.2/6.3/6.4/6.4.1/6.5 tests had failures"
     WARN "T1 default-deny:        $TEST1"
     WARN "T2 mtime live-reload:   $TEST2"
     WARN "T3 D-Bus List:          $TEST3"
@@ -4421,9 +4651,9 @@ fi
 # ─── Done + drop into shell at repo dir ─────────────────────────────
 
 if [ "$INSTALLED" = 1 ]; then
-    H "DONE — Phase 6.4 — amwall installed, daemon running, Qt6 GUI with User Rules tab on screen"
+    H "DONE — Phase 6.5 — amwall installed, IPv6 enforced, Qt6 GUI with Connections tab"
 else
-    H "DONE — through Phase 6.4; install step skipped/failed"
+    H "DONE — through Phase 6.5; install step skipped/failed"
 fi
 
 cat <<EOF
@@ -4432,8 +4662,8 @@ cat <<EOF
 
   Suggested commit + snapshot:
     git add linux/ amwall-core/
-    git commit -m "linux: Phase 6.4 — User Rules tab + Rule editor dialog"
-    # then snapshot the VM as 'phase-6.4-user-rules-tab'
+    git commit -m "linux: Phase 6.4.1 + 6.5 — IPv6 enforcement + Connections tab"
+    # then snapshot the VM as 'phase-6.5-connections-tab'
 
   Try the prompt (rules.toml is empty by default → everything denies):
     curl --max-time 5 https://example.com
@@ -4485,19 +4715,27 @@ cat <<EOF
     # set AMWALL_SKIP_INSTALL=1 to iterate without touching systemd
 
   Phase 6 progress (Qt6 GUI, Windows-amwall feature parity):
-    - 6.1 ✓ — foundation: QMainWindow + tray + close-to-tray
-    - 6.2 ✓ — status dashboard + DbusClient + real File/View/Help menus
-    - 6.3 ✓ — connect-prompt dialog (per-comm Allow/Block, whole-app wildcards)
-    - 6.4 ✓ — User Rules tab + Rule editor (Edit menu restored)
-    - 6.5 — Connections tab (live /proc/net walk)
-    - 6.6 — Packets log tab (ConnectAttempt history view; signal already wired)
-    - 6.7 — Apps tab + App Properties dialog
-    - 6.8 — Settings dialog (8-page QNotebook); restores Settings menu
-    - 6.9 — i18n (rust_i18n locales/*.toml); Blocklist menu lands here
+    - 6.1   ✓ foundation: QMainWindow + tray + close-to-tray
+    - 6.2   ✓ status dashboard + DbusClient + real File/View/Help menus
+    - 6.3   ✓ connect-prompt dialog (per-comm Allow/Block, whole-app wildcards)
+    - 6.4   ✓ User Rules tab + Rule editor (Edit menu restored)
+    - 6.4.1 ✓ IPv6 default-deny via parallel RULES_V6 BPF map
+    - 6.5   ✓ Connections tab (live /proc/net/tcp + tcp6; refresh every 5s)
+    - 6.6   — Packets log tab (ConnectAttempt history view; signal already wired)
+    - 6.7   — Apps tab + App Properties dialog
+    - 6.8   — Settings dialog (8-page QNotebook); restores Settings menu
+    - 6.9   — i18n (rust_i18n locales/*.toml); Blocklist menu lands here
 
   6.3.1 (queued) — BPF reads task->group_leader->comm so multi-thread
                    apps (Firefox DNS Resolver #N) collapse to one prompt
-                   instead of one per thread name.
+                   instead of one per thread name. Needs aya-tool to
+                   generate vmlinux.rs from /sys/kernel/btf/vmlinux —
+                   aya-tool is now installed at setup time but the BPF
+                   walk itself is its own iteration.
+
+  6.5.1 (queued) — Per-process resolution on the Connections tab.
+                   Walk /proc/<pid>/fd/* and map socket inodes back
+                   to PIDs (cached). Adds a "Process" column.
 
   Plan Phase 5b — Windows-side wiring of amwall-core — still needs a
   Windows checkout (root Cargo.toml + src/rules/*.rs adoption + MSI
