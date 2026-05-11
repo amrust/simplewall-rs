@@ -2196,7 +2196,10 @@ write_file linux/amwall-gui-qt/src/connectprompt.cpp <<'EOF'
 #include "connectprompt.h"
 
 #include <QApplication>
+#include <QByteArray>
 #include <QCloseEvent>
+#include <QFile>
+#include <QFileInfo>
 #include <QFont>
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -2205,6 +2208,37 @@ write_file linux/amwall-gui-qt/src/connectprompt.cpp <<'EOF'
 #include <QPushButton>
 #include <QStyle>
 #include <QVBoxLayout>
+
+namespace {
+
+// Resolve /proc/<pid>/exe — symlink to the actual binary. Returns
+// empty string if the process has already exited or perms deny us.
+// Note we read this in the GUI process (running as 'somebody'); a
+// root-owned binary's exe symlink is still readable by anyone with
+// /proc access since the symlink target itself isn't dereferenced
+// — only the link string matters.
+QString resolveExe(uint pid) {
+    QFileInfo link(QStringLiteral("/proc/%1/exe").arg(pid));
+    if (!link.isSymLink()) return {};
+    return link.symLinkTarget();
+}
+
+// /proc/<pid>/cmdline is argv joined by NUL bytes, trailing NUL.
+// Replace NULs with spaces for display; truncate at 200 chars so a
+// pathological cmdline doesn't blow up the dialog width.
+QString resolveCmdline(uint pid) {
+    QFile f(QStringLiteral("/proc/%1/cmdline").arg(pid));
+    if (!f.open(QIODevice::ReadOnly)) return {};
+    QByteArray bytes = f.readAll();
+    if (bytes.isEmpty()) return {};
+    if (bytes.endsWith('\0')) bytes.chop(1);
+    bytes.replace('\0', ' ');
+    QString s = QString::fromLocal8Bit(bytes);
+    if (s.size() > 200) s = s.left(197) + QStringLiteral("...");
+    return s;
+}
+
+}  // namespace
 
 ConnectPromptDialog::ConnectPromptDialog(uint pid,
                                          const QString &comm,
@@ -2259,6 +2293,31 @@ ConnectPromptDialog::ConnectPromptDialog(uint pid,
         new QLabel(QStringLiteral("<code>%1</code> (pid %2)")
                        .arg(comm.toHtmlEscaped())
                        .arg(pid), this));
+
+    // /proc/<pid>/exe and cmdline disambiguate the truncated 15-char
+    // TASK_COMM_NAME — e.g. comm="http" could be HTTPie at
+    // /usr/local/bin/http, /usr/bin/http (a shell wrapper), or anything
+    // else a user installed. Race window: the process may have exited
+    // between the BPF event and the GUI handling it; rows are omitted
+    // when /proc is empty rather than showing misleading placeholders.
+    const QString exePath = resolveExe(pid);
+    if (!exePath.isEmpty()) {
+        auto *exeLabel = new QLabel(
+            QStringLiteral("<code>%1</code>").arg(exePath.toHtmlEscaped()), this);
+        exeLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        exeLabel->setWordWrap(true);
+        details->addRow(tr("Binary:"), exeLabel);
+    }
+
+    const QString cmdline = resolveCmdline(pid);
+    if (!cmdline.isEmpty()) {
+        auto *cmdLabel = new QLabel(
+            QStringLiteral("<code>%1</code>").arg(cmdline.toHtmlEscaped()), this);
+        cmdLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        cmdLabel->setWordWrap(true);
+        details->addRow(tr("Command:"), cmdLabel);
+    }
+
     details->addRow(tr("First destination:"),
         new QLabel(QStringLiteral("<code>%1:%2</code>")
                        .arg(ip.toHtmlEscaped())
