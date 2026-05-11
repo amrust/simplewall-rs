@@ -168,8 +168,12 @@ set -o pipefail
 if [ -z "${AMWALL_LOGGING_ACTIVE:-}" ] && [ "${AMWALL_NO_LOG:-0}" != "1" ]; then
     AMWALL_LOG_FILE="${AMWALL_LOG_FILE:-$HOME/amwall-run.log}"
     : > "$AMWALL_LOG_FILE"  # truncate any prior log
+    # Stamp used to scope coredumpctl --since at end-of-run so we
+    # only show cores from THIS script invocation, not old ones.
+    AMWALL_RUN_START="$(date '+%Y-%m-%d %H:%M:%S')"
     export AMWALL_LOGGING_ACTIVE=1
     export AMWALL_LOG_FILE
+    export AMWALL_RUN_START
     exec 3>&1 4>&2
     exec > >(tee "$AMWALL_LOG_FILE") 2>&1
     printf '\n'
@@ -3868,9 +3872,55 @@ if [ -n "${AMWALL_LOGGING_ACTIVE:-}" ]; then
     printf '\n'
     printf '════════════════════════════════════════════════════════════\n'
     printf '  ▲▲▲  END AMWALL RUN LOG  ▲▲▲\n'
-    printf '  Select from "BEGIN AMWALL RUN LOG" up through "END AMWALL\n'
-    printf '  RUN LOG" and paste to Claude. Or:  cat %s\n' "$AMWALL_LOG_FILE"
     printf '════════════════════════════════════════════════════════════\n'
+    printf '\n'
+
+    # ─── GUI runtime log (Qt qDebug/qWarning + crash messages) ──────
+    # Dumped AFTER the build log so an immediate-startup GUI crash is
+    # visible without a second command. The GUI is still running in
+    # the background — anything it logs after this point won't be in
+    # this dump; re-cat manually with: tail -f /tmp/amwall-gui.log
+    GUI_RUNTIME_LOG=/tmp/amwall-gui.log
+    if [ -s "$GUI_RUNTIME_LOG" ]; then
+        printf '════════════════════════════════════════════════════════════\n'
+        printf '  ▼▼▼  BEGIN GUI RUNTIME LOG  ▼▼▼   (%s)\n' "$GUI_RUNTIME_LOG"
+        printf '════════════════════════════════════════════════════════════\n'
+        cat "$GUI_RUNTIME_LOG"
+        printf '\n'
+        printf '════════════════════════════════════════════════════════════\n'
+        printf '  ▲▲▲  END GUI RUNTIME LOG  ▲▲▲\n'
+        printf '════════════════════════════════════════════════════════════\n'
+        printf '\n'
+    elif [ -e "$GUI_RUNTIME_LOG" ]; then
+        printf '  (GUI runtime log %s is empty — no warnings yet)\n' "$GUI_RUNTIME_LOG"
+        printf '\n'
+    fi
+
+    # ─── Coredump (only if amwall-gui crashed during this run) ──────
+    # systemd-coredump is enabled on Mint by default. Show the most
+    # recent core for amwall-gui only if it's newer than the start of
+    # this script — older cores are from prior runs and not relevant.
+    if command -v coredumpctl >/dev/null 2>&1; then
+        # --since=$AMWALL_RUN_START scopes to this run only.
+        if coredumpctl list amwall-gui --since="$AMWALL_RUN_START" --no-pager 2>/dev/null \
+              | grep -q amwall-gui; then
+            printf '════════════════════════════════════════════════════════════\n'
+            printf '  ▼▼▼  AMWALL-GUI COREDUMP (this run)  ▼▼▼\n'
+            printf '════════════════════════════════════════════════════════════\n'
+            coredumpctl info amwall-gui --no-pager 2>&1 | head -80
+            printf '\n'
+            printf '════════════════════════════════════════════════════════════\n'
+            printf '  ▲▲▲  END COREDUMP  ▲▲▲   coredumpctl gdb amwall-gui to dig\n'
+            printf '════════════════════════════════════════════════════════════\n'
+            printf '\n'
+        fi
+    fi
+
+    printf '  Select all three blocks (RUN LOG / GUI LOG / COREDUMP, if present)\n'
+    printf '  and paste to Claude. Or run any of:\n'
+    printf '      cat %s\n' "$AMWALL_LOG_FILE"
+    printf '      cat %s\n' "$GUI_RUNTIME_LOG"
+    printf '      coredumpctl info amwall-gui\n'
     printf '\n'
 fi
 
