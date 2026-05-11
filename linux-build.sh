@@ -3934,17 +3934,43 @@ if [ -n "${AMWALL_LOGGING_ACTIVE:-}" ]; then
     printf '\n'
 fi
 
-# ─── Live tail of the GUI log so we see crashes/warnings in real time ──
-# Replaces the previous `exec bash` shell drop. The user interacts with
-# the GUI (clicks Allow on prompts, etc.) and sees Qt warnings + DBus
-# errors stream here as they happen. Ctrl-C exits back to the original
-# shell. To re-enter the repo afterwards: cd ~/amwall.
+# ─── Live combined log: daemon journal + GUI runtime log ───────────
+#
+# The user wants to see EVERYTHING in real time as they interact with
+# the GUI: connect/allow/deny events from the daemon (which logs to
+# systemd journal — that's the standard place for system-service
+# stdout/stderr) AND Qt warnings/crashes from the GUI (which the
+# script redirects to ~/.local/share/amwall/gui.log).
+#
+# We tail both, prefixed so the source is obvious:
+#    [daem] ← amwall-daemon (journalctl -fu amwall-daemon, sudo)
+#    [gui ] ← amwall-gui (~/.local/share/amwall/gui.log)
+#
+# Ctrl-C kills both via the EXIT trap and returns to the parent shell.
+# To re-enter the repo afterwards: cd ~/amwall.
+
 GUI_RUNTIME_LOG="${GUI_RUNTIME_LOG:-${XDG_DATA_HOME:-$HOME/.local/share}/amwall/gui.log}"
-# Make sure the directory + file exist so tail -F doesn't complain on
-# cold launches where amwall-gui hasn't written anything yet.
 mkdir -p "$(dirname "$GUI_RUNTIME_LOG")"
 [ -e "$GUI_RUNTIME_LOG" ] || : > "$GUI_RUNTIME_LOG"
+
 printf '════════════════════════════════════════════════════════════\n'
-printf '  ▶ live tail of %s   (Ctrl-C to exit)\n' "$GUI_RUNTIME_LOG"
+printf '  ▶ live combined log — Ctrl-C to exit\n'
+printf '       [daem]  amwall-daemon (allow/deny, D-Bus, BPF)\n'
+printf '       [gui ]  amwall-gui    (Qt qDebug/qWarning, crashes)\n'
+printf '       GUI log file: %s\n' "$GUI_RUNTIME_LOG"
 printf '════════════════════════════════════════════════════════════\n'
-exec tail -F "$GUI_RUNTIME_LOG"
+
+# Background tail of the GUI log. sed -u (line-buffered) is GNU sed —
+# fine on Linux. Prefix added so output is differentiable when both
+# streams interleave.
+tail -F "$GUI_RUNTIME_LOG" 2>/dev/null | sed -u 's/^/[gui ] /' &
+GUI_TAIL_PID=$!
+trap 'kill $GUI_TAIL_PID 2>/dev/null; wait $GUI_TAIL_PID 2>/dev/null; true' EXIT INT
+
+# Foreground: daemon journal, with 50 lines of recent context backfilled
+# so the user immediately sees what the daemon did during script setup.
+# sudo because journalctl -u <system service> requires elevated read
+# perms unless the user is in systemd-journal/adm. The earlier sudo -v
+# in the smoke-test block keeps the sudo timestamp warm; usually no
+# password prompt here.
+sudo journalctl -u amwall-daemon -n 50 -f --no-pager 2>&1 | sed -u 's/^/[daem] /'
