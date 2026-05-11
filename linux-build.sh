@@ -1180,7 +1180,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets DBus Network)
 
 # AMWALL_VERSION is baked into the binary so --version and the About
 # box show the same string the .deb is built with. Bumped per phase.
-add_compile_definitions(AMWALL_VERSION="0.1.0+phase6.5")
+add_compile_definitions(AMWALL_VERSION="0.1.0+phase6.7")
 
 add_executable(amwall-gui
     src/main.cpp
@@ -1202,6 +1202,8 @@ add_executable(amwall-gui
     src/connectionstab.h
     src/packetslogtab.cpp
     src/packetslogtab.h
+    src/appstab.cpp
+    src/appstab.h
 )
 
 target_link_libraries(amwall-gui PRIVATE
@@ -1308,6 +1310,7 @@ class PromptCoordinator;
 class UserRulesTab;
 class ConnectionsTab;
 class PacketsLogTab;
+class AppsTab;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -1341,6 +1344,7 @@ private:
     UserRulesTab      *m_userRules = nullptr;
     ConnectionsTab    *m_connections = nullptr;
     PacketsLogTab     *m_packetsLog = nullptr;
+    AppsTab           *m_apps = nullptr;
 
     QLabel *m_statusDaemon = nullptr;   // permanent left widget
     QLabel *m_statusRefresh = nullptr;  // permanent right widget
@@ -1357,6 +1361,7 @@ EOF
 write_file linux/amwall-gui-qt/src/mainwindow.cpp <<'EOF'
 #include "mainwindow.h"
 
+#include "appstab.h"
 #include "connectionstab.h"
 #include "dashboard.h"
 #include "dbusclient.h"
@@ -1418,10 +1423,21 @@ void MainWindow::setupCentralWidget() {
     m_userRules   = new UserRulesTab(m_dbus, this);
     m_connections = new ConnectionsTab(this);
     m_packetsLog  = new PacketsLogTab(m_dbus, this);
+    m_apps        = new AppsTab(m_dbus, this);
     m_tabs->addTab(m_dashboard,   tr("&Overview"));
     m_tabs->addTab(m_userRules,   tr("&User Rules"));
+    m_tabs->addTab(m_apps,        tr("&Apps"));
     m_tabs->addTab(m_connections, tr("&Connections"));
     m_tabs->addTab(m_packetsLog,  tr("&Packets log"));
+    // "Show in User Rules" in the Apps context menu jumps tabs.
+    // No filtering of the User Rules table — the user can scroll
+    // and the comm is in the first column so it's quick to find.
+    connect(m_apps, &AppsTab::showInRulesRequested,
+            this, [this](const QString &) {
+                if (m_tabs && m_userRules) {
+                    m_tabs->setCurrentWidget(m_userRules);
+                }
+            });
     // Default to User Rules — that's the action surface; the
     // dashboard is informational and a click away.
     m_tabs->setCurrentWidget(m_userRules);
@@ -3660,6 +3676,373 @@ void PacketsLogTab::applyVisibility() {
 EOF
 
 
+# ─── Phase 6.7 — Apps tab (.desktop scan + per-app rule actions) ────
+
+write_file linux/amwall-gui-qt/src/appstab.h <<'EOF'
+// AppsTab — Phase 6.7. Lists installed desktop apps drawn from
+// /usr/share/applications, ~/.local/share/applications, and the
+// usual flatpak/snap locations. For each entry we extract Name,
+// Exec, Icon, derive the kernel comm (first 15 chars of basename(Exec)),
+// and cross-reference DbusClient::rules() to show how many rules
+// already exist for that comm.
+//
+// Right-clicking a row offers "Allow this app" / "Block this app"
+// (writes a wildcard rule for the comm) and "Show in User Rules"
+// (switches to the User Rules tab — wired via showInRules signal).
+//
+// Auto-rescans the .desktop files lazily — only on first show and
+// when the user clicks Refresh, since .desktop entries change at
+// install-package cadence, not connection cadence.
+
+#pragma once
+
+#include <QWidget>
+
+class DbusClient;
+class QLabel;
+class QLineEdit;
+class QTableWidget;
+
+class AppsTab : public QWidget {
+    Q_OBJECT
+
+public:
+    explicit AppsTab(DbusClient *dbus, QWidget *parent = nullptr);
+
+signals:
+    void showInRulesRequested(const QString &comm);
+
+public slots:
+    void refreshApps();         // re-scan .desktop files (manual button)
+    void refreshRuleCounts();   // re-bind rule counts after stateChanged
+
+private slots:
+    void onContextMenu(const QPoint &pos);
+    void onFilterChanged(const QString &text);
+
+private:
+    DbusClient   *m_dbus  = nullptr;
+    QTableWidget *m_table = nullptr;
+    QLabel       *m_count = nullptr;
+    QLineEdit    *m_filter = nullptr;
+};
+EOF
+
+write_file linux/amwall-gui-qt/src/appstab.cpp <<'EOF'
+#include "appstab.h"
+
+#include "dbusclient.h"
+
+#include <QAbstractItemView>
+#include <QAction>
+#include <QDir>
+#include <QFileInfo>
+#include <QHBoxLayout>
+#include <QHash>
+#include <QHeaderView>
+#include <QIcon>
+#include <QLabel>
+#include <QLineEdit>
+#include <QList>
+#include <QMenu>
+#include <QPushButton>
+#include <QSet>
+#include <QSettings>
+#include <QSignalBlocker>
+#include <QStyle>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+#include <QVBoxLayout>
+#include <algorithm>
+
+namespace {
+constexpr int COL_NAME = 0;
+constexpr int COL_COMM = 1;
+constexpr int COL_EXEC = 2;
+constexpr int COL_RULES = 3;
+
+struct DesktopApp {
+    QString name;
+    QString exec;       // raw Exec= value, %-codes left in for display
+    QString iconName;   // resolved via QIcon::fromTheme
+    QString comm;       // first 15 chars of basename(first-word(Exec))
+};
+
+// Strip the first word of an Exec= value (the actual command, before
+// args/field-codes), drop env-var prefixes like "env FOO=bar firefox",
+// take the basename, and truncate to TASK_COMM_LEN-1 = 15. That's
+// what bpf_get_current_comm() / task->group_leader->comm returns
+// after a fork+exec — matching the BPF map key.
+QString commFromExec(const QString &exec) {
+    if (exec.isEmpty()) return {};
+    QString first = exec.section(' ', 0, 0).trimmed();
+    // skip `env FOO=bar firefox` style — keep taking next word until
+    // it's not VAR=value, then that's the binary.
+    int wordIdx = 0;
+    while (first == QStringLiteral("env") || first.contains('=')) {
+        ++wordIdx;
+        first = exec.section(' ', wordIdx, wordIdx).trimmed();
+        if (first.isEmpty()) return {};
+        if (wordIdx > 4) break;  // bail
+    }
+    if (first.startsWith('"') && first.endsWith('"') && first.size() >= 2) {
+        first = first.mid(1, first.size() - 2);
+    }
+    QString base = first.section('/', -1);
+    return base.left(15);
+}
+
+QStringList desktopDirs() {
+    QStringList dirs = {
+        QStringLiteral("/usr/share/applications"),
+        QStringLiteral("/usr/local/share/applications"),
+        QDir::homePath() + QStringLiteral("/.local/share/applications"),
+        QStringLiteral("/var/lib/flatpak/exports/share/applications"),
+        QDir::homePath() + QStringLiteral("/.local/share/flatpak/exports/share/applications"),
+        QStringLiteral("/var/lib/snapd/desktop/applications"),
+    };
+    return dirs;
+}
+
+QList<DesktopApp> scanDesktopApps() {
+    QList<DesktopApp> apps;
+    QSet<QString> seenNames;  // dedup display name across dirs
+    for (const QString &dirPath : desktopDirs()) {
+        QDir dir(dirPath);
+        if (!dir.exists()) continue;
+        const QStringList files = dir.entryList(
+            QStringList{QStringLiteral("*.desktop")}, QDir::Files);
+        for (const QString &f : files) {
+            QSettings ini(dir.absoluteFilePath(f), QSettings::IniFormat);
+            ini.beginGroup(QStringLiteral("Desktop Entry"));
+            if (ini.value(QStringLiteral("NoDisplay")).toBool() ||
+                ini.value(QStringLiteral("Hidden")).toBool()) {
+                ini.endGroup();
+                continue;
+            }
+            const QString type = ini.value(QStringLiteral("Type")).toString();
+            if (!type.isEmpty() && type != QStringLiteral("Application")) {
+                ini.endGroup();
+                continue;
+            }
+            DesktopApp a;
+            a.name     = ini.value(QStringLiteral("Name")).toString();
+            a.exec     = ini.value(QStringLiteral("Exec")).toString();
+            a.iconName = ini.value(QStringLiteral("Icon")).toString();
+            ini.endGroup();
+            if (a.name.isEmpty() || a.exec.isEmpty()) continue;
+            a.comm = commFromExec(a.exec);
+            if (a.comm.isEmpty()) continue;
+            // Dedup by (name, comm): same app installed twice across
+            // /usr and ~/.local shouldn't appear as two rows.
+            const QString key = a.name + QStringLiteral("\x01") + a.comm;
+            if (seenNames.contains(key)) continue;
+            seenNames.insert(key);
+            apps.append(a);
+        }
+    }
+    std::sort(apps.begin(), apps.end(), [](const DesktopApp &l,
+                                           const DesktopApp &r) {
+        return l.name.localeAwareCompare(r.name) < 0;
+    });
+    return apps;
+}
+}  // namespace
+
+AppsTab::AppsTab(DbusClient *dbus, QWidget *parent)
+    : QWidget(parent), m_dbus(dbus) {
+
+    auto *outer = new QVBoxLayout(this);
+    outer->setContentsMargins(8, 8, 8, 8);
+    outer->setSpacing(6);
+
+    // ─── Header bar ───────────────────────────────────────────────
+    auto *header = new QHBoxLayout;
+    auto *title = new QLabel(tr("<b>Apps</b>"), this);
+    title->setTextFormat(Qt::RichText);
+    header->addWidget(title);
+    m_count = new QLabel(QStringLiteral("(0)"), this);
+    header->addWidget(m_count);
+    header->addSpacing(12);
+
+    header->addWidget(new QLabel(tr("Filter:"), this));
+    m_filter = new QLineEdit(this);
+    m_filter->setPlaceholderText(tr("name, comm, or exec..."));
+    m_filter->setClearButtonEnabled(true);
+    header->addWidget(m_filter, 1);
+
+    auto *refresh = new QPushButton(
+        style()->standardIcon(QStyle::SP_BrowserReload), tr("Rescan"), this);
+    header->addWidget(refresh);
+
+    outer->addLayout(header);
+
+    // ─── Table ────────────────────────────────────────────────────
+    m_table = new QTableWidget(0, 4, this);
+    m_table->setHorizontalHeaderLabels({
+        tr("Name"), tr("comm"), tr("Exec"), tr("Rules")
+    });
+    m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_table->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_table->setSortingEnabled(true);
+    m_table->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_table->verticalHeader()->setVisible(false);
+    auto *hh = m_table->horizontalHeader();
+    hh->setSectionResizeMode(COL_NAME,  QHeaderView::Interactive);
+    hh->setSectionResizeMode(COL_COMM,  QHeaderView::ResizeToContents);
+    hh->setSectionResizeMode(COL_EXEC,  QHeaderView::Stretch);
+    hh->setSectionResizeMode(COL_RULES, QHeaderView::ResizeToContents);
+    m_table->setColumnWidth(COL_NAME, 220);
+    outer->addWidget(m_table, 1);
+
+    auto *hint = new QLabel(
+        tr("<i style='font-size: small;'>"
+           "Right-click an app to add an allow/deny rule for its comm "
+           "or jump to it in the User Rules tab. comm is the kernel's "
+           "15-char TASK_COMM_NAME — the same key the BPF map uses, "
+           "so the rule you create here matches what the daemon sees."
+           "</i>"),
+        this);
+    hint->setTextFormat(Qt::RichText);
+    hint->setWordWrap(true);
+    outer->addWidget(hint);
+
+    // ─── Wiring ───────────────────────────────────────────────────
+    connect(refresh, &QPushButton::clicked,
+            this, &AppsTab::refreshApps);
+    connect(m_table, &QWidget::customContextMenuRequested,
+            this, &AppsTab::onContextMenu);
+    connect(m_filter, &QLineEdit::textChanged,
+            this, &AppsTab::onFilterChanged);
+    if (m_dbus) {
+        connect(m_dbus, &DbusClient::stateChanged,
+                this, &AppsTab::refreshRuleCounts);
+    }
+
+    refreshApps();
+}
+
+void AppsTab::refreshApps() {
+    const QList<DesktopApp> apps = scanDesktopApps();
+
+    // Count rules per comm. One pass over the rule list.
+    QHash<QString, int> counts;
+    if (m_dbus) {
+        for (const RuleEntry &r : m_dbus->rules()) {
+            ++counts[r.comm];
+        }
+    }
+
+    QSignalBlocker block(m_table);
+    m_table->setSortingEnabled(false);
+    m_table->setRowCount(apps.size());
+    for (int i = 0; i < apps.size(); ++i) {
+        const DesktopApp &a = apps[i];
+        auto *nItem = new QTableWidgetItem(a.name);
+        if (!a.iconName.isEmpty()) {
+            QIcon ic = QIcon::fromTheme(a.iconName);
+            if (!ic.isNull()) nItem->setIcon(ic);
+        }
+        auto *cItem = new QTableWidgetItem(a.comm);
+        auto *eItem = new QTableWidgetItem(a.exec);
+        eItem->setToolTip(a.exec);
+        const int n = counts.value(a.comm, 0);
+        auto *rItem = new QTableWidgetItem(QString::number(n));
+        // Right-aligned numeric cell, dim when zero (no rules yet).
+        rItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        if (n == 0) rItem->setForeground(palette().color(QPalette::Disabled,
+                                                          QPalette::Text));
+        m_table->setItem(i, COL_NAME,  nItem);
+        m_table->setItem(i, COL_COMM,  cItem);
+        m_table->setItem(i, COL_EXEC,  eItem);
+        m_table->setItem(i, COL_RULES, rItem);
+    }
+    m_table->setSortingEnabled(true);
+    m_count->setText(QStringLiteral("(%1)").arg(apps.size()));
+
+    // Re-apply filter visibility after rebuild.
+    onFilterChanged(m_filter->text());
+}
+
+void AppsTab::refreshRuleCounts() {
+    // Cheap: same .desktop list, just recompute rule counts column.
+    if (!m_dbus) return;
+    QHash<QString, int> counts;
+    for (const RuleEntry &r : m_dbus->rules()) {
+        ++counts[r.comm];
+    }
+    QSignalBlocker block(m_table);
+    for (int r = 0; r < m_table->rowCount(); ++r) {
+        auto *commItem = m_table->item(r, COL_COMM);
+        auto *cntItem  = m_table->item(r, COL_RULES);
+        if (!commItem || !cntItem) continue;
+        const int n = counts.value(commItem->text(), 0);
+        cntItem->setText(QString::number(n));
+        if (n == 0) {
+            cntItem->setForeground(palette().color(QPalette::Disabled,
+                                                    QPalette::Text));
+        } else {
+            cntItem->setForeground(palette().color(QPalette::Active,
+                                                    QPalette::Text));
+        }
+    }
+}
+
+void AppsTab::onContextMenu(const QPoint &pos) {
+    const int row = m_table->rowAt(pos.y());
+    if (row < 0) return;
+    auto *commItem = m_table->item(row, COL_COMM);
+    auto *nameItem = m_table->item(row, COL_NAME);
+    if (!commItem) return;
+    const QString comm = commItem->text();
+    const QString name = nameItem ? nameItem->text() : comm;
+
+    QMenu menu(this);
+    auto *allow = menu.addAction(
+        style()->standardIcon(QStyle::SP_DialogApplyButton),
+        tr("Allow \"%1\" (writes wildcard rule)").arg(name));
+    auto *deny  = menu.addAction(
+        style()->standardIcon(QStyle::SP_DialogNoButton),
+        tr("Block \"%1\"").arg(name));
+    menu.addSeparator();
+    auto *jump  = menu.addAction(
+        style()->standardIcon(QStyle::SP_FileDialogContentsView),
+        tr("Show in User Rules"));
+
+    QAction *picked = menu.exec(m_table->viewport()->mapToGlobal(pos));
+    if (!picked || !m_dbus) return;
+    if (picked == allow) {
+        m_dbus->allow(comm, QStringLiteral("any"), 0);
+    } else if (picked == deny) {
+        m_dbus->deny(comm, QStringLiteral("any"), 0);
+    } else if (picked == jump) {
+        emit showInRulesRequested(comm);
+    }
+}
+
+void AppsTab::onFilterChanged(const QString &text) {
+    const QString needle = text.trimmed();
+    QSignalBlocker block(m_table);
+    for (int r = 0; r < m_table->rowCount(); ++r) {
+        auto *n = m_table->item(r, COL_NAME);
+        auto *c = m_table->item(r, COL_COMM);
+        auto *e = m_table->item(r, COL_EXEC);
+        if (!n || !c || !e) continue;
+        bool hide = false;
+        if (!needle.isEmpty()) {
+            const bool hit =
+                n->text().contains(needle, Qt::CaseInsensitive) ||
+                c->text().contains(needle, Qt::CaseInsensitive) ||
+                e->text().contains(needle, Qt::CaseInsensitive);
+            if (!hit) hide = true;
+        }
+        m_table->setRowHidden(r, hide);
+    }
+}
+EOF
+
+
 # ─── amwall-ebpf — Phase 2 enforcement (unchanged in Phase 3) ───────
 
 H "amwall-ebpf (RULES HashMap + default-deny LSM)"
@@ -5385,14 +5768,16 @@ cat <<EOF
     - 6.4   ✓ User Rules tab + Rule editor (Edit menu restored)
     - 6.4.1 ✓ IPv6 default-deny via parallel RULES_V6 BPF map
     - 6.5   ✓ Connections tab (live /proc/net/tcp + tcp6; refresh every 5s)
-    - 6.6   — Packets log tab (ConnectAttempt history view; signal already wired)
-    - 6.7   — Apps tab + App Properties dialog
+    - 6.5.1 ✓ Per-process column on Connections — socket inode → PID
+            via /proc/<pid>/fd/* walk, 5 s cadence, "(unknown)" for
+            sockets owned by other users (run as root to resolve all).
+    - 6.6   ✓ Packets log tab — rolling 2000-event ConnectAttempt
+            history with filter + pause + AF_UNIX toggle.
+    - 6.7   ✓ Apps tab — scans /usr/share/applications (+ flatpak +
+            snap + ~/.local). Right-click → allow/deny wildcard rule
+            for the comm; or "Show in User Rules" to jump tabs.
     - 6.8   — Settings dialog (8-page QNotebook); restores Settings menu
     - 6.9   — i18n (rust_i18n locales/*.toml); Blocklist menu lands here
-
-  6.5.1 (queued) — Per-process resolution on the Connections tab.
-                   Walk /proc/<pid>/fd/* and map socket inodes back
-                   to PIDs (cached). Adds a "Process" column.
 
   Plan Phase 5b — Windows-side wiring of amwall-core — still needs a
   Windows checkout (root Cargo.toml + src/rules/*.rs adoption + MSI
