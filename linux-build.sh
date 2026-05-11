@@ -954,16 +954,19 @@ fn action_str(a: Action) -> &'static str {
 }
 EOF
 
-# ─── amwall-gui — C++/Qt6 hybrid (Phase 6.1 + 6.2) ──────────────────
+# ─── amwall-gui — C++/Qt6 hybrid (Phase 6.1 + 6.2 + 6.3) ────────────
 #
-# 6.1 laid the QMainWindow + tray + close-to-tray foundation. 6.2
-# adds: DbusClient helper, live status dashboard central widget,
-# permanent status-bar widgets (daemon state + last refresh), and
-# trims the menu bar down to only menus whose items have real
-# handlers (File / View / Help). Edit / Settings / Blocklist menus
-# return when 6.4 / 6.8 / 6.x bring tabs/dialogs that need them.
+# 6.1 laid the QMainWindow + tray + close-to-tray foundation.
+# 6.2 added DbusClient + status dashboard + permanent status bar +
+#     trimmed menu bar to only menus whose items have real handlers.
+# 6.3 adds the connect-prompt dialog: subscribe to ConnectAttempt,
+#     filter for default-denies, queue + dedup, modeless top-level
+#     dialog with Allow / Block / Dismiss persisting decisions over
+#     the existing Daemon1.Allow/Deny methods. Restores Win32-amwall
+#     "first-run" behavior. Edit / Settings / Blocklist menus still
+#     return in 6.4 / 6.8 / 6.x.
 
-H "amwall-gui-qt (C++/Qt6 — status dashboard + live D-Bus client)"
+H "amwall-gui-qt (C++/Qt6 — connect-prompt dialog + rule cache)"
 
 write_file linux/amwall-gui-qt/CMakeLists.txt <<'EOF'
 cmake_minimum_required(VERSION 3.16)
@@ -987,7 +990,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets DBus)
 
 # AMWALL_VERSION is baked into the binary so --version and the About
 # box show the same string the .deb is built with. Bumped per phase.
-add_compile_definitions(AMWALL_VERSION="0.1.0+phase6.2")
+add_compile_definitions(AMWALL_VERSION="0.1.0+phase6.3")
 
 add_executable(amwall-gui
     src/main.cpp
@@ -997,6 +1000,10 @@ add_executable(amwall-gui
     src/dbusclient.h
     src/dashboard.cpp
     src/dashboard.h
+    src/connectprompt.cpp
+    src/connectprompt.h
+    src/promptcoordinator.cpp
+    src/promptcoordinator.h
 )
 
 target_link_libraries(amwall-gui PRIVATE
@@ -1097,6 +1104,7 @@ class QLabel;
 class QMenu;
 class DbusClient;
 class Dashboard;
+class PromptCoordinator;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -1122,8 +1130,9 @@ private:
     void setupTrayIcon();
     void loadSettings();
 
-    DbusClient *m_dbus = nullptr;
-    Dashboard  *m_dashboard = nullptr;
+    DbusClient        *m_dbus = nullptr;
+    PromptCoordinator *m_prompts = nullptr;
+    Dashboard         *m_dashboard = nullptr;
 
     QLabel *m_statusDaemon = nullptr;   // permanent left widget
     QLabel *m_statusRefresh = nullptr;  // permanent right widget
@@ -1142,6 +1151,7 @@ write_file linux/amwall-gui-qt/src/mainwindow.cpp <<'EOF'
 
 #include "dashboard.h"
 #include "dbusclient.h"
+#include "promptcoordinator.h"
 
 #include <QAction>
 #include <QApplication>
@@ -1169,6 +1179,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     connect(m_dbus, &DbusClient::stateChanged,
             this, &MainWindow::onDbusStateChanged);
 
+    // PromptCoordinator must exist BEFORE Dashboard so Dashboard can
+    // bind to its pendingCountChanged signal in its constructor.
+    m_prompts = new PromptCoordinator(m_dbus, /*windowAnchor=*/this, this);
+
     setupCentralWidget();
     setupStatusBar();
     setupMenuBar();
@@ -1182,7 +1196,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 }
 
 void MainWindow::setupCentralWidget() {
-    m_dashboard = new Dashboard(m_dbus, this);
+    m_dashboard = new Dashboard(m_dbus, m_prompts, this);
     setCentralWidget(m_dashboard);
 }
 
@@ -1365,25 +1379,35 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 EOF
 
 write_file linux/amwall-gui-qt/src/dbusclient.h <<'EOF'
-// DbusClient — synchronous D-Bus client for org.amwall.Daemon1.
+// DbusClient — D-Bus client for org.amwall.Daemon1.
 //
-// Owns the system-bus connection, polls Peer.Ping + List() on a
-// QTimer (or on-demand via refresh()), and exposes the result as
-// reachability + rule count + last-error + last-refresh timestamp.
-// Emits stateChanged() on any transition so MainWindow's status bar
-// + the Dashboard widget can re-render.
+// Owns the system-bus connection. Polls Peer.Ping + List() on a
+// QTimer (or on-demand via refresh()) to keep the rule cache fresh.
+// Subscribes to the ConnectAttempt signal and re-emits it as a Qt
+// signal so PromptCoordinator can react. Provides allow()/deny()
+// helpers that fire-and-forget the corresponding daemon methods
+// (polkit gates them server-side; failures land in qWarning).
 //
-// Synchronous calls are fine here: List() is small (a handful of
-// rule tuples) and the daemon is local. If list size grows, switch
-// to QDBusPendingCall.
+// Synchronous .call() is used for List/Ping (small payload, local
+// daemon) — async would just add complexity for sub-millisecond
+// responses. allow()/deny() use asyncCall to avoid blocking the GUI
+// while polkit prompts (when applicable).
 
 #pragma once
 
 #include <QDateTime>
+#include <QList>
 #include <QObject>
 #include <QString>
 
 class QTimer;
+
+struct RuleEntry {
+    QString comm;
+    QString ip;
+    QString action;  // "allow" or "deny"
+    ushort  port;
+};
 
 class DbusClient : public QObject {
     Q_OBJECT
@@ -1391,31 +1415,60 @@ class DbusClient : public QObject {
 public:
     explicit DbusClient(QObject *parent = nullptr);
 
-    bool isReachable() const  { return m_reachable; }
-    int  ruleCount()  const   { return m_ruleCount; }
-    QDateTime lastRefresh() const { return m_lastRefresh; }
-    QString lastError() const { return m_lastError; }
+    bool isReachable() const         { return m_reachable; }
+    int  ruleCount()   const         { return m_rules.size(); }
+    const QList<RuleEntry>& rules() const { return m_rules; }
+    QDateTime lastRefresh() const    { return m_lastRefresh; }
+    QString lastError() const        { return m_lastError; }
+
+    // True if rules.toml already contains an entry for this 4-tuple
+    // (any action). Used by PromptCoordinator to suppress prompts
+    // for things the user already decided about.
+    bool hasRule(const QString &comm, const QString &ip, ushort port) const;
 
     void startAutoRefresh(int intervalMs);
     void stopAutoRefresh();
 
 public slots:
-    // Re-poll the daemon and emit stateChanged() if anything moved.
+    // Re-poll the daemon and emit stateChanged().
     void refresh();
+
+    // Persist a rule via the daemon. Async — if polkit denies, a
+    // qWarning lands in /tmp/amwall-gui.log. After the next refresh
+    // tick the rule shows up in our cache.
+    void allow(const QString &comm, const QString &ip, ushort port);
+    void deny(const QString &comm, const QString &ip, ushort port);
 
 signals:
     void stateChanged();
 
+    // Re-emitted from the D-Bus ConnectAttempt signal. Filtering
+    // (action / family / dedup) lives in PromptCoordinator.
+    void connectAttempt(uint pid, const QString &comm,
+                        const QString &ip, ushort port,
+                        const QString &action);
+
+private slots:
+    // Private — wired to QDBusConnection::connect() with the OLD-
+    // style SLOT() macro because Qt's D-Bus signal demarshaller
+    // requires it. Forwards to the public Qt connectAttempt signal.
+    void onDbusConnectAttempt(uint pid, const QString &comm,
+                              const QString &ip, ushort port,
+                              const QString &action);
+
 private:
     bool pingDaemon(QString *errOut);
-    bool listRules(int *countOut, QString *errOut);
+    bool listRules(QList<RuleEntry> *out, QString *errOut);
+    void subscribeSignals();
+    void callModify(const char *method, const QString &comm,
+                    const QString &ip, ushort port);
 
     QTimer *m_timer = nullptr;
 
-    bool       m_reachable = false;
-    int        m_ruleCount = 0;
-    QDateTime  m_lastRefresh;
-    QString    m_lastError;
+    bool             m_reachable = false;
+    QList<RuleEntry> m_rules;
+    QDateTime        m_lastRefresh;
+    QString          m_lastError;
 };
 EOF
 
@@ -1424,14 +1477,47 @@ write_file linux/amwall-gui-qt/src/dbusclient.cpp <<'EOF'
 
 #include <QDBusArgument>
 #include <QDBusConnection>
+#include <QDBusError>
 #include <QDBusMessage>
-#include <QDBusReply>
+#include <QDBusPendingCall>
+#include <QDBusPendingCallWatcher>
+#include <QDBusPendingReply>
 #include <QDebug>
 #include <QTimer>
 
 DbusClient::DbusClient(QObject *parent) : QObject(parent) {
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &DbusClient::refresh);
+    subscribeSignals();
+}
+
+void DbusClient::subscribeSignals() {
+    auto bus = QDBusConnection::systemBus();
+    if (!bus.isConnected()) {
+        qWarning() << "DbusClient: system bus not connected; signal subscription skipped";
+        return;
+    }
+    // Old-style SLOT() macro is required for QDBusConnection::connect():
+    // Qt's D-Bus demarshaller introspects the slot signature to map
+    // the wire types `usqs` (uint, str, str, ushort, str). The
+    // functor (new-style) form does not work for D-Bus signals.
+    bool ok = bus.connect(
+        QStringLiteral("org.amwall.Daemon1"),
+        QStringLiteral("/org/amwall/Daemon1"),
+        QStringLiteral("org.amwall.Daemon1"),
+        QStringLiteral("ConnectAttempt"),
+        this,
+        SLOT(onDbusConnectAttempt(uint, QString, QString, ushort, QString)));
+    if (!ok) {
+        qWarning() << "DbusClient: failed to subscribe to ConnectAttempt:"
+                   << bus.lastError().message();
+    }
+}
+
+void DbusClient::onDbusConnectAttempt(uint pid, const QString &comm,
+                                      const QString &ip, ushort port,
+                                      const QString &action) {
+    emit connectAttempt(pid, comm, ip, port, action);
 }
 
 void DbusClient::startAutoRefresh(int intervalMs) {
@@ -1446,20 +1532,20 @@ void DbusClient::refresh() {
     QString err;
     bool ok = pingDaemon(&err);
     if (ok) {
-        int n = 0;
-        ok = listRules(&n, &err);
+        QList<RuleEntry> rules;
+        ok = listRules(&rules, &err);
         if (ok) {
             m_reachable = true;
-            m_ruleCount = n;
+            m_rules = std::move(rules);
             m_lastError.clear();
         } else {
             m_reachable = false;
-            m_ruleCount = 0;
+            m_rules.clear();
             m_lastError = err;
         }
     } else {
         m_reachable = false;
-        m_ruleCount = 0;
+        m_rules.clear();
         m_lastError = err;
     }
 
@@ -1470,6 +1556,53 @@ void DbusClient::refresh() {
     emit stateChanged();
 }
 
+bool DbusClient::hasRule(const QString &comm, const QString &ip, ushort port) const {
+    for (const RuleEntry &r : m_rules) {
+        if (r.comm == comm && r.ip == ip && r.port == port) return true;
+    }
+    return false;
+}
+
+void DbusClient::allow(const QString &comm, const QString &ip, ushort port) {
+    callModify("Allow", comm, ip, port);
+}
+
+void DbusClient::deny(const QString &comm, const QString &ip, ushort port) {
+    callModify("Deny", comm, ip, port);
+}
+
+void DbusClient::callModify(const char *method, const QString &comm,
+                            const QString &ip, ushort port) {
+    auto bus = QDBusConnection::systemBus();
+    auto msg = QDBusMessage::createMethodCall(
+        QStringLiteral("org.amwall.Daemon1"),
+        QStringLiteral("/org/amwall/Daemon1"),
+        QStringLiteral("org.amwall.Daemon1"),
+        QString::fromLatin1(method));
+    msg << comm << ip << QVariant::fromValue<ushort>(port);
+
+    // asyncCall: polkit may pop a prompt or take a bus round-trip;
+    // don't freeze the GUI while waiting. The timeout is generous
+    // because polkit interaction can be slow.
+    auto pending = bus.asyncCall(msg, /*timeoutMs=*/15000);
+    auto *watcher = new QDBusPendingCallWatcher(pending, this);
+    connect(watcher, &QDBusPendingCallWatcher::finished,
+            this, [this, method, comm, ip, port](QDBusPendingCallWatcher *w) {
+        QDBusPendingReply<> reply = *w;
+        if (reply.isError()) {
+            qWarning() << "DbusClient:" << method
+                       << "(" << comm << "," << ip << "," << port << ") failed:"
+                       << reply.error().message();
+        } else {
+            // Speed up the cache update so PromptCoordinator's hasRule
+            // check sees the new entry on the next signal. The 5-second
+            // poll would otherwise lag behind a fast user.
+            this->refresh();
+        }
+        w->deleteLater();
+    });
+}
+
 bool DbusClient::pingDaemon(QString *errOut) {
     auto bus = QDBusConnection::systemBus();
     if (!bus.isConnected()) {
@@ -1477,10 +1610,10 @@ bool DbusClient::pingDaemon(QString *errOut) {
         return false;
     }
     auto msg = QDBusMessage::createMethodCall(
-        "org.amwall.Daemon1",
-        "/org/amwall/Daemon1",
-        "org.freedesktop.DBus.Peer",
-        "Ping");
+        QStringLiteral("org.amwall.Daemon1"),
+        QStringLiteral("/org/amwall/Daemon1"),
+        QStringLiteral("org.freedesktop.DBus.Peer"),
+        QStringLiteral("Ping"));
     auto reply = bus.call(msg, QDBus::Block, /*timeoutMs=*/2000);
     if (reply.type() == QDBusMessage::ErrorMessage) {
         if (errOut) *errOut = reply.errorMessage();
@@ -1489,26 +1622,25 @@ bool DbusClient::pingDaemon(QString *errOut) {
     return true;
 }
 
-bool DbusClient::listRules(int *countOut, QString *errOut) {
+bool DbusClient::listRules(QList<RuleEntry> *out, QString *errOut) {
     // org.amwall.Daemon1.List() returns a(ssqs) — array of
     // (comm, ip, port, action) tuples. We unpack via QDBusArgument
     // without registering custom marshallers so nothing leaks into
-    // global state (and so we stay tolerant of daemon-side schema
-    // changes — we only need the count for now).
+    // global state. Each tuple becomes a RuleEntry the GUI can
+    // search (PromptCoordinator) and render (Dashboard / 6.4).
     auto bus = QDBusConnection::systemBus();
     auto msg = QDBusMessage::createMethodCall(
-        "org.amwall.Daemon1",
-        "/org/amwall/Daemon1",
-        "org.amwall.Daemon1",
-        "List");
+        QStringLiteral("org.amwall.Daemon1"),
+        QStringLiteral("/org/amwall/Daemon1"),
+        QStringLiteral("org.amwall.Daemon1"),
+        QStringLiteral("List"));
     auto reply = bus.call(msg, QDBus::Block, /*timeoutMs=*/2000);
     if (reply.type() != QDBusMessage::ReplyMessage) {
         if (errOut) *errOut = reply.errorMessage();
         return false;
     }
     if (reply.arguments().isEmpty()) {
-        if (countOut) *countOut = 0;
-        return true;
+        return true;  // empty list, leave *out as-is
     }
     QVariant first = reply.arguments().first();
     if (!first.canConvert<QDBusArgument>()) {
@@ -1520,18 +1652,15 @@ bool DbusClient::listRules(int *countOut, QString *errOut) {
         if (errOut) *errOut = QStringLiteral("List() did not return an array");
         return false;
     }
-    int count = 0;
     arg.beginArray();
     while (!arg.atEnd()) {
         arg.beginStructure();
-        QString comm, ip, action;
-        ushort port = 0;
-        arg >> comm >> ip >> port >> action;
+        RuleEntry e;
+        arg >> e.comm >> e.ip >> e.port >> e.action;
         arg.endStructure();
-        ++count;
+        out->append(e);
     }
     arg.endArray();
-    if (countOut) *countOut = count;
     return true;
 }
 EOF
@@ -1539,10 +1668,11 @@ EOF
 write_file linux/amwall-gui-qt/src/dashboard.h <<'EOF'
 // Dashboard — central widget shown in MainWindow until 6.4 replaces
 // it with the tabbed app/rules/connections view. Renders DbusClient
-// state as a polished status panel:
+// state + PromptCoordinator state as a polished status panel:
 //   • header with theme icon + product name + version
 //   • daemon group: state, rule count, endpoint, refresh button
-// Updates itself on DbusClient::stateChanged.
+//   • activity group: pending prompts (live count from coordinator)
+// Updates itself on DbusClient::stateChanged + pendingCountChanged.
 
 #pragma once
 
@@ -1550,21 +1680,26 @@ write_file linux/amwall-gui-qt/src/dashboard.h <<'EOF'
 
 class QLabel;
 class DbusClient;
+class PromptCoordinator;
 
 class Dashboard : public QWidget {
     Q_OBJECT
 
 public:
-    explicit Dashboard(DbusClient *dbus, QWidget *parent = nullptr);
+    Dashboard(DbusClient *dbus, PromptCoordinator *prompts,
+              QWidget *parent = nullptr);
 
 private slots:
     void onDbusStateChanged();
+    void onPendingChanged(int n);
 
 private:
-    DbusClient *m_dbus;
-    QLabel     *m_stateLabel = nullptr;
-    QLabel     *m_countLabel = nullptr;
-    QLabel     *m_lastLabel  = nullptr;
+    DbusClient        *m_dbus;
+    PromptCoordinator *m_prompts;
+    QLabel            *m_stateLabel = nullptr;
+    QLabel            *m_countLabel = nullptr;
+    QLabel            *m_lastLabel  = nullptr;
+    QLabel            *m_pendingLabel = nullptr;
 };
 EOF
 
@@ -1572,6 +1707,7 @@ write_file linux/amwall-gui-qt/src/dashboard.cpp <<'EOF'
 #include "dashboard.h"
 
 #include "dbusclient.h"
+#include "promptcoordinator.h"
 
 #include <QApplication>
 #include <QFont>
@@ -1590,8 +1726,9 @@ write_file linux/amwall-gui-qt/src/dashboard.cpp <<'EOF'
 #define AMWALL_VERSION "unknown"
 #endif
 
-Dashboard::Dashboard(DbusClient *dbus, QWidget *parent)
-    : QWidget(parent), m_dbus(dbus) {
+Dashboard::Dashboard(DbusClient *dbus, PromptCoordinator *prompts,
+                     QWidget *parent)
+    : QWidget(parent), m_dbus(dbus), m_prompts(prompts) {
 
     auto *outer = new QVBoxLayout(this);
     outer->setContentsMargins(24, 24, 24, 24);
@@ -1659,11 +1796,38 @@ Dashboard::Dashboard(DbusClient *dbus, QWidget *parent)
     dlayout->addRow(QString(), refreshBtn);
 
     outer->addWidget(daemonGroup);
+
+    // ─── Activity group ───────────────────────────────────────────
+    auto *activityGroup = new QGroupBox(tr("Activity"), this);
+    auto *alayout = new QFormLayout(activityGroup);
+    alayout->setLabelAlignment(Qt::AlignRight);
+    alayout->setHorizontalSpacing(16);
+    alayout->setVerticalSpacing(8);
+
+    m_pendingLabel = new QLabel(QStringLiteral("0"), activityGroup);
+    m_pendingLabel->setTextFormat(Qt::RichText);
+    alayout->addRow(tr("Pending prompts:"), m_pendingLabel);
+
+    outer->addWidget(activityGroup);
     outer->addStretch(1);
 
     connect(m_dbus, &DbusClient::stateChanged,
             this, &Dashboard::onDbusStateChanged);
+    connect(m_prompts, &PromptCoordinator::pendingCountChanged,
+            this, &Dashboard::onPendingChanged);
     onDbusStateChanged();
+    onPendingChanged(m_prompts->pendingCount());
+}
+
+void Dashboard::onPendingChanged(int n) {
+    if (n == 0) {
+        m_pendingLabel->setText(
+            tr("<span style='color: palette(mid);'>0 (idle)</span>"));
+    } else {
+        m_pendingLabel->setText(
+            tr("<span style='color:#ef6c00; font-weight:bold;'>"
+               "%n waiting</span>", "", n));
+    }
 }
 
 void Dashboard::onDbusStateChanged() {
@@ -1687,6 +1851,377 @@ void Dashboard::onDbusStateChanged() {
     QDateTime ts = m_dbus->lastRefresh();
     m_lastLabel->setText(
         ts.isValid() ? ts.toString("yyyy-MM-dd HH:mm:ss") : tr("never"));
+}
+EOF
+
+write_file linux/amwall-gui-qt/src/connectprompt.h <<'EOF'
+// ConnectPromptDialog — modeless top-level dialog shown when an
+// unknown app tries to connect (default-deny in BPF). User picks
+// Allow / Block / Dismiss; Allow + Block persist via DbusClient,
+// Dismiss does nothing (BPF will re-deny + re-prompt on retry).
+//
+// Top-level (no parent), Qt::Window, WindowStaysOnTopHint so it
+// doesn't get buried under MainWindow or other apps. Centred on
+// the primary screen by Qt default.
+//
+// PromptCoordinator owns the dialog lifecycle.
+
+#pragma once
+
+#include <QDialog>
+#include <QString>
+
+class QLabel;
+
+class ConnectPromptDialog : public QDialog {
+    Q_OBJECT
+
+public:
+    enum Decision { Allow, Block, Dismiss };
+
+    ConnectPromptDialog(uint pid,
+                        const QString &comm,
+                        const QString &ip,
+                        ushort port,
+                        QWidget *parent = nullptr);
+
+signals:
+    void decided(Decision d);
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
+private:
+    bool m_emitted = false;
+    void emitOnce(Decision d);
+};
+EOF
+
+write_file linux/amwall-gui-qt/src/connectprompt.cpp <<'EOF'
+#include "connectprompt.h"
+
+#include <QApplication>
+#include <QCloseEvent>
+#include <QFont>
+#include <QFormLayout>
+#include <QHBoxLayout>
+#include <QIcon>
+#include <QLabel>
+#include <QPushButton>
+#include <QStyle>
+#include <QVBoxLayout>
+
+ConnectPromptDialog::ConnectPromptDialog(uint pid,
+                                         const QString &comm,
+                                         const QString &ip,
+                                         ushort port,
+                                         QWidget *parent)
+    : QDialog(parent,
+              Qt::Window
+              | Qt::WindowTitleHint
+              | Qt::WindowCloseButtonHint
+              | Qt::WindowStaysOnTopHint) {
+    setWindowTitle(tr("Connection request — amwall"));
+    setModal(false);
+    setMinimumWidth(420);
+
+    auto *outer = new QVBoxLayout(this);
+    outer->setContentsMargins(20, 20, 20, 20);
+    outer->setSpacing(14);
+
+    // ─── Header row: icon + headline ──────────────────────────────
+    auto *header = new QHBoxLayout;
+    header->setSpacing(14);
+
+    auto *iconLabel = new QLabel(this);
+    QIcon ico = style()->standardIcon(QStyle::SP_MessageBoxQuestion);
+    iconLabel->setPixmap(ico.pixmap(40, 40));
+    header->addWidget(iconLabel, 0, Qt::AlignTop);
+
+    auto *headline = new QLabel(
+        tr("<b>%1</b> wants to connect.").arg(comm.toHtmlEscaped()),
+        this);
+    headline->setTextFormat(Qt::RichText);
+    headline->setWordWrap(true);
+    QFont hf = headline->font();
+    hf.setPointSize(hf.pointSize() + 1);
+    headline->setFont(hf);
+    header->addWidget(headline, 1);
+
+    outer->addLayout(header);
+
+    // ─── Detail rows ──────────────────────────────────────────────
+    auto *details = new QFormLayout;
+    details->setLabelAlignment(Qt::AlignRight);
+    details->setHorizontalSpacing(12);
+    details->setVerticalSpacing(4);
+
+    details->addRow(tr("Process:"),
+        new QLabel(QStringLiteral("<code>%1</code> (pid %2)")
+                       .arg(comm.toHtmlEscaped())
+                       .arg(pid), this));
+    details->addRow(tr("Destination:"),
+        new QLabel(QStringLiteral("<code>%1:%2</code>")
+                       .arg(ip.toHtmlEscaped())
+                       .arg(port), this));
+    details->addRow(tr("Default action:"),
+        new QLabel(tr("<span style='color:#c62828;'>blocked</span> (no rule)"), this));
+
+    outer->addLayout(details);
+
+    auto *hint = new QLabel(
+        tr("<span style='color: palette(mid); font-size: small;'>"
+           "Allow saves a rule for this exact destination. Block saves "
+           "a deny rule (silent next time). Dismiss does nothing — the "
+           "app will re-prompt on retry.</span>"),
+        this);
+    hint->setTextFormat(Qt::RichText);
+    hint->setWordWrap(true);
+    outer->addWidget(hint);
+
+    // ─── Buttons ──────────────────────────────────────────────────
+    auto *buttons = new QHBoxLayout;
+    buttons->addStretch(1);
+
+    auto *dismissBtn = new QPushButton(tr("&Dismiss"), this);
+    auto *blockBtn   = new QPushButton(
+        style()->standardIcon(QStyle::SP_DialogNoButton),
+        tr("&Block"), this);
+    auto *allowBtn   = new QPushButton(
+        style()->standardIcon(QStyle::SP_DialogApplyButton),
+        tr("&Allow"), this);
+    allowBtn->setDefault(true);
+
+    buttons->addWidget(dismissBtn);
+    buttons->addWidget(blockBtn);
+    buttons->addWidget(allowBtn);
+    outer->addLayout(buttons);
+
+    connect(allowBtn,   &QPushButton::clicked, this, [this]{ emitOnce(Allow); });
+    connect(blockBtn,   &QPushButton::clicked, this, [this]{ emitOnce(Block); });
+    connect(dismissBtn, &QPushButton::clicked, this, [this]{ emitOnce(Dismiss); });
+}
+
+void ConnectPromptDialog::emitOnce(Decision d) {
+    if (m_emitted) return;
+    m_emitted = true;
+    emit decided(d);
+    close();
+}
+
+void ConnectPromptDialog::closeEvent(QCloseEvent *event) {
+    // Window close (X button) counts as Dismiss. Guard with m_emitted
+    // so we don't double-fire when emitOnce already called close().
+    if (!m_emitted) {
+        m_emitted = true;
+        emit decided(Dismiss);
+    }
+    event->accept();
+}
+EOF
+
+write_file linux/amwall-gui-qt/src/promptcoordinator.h <<'EOF'
+// PromptCoordinator — receives ConnectAttempt signals from
+// DbusClient, filters them down to "this is something the user
+// hasn't decided about yet", queues, and shows one
+// ConnectPromptDialog at a time.
+//
+// Filters applied:
+//   • action == "deny" only           (allows are silent)
+//   • ip is real IPv4 (not "(family=N)" — AF_UNIX etc. don't go through
+//     the user's network policy)
+//   • !DbusClient::hasRule()          (already in rules.toml)
+//   • not already pending             (per-tuple dedup)
+//   • not recently decided            (60-second cooldown — by then
+//                                      the daemon has reloaded and
+//                                      hasRule will catch it)
+//
+// Emits pendingCountChanged so the Dashboard widget can show the
+// "Pending prompts: N" row. When the queue drains, count goes to 0.
+
+#pragma once
+
+#include <QDateTime>
+#include <QHash>
+#include <QObject>
+#include <QQueue>
+#include <QSet>
+#include <QString>
+
+#include "connectprompt.h"
+
+class DbusClient;
+class QWidget;
+
+struct PromptKey {
+    QString comm;
+    QString ip;
+    ushort  port;
+    bool operator==(const PromptKey &o) const {
+        return comm == o.comm && ip == o.ip && port == o.port;
+    }
+};
+// Qt6 qHash returns size_t (Qt5 used uint). Mix the three fields
+// with rotated seeds so similar tuples don't collide.
+inline size_t qHash(const PromptKey &k, size_t seed = 0) noexcept {
+    return qHash(k.comm, seed)
+         ^ qHash(k.ip, seed ^ 0x9e3779b9u)
+         ^ size_t(k.port);
+}
+
+struct PromptRequest {
+    uint    pid;
+    QString comm;
+    QString ip;
+    ushort  port;
+};
+
+class PromptCoordinator : public QObject {
+    Q_OBJECT
+
+public:
+    PromptCoordinator(DbusClient *dbus, QWidget *windowAnchor,
+                      QObject *parent = nullptr);
+
+    int pendingCount() const { return m_queue.size() + (m_current ? 1 : 0); }
+
+signals:
+    void pendingCountChanged(int n);
+
+private slots:
+    void onConnectAttempt(uint pid, const QString &comm,
+                          const QString &ip, ushort port,
+                          const QString &action);
+    void onDecision(ConnectPromptDialog::Decision d);
+
+private:
+    void enqueue(const PromptRequest &req);
+    void processNext();
+    void notifyCount();
+    void pruneRecent();  // expire entries older than 60 sec
+
+    DbusClient *m_dbus;
+    QWidget    *m_anchor;  // for raising MainWindow when prompt fires
+
+    QQueue<PromptRequest>     m_queue;
+    QSet<PromptKey>           m_pending;   // in queue or showing
+    QHash<PromptKey, QDateTime> m_decided; // 60-sec cooldown
+    PromptRequest             m_currentReq{};
+    ConnectPromptDialog      *m_current = nullptr;
+};
+EOF
+
+write_file linux/amwall-gui-qt/src/promptcoordinator.cpp <<'EOF'
+#include "promptcoordinator.h"
+
+#include "dbusclient.h"
+
+#include <QDateTime>
+#include <QDebug>
+#include <QWidget>
+
+static constexpr int kCooldownSeconds = 60;
+
+PromptCoordinator::PromptCoordinator(DbusClient *dbus, QWidget *windowAnchor,
+                                     QObject *parent)
+    : QObject(parent), m_dbus(dbus), m_anchor(windowAnchor) {
+    connect(m_dbus, &DbusClient::connectAttempt,
+            this, &PromptCoordinator::onConnectAttempt);
+}
+
+void PromptCoordinator::onConnectAttempt(uint pid, const QString &comm,
+                                         const QString &ip, ushort port,
+                                         const QString &action) {
+    // Filter 1: only default-denies need user attention.
+    if (action != QStringLiteral("deny")) return;
+
+    // Filter 2: AF_UNIX / AF_NETLINK / etc. don't have routable
+    // destinations — the daemon stamps them as "(family=N)". Don't
+    // prompt the user for things they can't meaningfully allow.
+    if (ip.startsWith(QStringLiteral("(family="))) return;
+
+    // Filter 3: already a rule for this 4-tuple → daemon should
+    // have allowed/denied silently per the rule. If we still got a
+    // deny signal, it's because the explicit rule IS deny — user
+    // already decided.
+    if (m_dbus->hasRule(comm, ip, port)) return;
+
+    PromptKey key{comm, ip, port};
+
+    // Filter 4: dedup against currently-pending and recently-decided.
+    pruneRecent();
+    if (m_pending.contains(key)) return;
+    if (m_decided.contains(key)) return;
+
+    enqueue({pid, comm, ip, port});
+}
+
+void PromptCoordinator::enqueue(const PromptRequest &req) {
+    PromptKey key{req.comm, req.ip, req.port};
+    m_pending.insert(key);
+    m_queue.enqueue(req);
+    notifyCount();
+    if (!m_current) processNext();
+}
+
+void PromptCoordinator::processNext() {
+    if (m_current) return;
+    if (m_queue.isEmpty()) {
+        notifyCount();
+        return;
+    }
+    m_currentReq = m_queue.dequeue();
+    m_current = new ConnectPromptDialog(
+        m_currentReq.pid, m_currentReq.comm, m_currentReq.ip, m_currentReq.port,
+        nullptr);
+    connect(m_current, &ConnectPromptDialog::decided,
+            this, &PromptCoordinator::onDecision);
+
+    // Pull the user's attention to amwall: if MainWindow is hidden,
+    // we still want them to see the prompt. The dialog itself is
+    // top-level + StaysOnTop so it shows above other apps.
+    m_current->show();
+    m_current->raise();
+    m_current->activateWindow();
+    notifyCount();
+}
+
+void PromptCoordinator::onDecision(ConnectPromptDialog::Decision d) {
+    PromptKey key{m_currentReq.comm, m_currentReq.ip, m_currentReq.port};
+    m_pending.remove(key);
+
+    switch (d) {
+    case ConnectPromptDialog::Allow:
+        m_dbus->allow(m_currentReq.comm, m_currentReq.ip, m_currentReq.port);
+        m_decided.insert(key, QDateTime::currentDateTime());
+        break;
+    case ConnectPromptDialog::Block:
+        m_dbus->deny(m_currentReq.comm, m_currentReq.ip, m_currentReq.port);
+        m_decided.insert(key, QDateTime::currentDateTime());
+        break;
+    case ConnectPromptDialog::Dismiss:
+        // No rule persisted; let the next BPF deny re-fire the prompt.
+        break;
+    }
+
+    if (m_current) {
+        m_current->deleteLater();
+        m_current = nullptr;
+    }
+    processNext();
+}
+
+void PromptCoordinator::notifyCount() {
+    emit pendingCountChanged(pendingCount());
+}
+
+void PromptCoordinator::pruneRecent() {
+    QDateTime cutoff = QDateTime::currentDateTime().addSecs(-kCooldownSeconds);
+    auto it = m_decided.begin();
+    while (it != m_decided.end()) {
+        if (it.value() < cutoff) it = m_decided.erase(it);
+        else                     ++it;
+    }
 }
 EOF
 
@@ -2915,15 +3450,16 @@ ALL_PASS=1
 [ "$TEST7" = PASS ] || ALL_PASS=0
 
 if [ "$ALL_PASS" = 1 ]; then
-    H "✓ PHASES 2 + 3 + 4 + 5 + 6.1 + 6.2 (status dashboard) ALL CONFIRMED"
+    H "✓ PHASES 2 + 3 + 4 + 5 + 6.1 + 6.2 + 6.3 (connect-prompt) ALL CONFIRMED"
     OK "Default-deny / live reload / D-Bus methods / D-Bus signals all work."
     OK "Polkit gates Allow/Deny/Del; local-active session passes through."
     OK ".deb builds and contains all 9 expected files."
     OK "amwall-core hoisted to repo root; Linux workspace consumes it."
-    OK "amwall-gui (Qt6): live status dashboard + DbusClient + tray + close-to-tray."
-    OK "Manually verify: dashboard shows '● Connected — N rules'; refresh button updates timestamp."
+    OK "amwall-gui (Qt6): dashboard + rule cache + connect-prompt queue."
+    OK "Manually verify: with daemon enforcing default-deny, run 'curl example.com'"
+    OK "in another terminal — a top-level Allow/Block/Dismiss dialog should appear."
 else
-    H "✗ Some Phase 2/3/4/5/6.1/6.2 tests had failures"
+    H "✗ Some Phase 2/3/4/5/6.1/6.2/6.3 tests had failures"
     WARN "T1 default-deny:        $TEST1"
     WARN "T2 mtime live-reload:   $TEST2"
     WARN "T3 D-Bus List:          $TEST3"
@@ -3016,9 +3552,9 @@ fi
 # ─── Done + drop into shell at repo dir ─────────────────────────────
 
 if [ "$INSTALLED" = 1 ]; then
-    H "DONE — Phase 6.2 — amwall installed, daemon running, Qt6 dashboard on screen"
+    H "DONE — Phase 6.3 — amwall installed, daemon running, Qt6 GUI with connect-prompt on screen"
 else
-    H "DONE — through Phase 6.2; install step skipped/failed"
+    H "DONE — through Phase 6.3; install step skipped/failed"
 fi
 
 cat <<EOF
@@ -3027,8 +3563,14 @@ cat <<EOF
 
   Suggested commit + snapshot:
     git add linux/ amwall-core/
-    git commit -m "linux: Phase 6.2 — Qt6 status dashboard + DbusClient + real menus"
-    # then snapshot the VM as 'phase-6.2-qt-dashboard'
+    git commit -m "linux: Phase 6.3 — connect-prompt dialog (Allow/Block/Dismiss queue)"
+    # then snapshot the VM as 'phase-6.3-connect-prompt'
+
+  Try the prompt (rules.toml is empty by default → everything denies):
+    curl --max-time 5 https://example.com
+    # Watch a top-level dialog pop up: "curl wants to connect..."
+    # Pick Allow → daemon persists rule → curl will succeed on retry.
+    # Dashboard 'Pending prompts' counter ticks up while dialog is open.
 
   Daemon status:
     systemctl status amwall-daemon --no-pager
@@ -3069,10 +3611,10 @@ cat <<EOF
   Phase 6 progress (Qt6 GUI, Windows-amwall feature parity):
     - 6.1 ✓ — foundation: QMainWindow + tray + close-to-tray
     - 6.2 ✓ — status dashboard + DbusClient + real File/View/Help menus
-    - 6.3 — connect-prompt modeless dialog (replaces Iced popup behavior)
+    - 6.3 ✓ — connect-prompt dialog (Allow/Block/Dismiss queue + dedup)
     - 6.4 — User-rules tab + Rule editor dialog (4 tabs); restores Edit menu
     - 6.5 — Connections tab (live /proc/net walk)
-    - 6.6 — Packets log tab (ConnectAttempt subscription)
+    - 6.6 — Packets log tab (ConnectAttempt history view; signal already wired)
     - 6.7 — Apps tab + App Properties dialog
     - 6.8 — Settings dialog (8-page QNotebook); restores Settings menu
     - 6.9 — i18n (rust_i18n locales/*.toml); Blocklist menu lands here
