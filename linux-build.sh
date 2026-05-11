@@ -3350,6 +3350,17 @@ impl AmwallDaemon {
 
 impl AmwallDaemon {
     fn modify(&self, comm: String, ip: String, port: u16, action: Action) -> Result<()> {
+        // Surface user/CLI rule changes in the daemon log so triage
+        // can correlate "user clicked Allow" → subsequent connection
+        // events. Polkit gating already happened in the D-Bus method
+        // handler; if we're here the change is authorised.
+        eprintln!(
+            "[USER ] {} comm={} {}:{} (D-Bus rule change)",
+            if matches!(action, Action::Allow) { "ALLOW" } else { "DENY " },
+            comm, ip,
+            if port == 0 { "any".to_string() } else { port.to_string() },
+        );
+
         // Persist to TOML.
         let mut cfg = RulesFile::load(&self.rules_path).unwrap_or_default();
         cfg.rules.retain(|r| !(r.comm == comm && r.ip == ip && r.port == port));
@@ -3375,6 +3386,12 @@ impl AmwallDaemon {
     }
 
     fn delete(&self, comm: String, ip: String, port: u16) -> Result<()> {
+        eprintln!(
+            "[USER ] DEL   comm={} {}:{} (D-Bus rule change)",
+            comm, ip,
+            if port == 0 { "any".to_string() } else { port.to_string() },
+        );
+
         let mut cfg = RulesFile::load(&self.rules_path).unwrap_or_default();
         cfg.rules.retain(|r| !(r.comm == comm && r.ip == ip && r.port == port));
         cfg.save(&self.rules_path)?;
@@ -3650,15 +3667,32 @@ fn reload_rules(map: &mut RulesMap, path: &Path) -> Result<usize> {
 }
 
 fn print_event(e: &ConnectEvent) {
+    // Per-family tag so log readers can distinguish rule-driven
+    // decisions from default-allow paths:
+    //   [ALLOW] / [DENY ]  — IPv4, the only family the BPF program
+    //                         actually evaluates rules for
+    //   [V6   ]            — IPv6, currently default-allowed by BPF
+    //                         (gap; queued as 6.4.1 IPv6 enforcement)
+    //   [LOCAL]            — AF_UNIX / AF_NETLINK / etc. — local IPC,
+    //                         not a network policy concern (matches
+    //                         simplewall behavior on Windows)
+    //   [USER ]            — appears separately from modify()/delete()
+    //                         when a user/CLI action persists a rule
     let comm = comm_str(&e.comm);
-    let tag = if e.action == ACT_ALLOW { "ALLOW" } else { "DENY " };
-    let dest = match e.family {
+    let (tag, dest) = match e.family {
         AF_INET => {
             let host = u32::from_be(e.dest_ip4);
-            format!("{}:{}", Ipv4Addr::from(host), e.dest_port)
+            let t = if e.action == ACT_ALLOW { "ALLOW" } else { "DENY " };
+            (t, format!("{}:{}", Ipv4Addr::from(host), e.dest_port))
         }
-        AF_INET6 => format!("[{}]:{}", Ipv6Addr::from(e.dest_ip6), e.dest_port),
-        other => format!("(family={})", other),
+        AF_INET6 => (
+            "V6   ",
+            format!("[{}]:{}", Ipv6Addr::from(e.dest_ip6), e.dest_port),
+        ),
+        _ => (
+            "LOCAL",
+            format!("(family={})", e.family),
+        ),
     };
     eprintln!("[{}] pid={} comm={} dest={}", tag, e.pid, comm, dest);
 }
