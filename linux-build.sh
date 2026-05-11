@@ -72,7 +72,9 @@
 #                              script `dpkg -i`s the .deb, enables +
 #                              starts amwall-daemon under systemd, and
 #                              launches amwall-gui (detached, log in
-#                              /tmp/amwall-gui.log). Override with
+#                              ~/.local/share/amwall/gui.log — XDG
+#                              equivalent of Win32 amwall's %APPDATA%
+#                              swaplog). Override with
 #                              AMWALL_SKIP_INSTALL=1 to iterate without
 #                              churning systemd.
 #   - Phase 6.1: Hybrid Qt6 GUI foundation (Iced replaced)
@@ -1593,7 +1595,7 @@ public slots:
     void refresh();
 
     // Persist a rule via the daemon. Async — if polkit denies, a
-    // qWarning lands in /tmp/amwall-gui.log. After the next refresh
+    // qWarning lands in ~/.local/share/amwall/gui.log. After the next refresh
     // tick the rule shows up in our cache.
     void allow(const QString &comm, const QString &ip, ushort port);
     void deny(const QString &comm, const QString &ip, ushort port);
@@ -3746,7 +3748,14 @@ else
         exec bash
     fi
 
-    GUI_OUT=/tmp/amwall-gui.log
+    # XDG-correct location for the GUI runtime log — Linux equivalent
+    # of Win32 amwall's %APPDATA%\amwall\swaplog. Honors $XDG_DATA_HOME
+    # if set; otherwise ~/.local/share/amwall/gui.log. The script's
+    # tail -F at end-of-run targets the same path.
+    GUI_LOG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/amwall"
+    mkdir -p "$GUI_LOG_DIR"
+    GUI_OUT="$GUI_LOG_DIR/gui.log"
+    export GUI_RUNTIME_LOG="$GUI_OUT"   # picked up by the tail -F at end
     INFO "nohup /usr/bin/amwall-gui (log → $GUI_OUT)"
     nohup /usr/bin/amwall-gui >"$GUI_OUT" 2>&1 &
     disown 2>/dev/null || true
@@ -3812,7 +3821,8 @@ cat <<EOF
     # File → Refresh (or F5) re-polls daemon
     # View → Always on top is persisted in ~/.config/amwall/amwall.conf
     pkill -x amwall-gui             # force-kill if needed
-    tail -f /tmp/amwall-gui.log     # watch Qt qDebug/qWarning output
+    tail -f ~/.local/share/amwall/gui.log   # Qt qDebug/qWarning + DBus errors
+    # (XDG-correct location; honors \$XDG_DATA_HOME if set)
 
   Inspect the D-Bus interface:
     busctl introspect org.amwall.Daemon1 /org/amwall/Daemon1
@@ -3879,8 +3889,9 @@ if [ -n "${AMWALL_LOGGING_ACTIVE:-}" ]; then
     # Dumped AFTER the build log so an immediate-startup GUI crash is
     # visible without a second command. The GUI is still running in
     # the background — anything it logs after this point won't be in
-    # this dump; re-cat manually with: tail -f /tmp/amwall-gui.log
-    GUI_RUNTIME_LOG=/tmp/amwall-gui.log
+    # this dump; re-cat manually with:
+    #   tail -f ${XDG_DATA_HOME:-$HOME/.local/share}/amwall/gui.log
+    GUI_RUNTIME_LOG="${GUI_RUNTIME_LOG:-${XDG_DATA_HOME:-$HOME/.local/share}/amwall/gui.log}"
     if [ -s "$GUI_RUNTIME_LOG" ]; then
         printf '════════════════════════════════════════════════════════════\n'
         printf '  ▼▼▼  BEGIN GUI RUNTIME LOG  ▼▼▼   (%s)\n' "$GUI_RUNTIME_LOG"
@@ -3928,9 +3939,10 @@ fi
 # the GUI (clicks Allow on prompts, etc.) and sees Qt warnings + DBus
 # errors stream here as they happen. Ctrl-C exits back to the original
 # shell. To re-enter the repo afterwards: cd ~/amwall.
-GUI_RUNTIME_LOG="${GUI_RUNTIME_LOG:-/tmp/amwall-gui.log}"
-# Make sure the file exists so tail -F doesn't complain on cold launches
-# where amwall-gui hasn't written anything yet.
+GUI_RUNTIME_LOG="${GUI_RUNTIME_LOG:-${XDG_DATA_HOME:-$HOME/.local/share}/amwall/gui.log}"
+# Make sure the directory + file exist so tail -F doesn't complain on
+# cold launches where amwall-gui hasn't written anything yet.
+mkdir -p "$(dirname "$GUI_RUNTIME_LOG")"
 [ -e "$GUI_RUNTIME_LOG" ] || : > "$GUI_RUNTIME_LOG"
 printf '════════════════════════════════════════════════════════════\n'
 printf '  ▶ live tail of %s   (Ctrl-C to exit)\n' "$GUI_RUNTIME_LOG"
