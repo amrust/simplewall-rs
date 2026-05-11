@@ -92,6 +92,61 @@ cargo wix --no-build --nocapture --target x86_64-pc-windows-msvc
 
 Output: `target\wix\amwall-<version>-x86_64.msi`.
 
+## Linux port (development)
+
+A Linux port lives under `linux/` (BPF LSM daemon + Qt6 GUI). It's pre-release — no .deb on the Releases page yet, only a self-bootstrapping build script at the repo root: [`linux-build.sh`](linux-build.sh).
+
+The script installs every toolchain dep (Rust nightly + clang/llvm + qt6-base-dev + cargo-deb + bpf-linker), edits GRUB to enable the BPF LSM, builds the daemon + CLI + Qt6 GUI, runs 7 smoke tests, and `dpkg -i`s the resulting `.deb`. Re-runnable from any Mint 22 / Ubuntu 24.04 VM snapshot — APT/Rust steps no-op when already satisfied.
+
+### One-liner: fetch + run latest
+
+From the VM, after every push from this repo:
+
+```bash
+sudo systemctl stop amwall-daemon && SHA=$(curl -fsSL https://api.github.com/repos/amrust/amwall/commits/main | python3 -c 'import json,sys;print(json.load(sys.stdin)["sha"])') && curl -fsSL https://raw.githubusercontent.com/amrust/amwall/$SHA/linux-build.sh -o ~/linux-build.sh && bash ~/linux-build.sh
+```
+
+What it does, step by step:
+
+1. **Stop the daemon** so the in-place reinstall can replace `/usr/bin/amwall-daemon`. Also un-blocks the curl that follows (the daemon's default-deny would otherwise drop it).
+2. **Resolve the current `main` HEAD SHA** via the GitHub API. Required because `https://raw.githubusercontent.com/.../main/...` is CDN-cached for ~5 minutes per push and serving stale content during that window will run an outdated script.
+3. **Fetch the script by exact SHA** — content-addressable, never cached stale.
+4. **Run it.** Output is teed to `~/amwall-run.log` (full build/test transcript). On completion the script ends with a live combined tail of the daemon journal (`journalctl -fu amwall-daemon`) + GUI log (`~/.local/share/amwall/gui.log`) — Ctrl-C to exit.
+
+### Knobs
+
+- `AMWALL_SKIP_INSTALL=1` — skip `dpkg -i` + service restart; useful when iterating on smoke tests without churning systemd.
+- `AMWALL_NO_LOG=1` — disable the `~/amwall-run.log` tee.
+- `AMWALL_LOG_FILE=/path/to/log` — override the run-log location.
+- `XDG_DATA_HOME=...` — moves the GUI runtime log target (default `~/.local/share/amwall/gui.log`).
+
+### Network reset between iterations
+
+Accumulated rules.toml entries (allow/deny clicks from the connect prompt) and `~/.config/amwall/` (Qt settings) can be wiped without a snapshot rollback:
+
+```bash
+sudo amwall-cli reset --yes                # both
+sudo amwall-cli reset --yes --keep-rules   # GUI config only
+sudo amwall-cli reset --yes --keep-config  # rules only
+```
+
+The build script's auto-install step calls `reset --yes` automatically before each `dpkg -i`, so back-to-back runs are clean by default.
+
+### Logs
+
+| Source | Path | How to read |
+|---|---|---|
+| `linux-build.sh` (full run transcript) | `~/amwall-run.log` | `cat ~/amwall-run.log` |
+| `amwall-daemon` (allow/deny, D-Bus, BPF) | systemd journal | `journalctl -fu amwall-daemon` |
+| `amwall-gui` (Qt qDebug/qWarning, crashes) | `~/.local/share/amwall/gui.log` | `tail -F ~/.local/share/amwall/gui.log` |
+| GUI coredumps (if any) | systemd-coredump | `coredumpctl info amwall-gui` |
+
+`~/.local/share/amwall/gui.log` is the XDG equivalent of Windows amwall's `%APPDATA%\amwall\swaplog.txt`.
+
+### Phase progress
+
+Tracked in the trailing banner of [`linux-build.sh`](linux-build.sh). High level: Phases 1–6.4 complete (BPF LSM default-deny enforcement, D-Bus interface with polkit gating, `.deb` packaging via cargo-deb, Qt6 GUI with status dashboard, per-comm connect prompts with whole-app wildcard rules, User Rules tab). Pending: Connections / Packets log / Apps / Settings tabs, i18n, and a BPF tweak to read `task->group_leader->comm` so multi-thread apps (Firefox's `DNS Resolver #N`) collapse to one prompt instead of one per thread.
+
 ## Releasing
 
 Releases are produced by the [`release` workflow](.github/workflows/release.yml) running on `windows-latest`. It fires **only on tag push**, not on every commit. The workflow runs the full gating triad (`cargo build --release`, `cargo clippy --all-targets -- -D warnings`, `cargo test`), then `cargo wix`, then attaches the MSI to a **draft** GitHub Release.
