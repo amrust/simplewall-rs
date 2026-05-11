@@ -103,12 +103,12 @@ The script installs every toolchain dep (Rust nightly + clang/llvm + qt6-base-de
 From the VM, after every push from this repo:
 
 ```bash
-sudo systemctl stop amwall-daemon && SHA=$(curl -fsSL https://api.github.com/repos/amrust/amwall/commits/main | python3 -c 'import json,sys;print(json.load(sys.stdin)["sha"])') && curl -fsSL https://raw.githubusercontent.com/amrust/amwall/$SHA/linux-build.sh -o ~/linux-build.sh && bash ~/linux-build.sh
+sudo systemctl stop amwall-daemon 2>/dev/null; SHA=$(curl -fsSL https://api.github.com/repos/amrust/amwall/commits/main | python3 -c 'import json,sys;print(json.load(sys.stdin)["sha"])') && curl -fsSL https://raw.githubusercontent.com/amrust/amwall/$SHA/linux-build.sh -o ~/linux-build.sh && bash ~/linux-build.sh
 ```
 
 What it does, step by step:
 
-1. **Stop the daemon** so the in-place reinstall can replace `/usr/bin/amwall-daemon`. Also un-blocks the curl that follows (the daemon's default-deny would otherwise drop it).
+1. **Stop the daemon** so the in-place reinstall can replace `/usr/bin/amwall-daemon`. Also un-blocks the curl that follows (the daemon's default-deny would otherwise drop it). Trailing `;` (not `&&`) so a fresh-snapshot run with no service unit installed yet still proceeds.
 2. **Resolve the current `main` HEAD SHA** via the GitHub API. Required because `https://raw.githubusercontent.com/.../main/...` is CDN-cached for ~5 minutes per push and serving stale content during that window will run an outdated script.
 3. **Fetch the script by exact SHA** — content-addressable, never cached stale.
 4. **Run it.** Output is teed to `~/amwall-run.log` (full build/test transcript). On completion the script ends with a live combined tail of the daemon journal (`journalctl -fu amwall-daemon`) + GUI log (`~/.local/share/amwall/gui.log`) — Ctrl-C to exit.
