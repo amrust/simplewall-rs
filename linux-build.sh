@@ -3055,6 +3055,14 @@ void UserRulesTab::rebuildTable() {
     // emissions; the rebuild creates and destroys rows in bulk and any
     // signal that fires mid-way sees half-populated state.
     QSignalBlocker block(m_table);
+    // Clear selection AND current-item pointer before the rebuild so
+    // a previously-selected row index doesn't carry the highlight
+    // into whatever rule lands at that index after sort. We re-apply
+    // the selection below via (comm, ip, port) lookup if there really
+    // was one — Qt's "current" defaulting to row 0 on first focus is
+    // what produced the "random row selected on first show" effect.
+    m_table->clearSelection();
+    m_table->setCurrentItem(nullptr);
     m_table->setRowCount(rules.size());
     int row = 0;
     for (const RuleEntry &r : rules) {
