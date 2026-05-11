@@ -1136,7 +1136,7 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets DBus)
 
 # AMWALL_VERSION is baked into the binary so --version and the About
 # box show the same string the .deb is built with. Bumped per phase.
-add_compile_definitions(AMWALL_VERSION="0.1.0+phase6.3")
+add_compile_definitions(AMWALL_VERSION="0.1.0+phase6.4")
 
 add_executable(amwall-gui
     src/main.cpp
@@ -1150,6 +1150,10 @@ add_executable(amwall-gui
     src/connectprompt.h
     src/promptcoordinator.cpp
     src/promptcoordinator.h
+    src/userrulestab.cpp
+    src/userrulestab.h
+    src/ruleeditor.cpp
+    src/ruleeditor.h
 )
 
 target_link_libraries(amwall-gui PRIVATE
@@ -1248,9 +1252,11 @@ class QAction;
 class QCloseEvent;
 class QLabel;
 class QMenu;
+class QTabWidget;
 class DbusClient;
 class Dashboard;
 class PromptCoordinator;
+class UserRulesTab;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -1268,6 +1274,7 @@ private slots:
     void onAbout();
     void onAlwaysOnTopToggled(bool on);
     void onDbusStateChanged();
+    void onAddRuleFromMenu();   // Edit > Add Rule — switches to User Rules tab
 
 private:
     void setupCentralWidget();
@@ -1278,7 +1285,9 @@ private:
 
     DbusClient        *m_dbus = nullptr;
     PromptCoordinator *m_prompts = nullptr;
+    QTabWidget        *m_tabs = nullptr;
     Dashboard         *m_dashboard = nullptr;
+    UserRulesTab      *m_userRules = nullptr;
 
     QLabel *m_statusDaemon = nullptr;   // permanent left widget
     QLabel *m_statusRefresh = nullptr;  // permanent right widget
@@ -1298,6 +1307,7 @@ write_file linux/amwall-gui-qt/src/mainwindow.cpp <<'EOF'
 #include "dashboard.h"
 #include "dbusclient.h"
 #include "promptcoordinator.h"
+#include "userrulestab.h"
 
 #include <QAction>
 #include <QApplication>
@@ -1311,6 +1321,7 @@ write_file linux/amwall-gui-qt/src/mainwindow.cpp <<'EOF'
 #include <QSettings>
 #include <QStatusBar>
 #include <QStyle>
+#include <QTabWidget>
 #include <QtGlobal>
 
 #ifndef AMWALL_VERSION
@@ -1342,8 +1353,25 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 }
 
 void MainWindow::setupCentralWidget() {
+    // Tabbed central. Overview = the existing dashboard. User Rules
+    // = the rule list + add/edit/delete (Phase 6.4). 6.5 will append
+    // a "Connections" tab; 6.6 a "Packets log" tab; etc.
+    m_tabs = new QTabWidget(this);
     m_dashboard = new Dashboard(m_dbus, m_prompts, this);
-    setCentralWidget(m_dashboard);
+    m_userRules = new UserRulesTab(m_dbus, this);
+    m_tabs->addTab(m_dashboard, tr("&Overview"));
+    m_tabs->addTab(m_userRules, tr("&User Rules"));
+    // Default to User Rules — that's the action surface; the
+    // dashboard is informational and a click away.
+    m_tabs->setCurrentWidget(m_userRules);
+    setCentralWidget(m_tabs);
+}
+
+void MainWindow::onAddRuleFromMenu() {
+    if (m_tabs && m_userRules) {
+        m_tabs->setCurrentWidget(m_userRules);
+        m_userRules->onAddRule();
+    }
 }
 
 void MainWindow::setupMenuBar() {
@@ -1359,6 +1387,16 @@ void MainWindow::setupMenuBar() {
     quit->setShortcut(QKeySequence::Quit);  // Ctrl+Q
     quit->setIcon(style()->standardIcon(QStyle::SP_DialogCloseButton));
     connect(quit, &QAction::triggered, this, &MainWindow::onQuit);
+
+    // Edit menu (re-introduced in Phase 6.4 now that User Rules tab
+    // gives the menu items something to act on). Edit / Delete live
+    // on the tab itself (selection-driven); only Add Rule is global.
+    auto *edit = menuBar()->addMenu(tr("&Edit"));
+    auto *addRule = edit->addAction(tr("&Add rule..."));
+    addRule->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
+    addRule->setIcon(style()->standardIcon(QStyle::SP_FileDialogNewFolder));
+    connect(addRule, &QAction::triggered,
+            this, &MainWindow::onAddRuleFromMenu);
 
     auto *view = menuBar()->addMenu(tr("&View"));
     auto *show = view->addAction(tr("&Show window"));
@@ -1600,6 +1638,9 @@ public slots:
     void allow(const QString &comm, const QString &ip, ushort port);
     void deny(const QString &comm, const QString &ip, ushort port);
 
+    // Delete an existing rule. Same async pattern.
+    void del(const QString &comm, const QString &ip, ushort port);
+
 signals:
     void stateChanged();
 
@@ -1753,6 +1794,10 @@ void DbusClient::allow(const QString &comm, const QString &ip, ushort port) {
 
 void DbusClient::deny(const QString &comm, const QString &ip, ushort port) {
     callModify("Deny", comm, ip, port);
+}
+
+void DbusClient::del(const QString &comm, const QString &ip, ushort port) {
+    callModify("Del", comm, ip, port);
 }
 
 void DbusClient::callModify(const char *method, const QString &comm,
@@ -2419,6 +2464,423 @@ void PromptCoordinator::pruneRecent() {
         if (it.value() < cutoff) it = m_decided.erase(it);
         else                     ++it;
     }
+}
+EOF
+
+write_file linux/amwall-gui-qt/src/ruleeditor.h <<'EOF'
+// RuleEditorDialog — modal dialog for adding or editing a rule.
+//
+// Two modes selected by the constructor:
+//   • Add mode (existing == nullptr): all fields editable. Use to
+//     create a brand-new rule. (comm, ip, port) is the daemon's
+//     unique key — submitting an existing key upserts.
+//   • Edit mode (existing != nullptr): only the action is editable.
+//     Process / IP / Port are shown read-only. To change those, the
+//     user deletes the rule and adds a new one — this avoids the
+//     orphan-state risk of "delete-then-add" (no daemon Update RPC).
+
+#pragma once
+
+#include <QDialog>
+
+#include "dbusclient.h"   // for RuleEntry
+
+class QComboBox;
+class QLineEdit;
+class QSpinBox;
+class QDialogButtonBox;
+
+class RuleEditorDialog : public QDialog {
+    Q_OBJECT
+
+public:
+    explicit RuleEditorDialog(const RuleEntry *existing = nullptr,
+                              QWidget *parent = nullptr);
+
+    QString comm()   const;
+    QString ip()     const;
+    ushort  port()   const;
+    QString action() const;   // "allow" | "deny"
+
+private slots:
+    void validateAndAccept();
+
+private:
+    bool m_isEdit;
+    QLineEdit        *m_comm = nullptr;
+    QComboBox        *m_action = nullptr;
+    QLineEdit        *m_ip = nullptr;
+    QSpinBox         *m_port = nullptr;
+    QDialogButtonBox *m_buttons = nullptr;
+};
+EOF
+
+write_file linux/amwall-gui-qt/src/ruleeditor.cpp <<'EOF'
+#include "ruleeditor.h"
+
+#include <QComboBox>
+#include <QDialogButtonBox>
+#include <QFormLayout>
+#include <QHBoxLayout>
+#include <QHostAddress>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
+#include <QSpinBox>
+#include <QVBoxLayout>
+
+RuleEditorDialog::RuleEditorDialog(const RuleEntry *existing, QWidget *parent)
+    : QDialog(parent), m_isEdit(existing != nullptr) {
+    setWindowTitle(m_isEdit ? tr("Edit rule") : tr("Add rule"));
+    setModal(true);
+    setMinimumWidth(380);
+
+    auto *outer = new QVBoxLayout(this);
+    auto *form  = new QFormLayout;
+    form->setLabelAlignment(Qt::AlignRight);
+
+    // Process (comm) — kernel TASK_COMM_NAME, ASCII, max 15 chars.
+    m_comm = new QLineEdit(this);
+    m_comm->setMaxLength(15);
+    m_comm->setPlaceholderText(tr("e.g. firefox  (max 15 chars, kernel comm)"));
+    // Allow letters, digits, underscore, hyphen, dot, colon, and
+    // space (Firefox's "DNS Resolver #N" has spaces and #).
+    m_comm->setValidator(new QRegularExpressionValidator(
+        QRegularExpression("[\\w .:#@/+-]+"), this));
+    form->addRow(tr("Process (comm):"), m_comm);
+
+    // Action — Allow / Deny.
+    m_action = new QComboBox(this);
+    m_action->addItem(tr("Allow"), "allow");
+    m_action->addItem(tr("Deny"),  "deny");
+    form->addRow(tr("Action:"), m_action);
+
+    // IP — "any" or IPv4 dotted-quad.
+    m_ip = new QLineEdit(this);
+    m_ip->setPlaceholderText(tr("any  or  192.168.1.1"));
+    form->addRow(tr("Destination IP:"), m_ip);
+
+    // Port — 0 = any.
+    m_port = new QSpinBox(this);
+    m_port->setRange(0, 65535);
+    m_port->setSpecialValueText(tr("0  (any port)"));
+    form->addRow(tr("Destination port:"), m_port);
+
+    outer->addLayout(form);
+
+    // In Edit mode pre-fill all fields and lock everything except
+    // the action combobox. Add mode starts blank with sensible
+    // defaults.
+    if (existing) {
+        m_comm->setText(existing->comm);
+        m_ip->setText(existing->ip);
+        m_port->setValue(existing->port);
+        m_action->setCurrentIndex(existing->action == "deny" ? 1 : 0);
+        m_comm->setReadOnly(true);
+        m_ip->setReadOnly(true);
+        m_port->setReadOnly(true);
+        m_port->setButtonSymbols(QAbstractSpinBox::NoButtons);
+
+        auto *note = new QLabel(
+            tr("<i style='font-size: small;'>Process / IP / Port are read-only "
+               "in Edit. To change those, delete this rule and add a new one.</i>"),
+            this);
+        note->setTextFormat(Qt::RichText);
+        note->setWordWrap(true);
+        outer->addWidget(note);
+    } else {
+        m_ip->setText(QStringLiteral("any"));
+    }
+
+    m_buttons = new QDialogButtonBox(
+        QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+    outer->addWidget(m_buttons);
+    connect(m_buttons, &QDialogButtonBox::accepted,
+            this, &RuleEditorDialog::validateAndAccept);
+    connect(m_buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+}
+
+QString RuleEditorDialog::comm()   const { return m_comm->text(); }
+QString RuleEditorDialog::ip()     const { return m_ip->text().trimmed(); }
+ushort  RuleEditorDialog::port()   const { return static_cast<ushort>(m_port->value()); }
+QString RuleEditorDialog::action() const { return m_action->currentData().toString(); }
+
+void RuleEditorDialog::validateAndAccept() {
+    if (m_isEdit) {
+        // Only the action can change; everything else is locked.
+        accept();
+        return;
+    }
+
+    const QString c = comm().trimmed();
+    if (c.isEmpty()) {
+        QMessageBox::warning(this, tr("Invalid rule"),
+            tr("Process name (comm) cannot be empty."));
+        m_comm->setFocus();
+        return;
+    }
+
+    const QString ipv = ip();
+    if (ipv.isEmpty()) {
+        QMessageBox::warning(this, tr("Invalid rule"),
+            tr("Destination IP cannot be empty.\n\nUse 'any' to match all IPs."));
+        m_ip->setFocus();
+        return;
+    }
+    if (!ipv.compare(QStringLiteral("any"), Qt::CaseInsensitive) == 0) {
+        QHostAddress addr(ipv);
+        if (addr.isNull() || addr.protocol() != QAbstractSocket::IPv4Protocol) {
+            QMessageBox::warning(this, tr("Invalid rule"),
+                tr("Destination IP must be 'any' or a valid IPv4 address "
+                   "(e.g. 192.168.1.1).\n\nIPv6 isn't enforced by the BPF "
+                   "program yet."));
+            m_ip->setFocus();
+            return;
+        }
+    }
+
+    accept();
+}
+EOF
+
+write_file linux/amwall-gui-qt/src/userrulestab.h <<'EOF'
+// UserRulesTab — central tab listing all rules from rules.toml.
+//
+// Source of truth: DbusClient::rules(). Auto-rebuilds the table
+// whenever DbusClient emits stateChanged. Buttons:
+//   • Add Rule    → opens RuleEditorDialog in Add mode → dbus.allow/deny
+//   • Edit Rule   → opens RuleEditorDialog in Edit mode (action only)
+//   • Delete Rule → confirms → dbus.del
+//
+// Double-click a row also opens Edit. Delete key on the table
+// triggers Delete. Enter triggers Edit.
+
+#pragma once
+
+#include <QWidget>
+
+#include "dbusclient.h"
+
+class QLabel;
+class QPushButton;
+class QTableWidget;
+
+class UserRulesTab : public QWidget {
+    Q_OBJECT
+
+public:
+    explicit UserRulesTab(DbusClient *dbus, QWidget *parent = nullptr);
+
+public slots:
+    // Public so the menu's Edit > Add Rule can drive the same path
+    // without duplicating dialog wiring in MainWindow.
+    void onAddRule();
+
+private slots:
+    void onDbusStateChanged();
+    void onSelectionChanged();
+    void onEditRule();
+    void onDeleteRule();
+    void onTableActivated();   // double-click / Enter
+
+private:
+    void rebuildTable();
+    bool   currentRule(RuleEntry *out) const;
+
+    DbusClient   *m_dbus = nullptr;
+    QTableWidget *m_table = nullptr;
+    QPushButton  *m_addBtn = nullptr;
+    QPushButton  *m_editBtn = nullptr;
+    QPushButton  *m_deleteBtn = nullptr;
+    QLabel       *m_countLabel = nullptr;
+};
+EOF
+
+write_file linux/amwall-gui-qt/src/userrulestab.cpp <<'EOF'
+#include "userrulestab.h"
+
+#include "ruleeditor.h"
+
+#include <QHBoxLayout>
+#include <QHeaderView>
+#include <QLabel>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QStyle>
+#include <QTableWidget>
+#include <QTableWidgetItem>
+#include <QVBoxLayout>
+
+UserRulesTab::UserRulesTab(DbusClient *dbus, QWidget *parent)
+    : QWidget(parent), m_dbus(dbus) {
+
+    auto *outer = new QVBoxLayout(this);
+    outer->setContentsMargins(8, 8, 8, 8);
+    outer->setSpacing(6);
+
+    // ─── Header (count) ──────────────────────────────────────────
+    auto *header = new QHBoxLayout;
+    auto *title = new QLabel(tr("<b>User rules</b>"), this);
+    title->setTextFormat(Qt::RichText);
+    header->addWidget(title);
+    m_countLabel = new QLabel(QStringLiteral("(0)"), this);
+    header->addWidget(m_countLabel);
+    header->addStretch(1);
+    outer->addLayout(header);
+
+    // ─── Table ───────────────────────────────────────────────────
+    m_table = new QTableWidget(0, 4, this);
+    m_table->setHorizontalHeaderLabels({
+        tr("Process (comm)"), tr("Action"), tr("Destination IP"), tr("Port")
+    });
+    m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_table->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_table->setSortingEnabled(true);
+    m_table->verticalHeader()->setVisible(false);
+    m_table->horizontalHeader()->setStretchLastSection(false);
+    m_table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    m_table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    m_table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    m_table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    outer->addWidget(m_table, /*stretch=*/1);
+
+    connect(m_table, &QTableWidget::itemSelectionChanged,
+            this, &UserRulesTab::onSelectionChanged);
+    connect(m_table, &QTableWidget::cellDoubleClicked,
+            this, &UserRulesTab::onTableActivated);
+
+    // ─── Buttons ─────────────────────────────────────────────────
+    auto *buttons = new QHBoxLayout;
+    buttons->addStretch(1);
+
+    m_addBtn = new QPushButton(
+        style()->standardIcon(QStyle::SP_FileDialogNewFolder),
+        tr("&Add..."), this);
+    m_editBtn = new QPushButton(
+        style()->standardIcon(QStyle::SP_FileDialogDetailedView),
+        tr("&Edit..."), this);
+    m_deleteBtn = new QPushButton(
+        style()->standardIcon(QStyle::SP_TrashIcon),
+        tr("&Delete"), this);
+
+    m_editBtn->setEnabled(false);
+    m_deleteBtn->setEnabled(false);
+
+    connect(m_addBtn,    &QPushButton::clicked, this, &UserRulesTab::onAddRule);
+    connect(m_editBtn,   &QPushButton::clicked, this, &UserRulesTab::onEditRule);
+    connect(m_deleteBtn, &QPushButton::clicked, this, &UserRulesTab::onDeleteRule);
+
+    buttons->addWidget(m_addBtn);
+    buttons->addWidget(m_editBtn);
+    buttons->addWidget(m_deleteBtn);
+    outer->addLayout(buttons);
+
+    connect(m_dbus, &DbusClient::stateChanged,
+            this, &UserRulesTab::onDbusStateChanged);
+    rebuildTable();
+}
+
+void UserRulesTab::onDbusStateChanged() {
+    rebuildTable();
+}
+
+void UserRulesTab::rebuildTable() {
+    // QTableWidget loses selection on row-count changes; selection
+    // preservation across rebuilds is a 6.5+ polish item if anyone
+    // wants it. For now the user re-clicks if the rebuild interrupts.
+    const auto &rules = m_dbus->rules();
+    m_table->setSortingEnabled(false);
+    m_table->setRowCount(rules.size());
+    int row = 0;
+    for (const RuleEntry &r : rules) {
+        auto *commItem = new QTableWidgetItem(r.comm);
+        auto *actionItem = new QTableWidgetItem(r.action.toUpper());
+        auto *ipItem = new QTableWidgetItem(r.ip);
+        auto *portItem = new QTableWidgetItem(
+            r.port == 0 ? tr("any") : QString::number(r.port));
+
+        // Color-code action: green for allow, red for deny.
+        if (r.action == QStringLiteral("allow")) {
+            actionItem->setForeground(QColor("#2e7d32"));
+        } else if (r.action == QStringLiteral("deny")) {
+            actionItem->setForeground(QColor("#c62828"));
+        }
+
+        m_table->setItem(row, 0, commItem);
+        m_table->setItem(row, 1, actionItem);
+        m_table->setItem(row, 2, ipItem);
+        m_table->setItem(row, 3, portItem);
+        ++row;
+    }
+    m_table->setSortingEnabled(true);
+    m_countLabel->setText(QStringLiteral("(%1)").arg(rules.size()));
+
+    // After rebuild, no row is selected; refresh button enabled state.
+    onSelectionChanged();
+}
+
+void UserRulesTab::onSelectionChanged() {
+    bool any = !m_table->selectedItems().isEmpty();
+    m_editBtn->setEnabled(any);
+    m_deleteBtn->setEnabled(any);
+}
+
+bool UserRulesTab::currentRule(RuleEntry *out) const {
+    auto sel = m_table->selectedItems();
+    if (sel.isEmpty()) return false;
+    int row = sel.first()->row();
+    out->comm   = m_table->item(row, 0)->text();
+    out->action = m_table->item(row, 1)->text().toLower();
+    out->ip     = m_table->item(row, 2)->text();
+    QString portText = m_table->item(row, 3)->text();
+    out->port   = (portText == tr("any")) ? 0 : portText.toUShort();
+    return true;
+}
+
+void UserRulesTab::onAddRule() {
+    RuleEditorDialog dlg(/*existing=*/nullptr, this);
+    if (dlg.exec() != QDialog::Accepted) return;
+    if (dlg.action() == QStringLiteral("allow")) {
+        m_dbus->allow(dlg.comm(), dlg.ip(), dlg.port());
+    } else {
+        m_dbus->deny(dlg.comm(), dlg.ip(), dlg.port());
+    }
+}
+
+void UserRulesTab::onEditRule() {
+    RuleEntry r;
+    if (!currentRule(&r)) return;
+    RuleEditorDialog dlg(&r, this);
+    if (dlg.exec() != QDialog::Accepted) return;
+    // Edit-mode dialog only allows action to change. (comm, ip, port)
+    // is the BPF map key; the daemon's Allow/Deny upserts on key match.
+    if (dlg.action() == QStringLiteral("allow")) {
+        m_dbus->allow(r.comm, r.ip, r.port);
+    } else {
+        m_dbus->deny(r.comm, r.ip, r.port);
+    }
+}
+
+void UserRulesTab::onDeleteRule() {
+    RuleEntry r;
+    if (!currentRule(&r)) return;
+    QString summary = QStringLiteral("%1  %2  %3:%4")
+                          .arg(r.action.toUpper(), r.comm, r.ip,
+                               r.port == 0 ? tr("any") : QString::number(r.port));
+    int rc = QMessageBox::question(
+        this, tr("Delete rule"),
+        tr("Delete this rule?\n\n  %1\n\nThis takes effect immediately.").arg(summary),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    if (rc != QMessageBox::Yes) return;
+    m_dbus->del(r.comm, r.ip, r.port);
+}
+
+void UserRulesTab::onTableActivated() {
+    onEditRule();
 }
 EOF
 
@@ -3647,16 +4109,16 @@ ALL_PASS=1
 [ "$TEST7" = PASS ] || ALL_PASS=0
 
 if [ "$ALL_PASS" = 1 ]; then
-    H "✓ PHASES 2 + 3 + 4 + 5 + 6.1 + 6.2 + 6.3 (connect-prompt) ALL CONFIRMED"
+    H "✓ PHASES 2 + 3 + 4 + 5 + 6.1 + 6.2 + 6.3 + 6.4 (User Rules tab) ALL CONFIRMED"
     OK "Default-deny / live reload / D-Bus methods / D-Bus signals all work."
     OK "Polkit gates Allow/Deny/Del; local-active session passes through."
     OK ".deb builds and contains all 9 expected files."
     OK "amwall-core hoisted to repo root; Linux workspace consumes it."
-    OK "amwall-gui (Qt6): dashboard + rule cache + connect-prompt queue."
-    OK "Manually verify: with daemon enforcing default-deny, run 'curl example.com'"
-    OK "in another terminal — a top-level Allow/Block dialog should appear (one per process)."
+    OK "amwall-gui (Qt6): tabbed central (Overview / User Rules) + connect-prompt + dashboard."
+    OK "Manually verify: User Rules tab lists rules, Add/Edit/Delete buttons work."
+    OK "Edit menu > Add rule (Ctrl+N) opens the editor on the User Rules tab."
 else
-    H "✗ Some Phase 2/3/4/5/6.1/6.2/6.3 tests had failures"
+    H "✗ Some Phase 2/3/4/5/6.1/6.2/6.3/6.4 tests had failures"
     WARN "T1 default-deny:        $TEST1"
     WARN "T2 mtime live-reload:   $TEST2"
     WARN "T3 D-Bus List:          $TEST3"
@@ -3775,9 +4237,9 @@ fi
 # ─── Done + drop into shell at repo dir ─────────────────────────────
 
 if [ "$INSTALLED" = 1 ]; then
-    H "DONE — Phase 6.3 — amwall installed, daemon running, Qt6 GUI with connect-prompt on screen"
+    H "DONE — Phase 6.4 — amwall installed, daemon running, Qt6 GUI with User Rules tab on screen"
 else
-    H "DONE — through Phase 6.3; install step skipped/failed"
+    H "DONE — through Phase 6.4; install step skipped/failed"
 fi
 
 cat <<EOF
@@ -3786,8 +4248,8 @@ cat <<EOF
 
   Suggested commit + snapshot:
     git add linux/ amwall-core/
-    git commit -m "linux: Phase 6.3 — connect-prompt dialog (per-comm whole-app prompts)"
-    # then snapshot the VM as 'phase-6.3-connect-prompt'
+    git commit -m "linux: Phase 6.4 — User Rules tab + Rule editor dialog"
+    # then snapshot the VM as 'phase-6.4-user-rules-tab'
 
   Try the prompt (rules.toml is empty by default → everything denies):
     curl --max-time 5 https://example.com
@@ -3842,12 +4304,16 @@ cat <<EOF
     - 6.1 ✓ — foundation: QMainWindow + tray + close-to-tray
     - 6.2 ✓ — status dashboard + DbusClient + real File/View/Help menus
     - 6.3 ✓ — connect-prompt dialog (per-comm Allow/Block, whole-app wildcards)
-    - 6.4 — User-rules tab + Rule editor dialog (4 tabs); restores Edit menu
+    - 6.4 ✓ — User Rules tab + Rule editor (Edit menu restored)
     - 6.5 — Connections tab (live /proc/net walk)
     - 6.6 — Packets log tab (ConnectAttempt history view; signal already wired)
     - 6.7 — Apps tab + App Properties dialog
     - 6.8 — Settings dialog (8-page QNotebook); restores Settings menu
     - 6.9 — i18n (rust_i18n locales/*.toml); Blocklist menu lands here
+
+  6.3.1 (queued) — BPF reads task->group_leader->comm so multi-thread
+                   apps (Firefox DNS Resolver #N) collapse to one prompt
+                   instead of one per thread name.
 
   Plan Phase 5b — Windows-side wiring of amwall-core — still needs a
   Windows checkout (root Cargo.toml + src/rules/*.rs adoption + MSI
