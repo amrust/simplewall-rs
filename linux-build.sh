@@ -323,7 +323,7 @@ fi
 # multi-thread apps spamming separate prompts as a degraded-mode UX.
 INFO "Ensuring aya-tool (BTF→Rust bindings for task_struct walk)..."
 if command -v aya-tool >/dev/null 2>&1; then
-    OK "aya-tool already installed: $(aya-tool --version 2>&1 | head -1 || echo '(--version unsupported)')"
+    OK "aya-tool already installed at $(command -v aya-tool)"
 else
     INFO "Building aya-tool from aya-rs/aya git (3-5 min, pulls clang-sys)..."
     if cargo install --locked --git https://github.com/aya-rs/aya aya-tool 2>&1 | sed 's/^/    /'; then
@@ -331,6 +331,23 @@ else
     else
         WARN "aya-tool install failed — BPF will use per-thread comm fallback"
         WARN "(multi-thread apps like Firefox will spam prompts; not blocking)"
+    fi
+fi
+
+# aya-tool shells out to BOTH `bpftool` (for `btf dump ... format c`) and
+# the `bindgen` CLI (separate from the bindgen library — comes from the
+# bindgen-cli crate). Without bindgen-cli on PATH, aya-tool generate
+# returns the obscure "bindgen failed: No such file or directory" we saw
+# in earlier runs.
+INFO "Ensuring bindgen CLI (aya-tool subprocess dependency)..."
+if command -v bindgen >/dev/null 2>&1; then
+    OK "bindgen already installed: $(bindgen --version 2>&1 | head -1)"
+else
+    INFO "Building bindgen-cli via cargo install (2-3 min)..."
+    if cargo install --locked bindgen-cli 2>&1 | sed 's/^/    /'; then
+        OK "bindgen-cli installed"
+    else
+        WARN "bindgen-cli install failed — BPF will use per-thread comm fallback"
     fi
 fi
 
@@ -4341,6 +4358,8 @@ if [ -z "$BPFTOOL_PATH" ]; then
     WARN "6.3.1 disabled. Try: sudo apt install linux-tools-\$(uname -r) linux-tools-common"
 elif ! command -v aya-tool >/dev/null 2>&1; then
     WARN "aya-tool not installed — 6.3.1 disabled (per-thread comm)."
+elif ! command -v bindgen >/dev/null 2>&1; then
+    WARN "bindgen CLI not installed — aya-tool would fail. 6.3.1 disabled."
 elif [ ! -r /sys/kernel/btf/vmlinux ]; then
     WARN "/sys/kernel/btf/vmlinux not readable — 6.3.1 disabled."
 else
