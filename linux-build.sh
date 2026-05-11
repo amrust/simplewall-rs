@@ -1673,6 +1673,15 @@ struct RuleEntry {
 };
 Q_DECLARE_METATYPE(RuleEntry)
 
+// Returned by DbusClient::resolveSockets — keyed by socket inode in
+// the resulting QHash. Defined outside the class so moc doesn't try
+// to parse it as a signal/slot declaration inside a slots: section.
+struct SocketProc {
+    uint    pid = 0;
+    QString comm;
+    QString exe;
+};
+
 // Free-function streaming operators — registered with the D-Bus
 // metatype system in DbusClient's ctor. Once registered, Qt can
 // (un)marshal QList<RuleEntry> directly via operator>> on a
@@ -1725,12 +1734,9 @@ public slots:
     // users (root daemons like systemd-resolved) get a real Process
     // cell instead of "(unknown)". Inodes the daemon couldn't match
     // are simply absent from the returned map. Returns an empty
-    // map on D-Bus failure (timeout, daemon dead).
-    struct SocketProc {
-        uint pid = 0;
-        QString comm;
-        QString exe;
-    };
+    // map on D-Bus failure (timeout, daemon dead). SocketProc itself
+    // is defined at file scope above so moc doesn't try to parse it
+    // as a slot declaration.
     QHash<quint64, SocketProc> resolveSockets(const QList<quint64> &inodes);
 
 signals:
@@ -1882,7 +1888,7 @@ bool DbusClient::hasAnyRuleFor(const QString &comm) const {
     return false;
 }
 
-QHash<quint64, DbusClient::SocketProc>
+QHash<quint64, SocketProc>
 DbusClient::resolveSockets(const QList<quint64> &inodes) {
     QHash<quint64, SocketProc> out;
     if (inodes.isEmpty()) return out;
