@@ -686,7 +686,7 @@ exclude = ["amwall-ebpf"]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-license = "MIT"
+license = "GPL-3.0-or-later"
 repository = "https://github.com/amrust/amwall"
 
 [workspace.dependencies]
@@ -707,7 +707,7 @@ write_file amwall-core/Cargo.toml <<'EOF'
 name = "amwall-core"
 version = "0.1.0"
 edition = "2021"
-license = "MIT"
+license = "GPL-3.0-or-later"
 repository = "https://github.com/amrust/amwall"
 description = "Shared rule types and TOML I/O for amwall (Linux + Windows)"
 
@@ -4110,12 +4110,15 @@ void SettingsDialog::buildAboutPage() {
     auto *desc = new QPlainTextEdit(page);
     desc->setReadOnly(true);
     desc->setPlainText(tr(
-        "amwall is a Linux re-implementation of the Win32 firewall of "
-        "the same name, built on BPF LSM enforcement (kernel-side) and "
-        "a Rust daemon + Qt6 GUI talking over D-Bus (user-space).\n\n"
-        "License: MIT.\n"
-        "Source: https://github.com/amrust/amwall\n"
-        "Upstream reference: henrypp/simplewall v3.8.7.\n\n"
+        "amwall is a per-application firewall built on BPF LSM "
+        "enforcement (kernel-side) and a Rust daemon + Qt6 GUI "
+        "talking over D-Bus (user-space).\n\n"
+        "It is an independent rewrite of what was simplewall v3.8.7 "
+        "(henrypp/simplewall, GPL-3.0). amwall is not affiliated "
+        "with, endorsed by, or sponsored by Henry++ or the simplewall "
+        "project — see the NOTICE file for the full attribution.\n\n"
+        "License: GPL-3.0-or-later.\n"
+        "Source: https://github.com/amrust/amwall\n\n"
         "Daemon status, rule path, BPF feature flags, and recent\n"
         "ConnectAttempt events: see the Overview tab and the daemon\n"
         "journal (journalctl -u amwall-daemon)."));
@@ -4546,7 +4549,7 @@ write_file linux/amwall-ebpf/Cargo.toml <<'EOF'
 name = "amwall-ebpf"
 version = "0.1.0"
 edition = "2021"
-license = "MIT"
+license = "GPL-3.0-or-later"
 publish = false
 
 [dependencies]
