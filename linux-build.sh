@@ -3652,7 +3652,7 @@ if [ "$ALL_PASS" = 1 ]; then
     OK "amwall-core hoisted to repo root; Linux workspace consumes it."
     OK "amwall-gui (Qt6): dashboard + rule cache + connect-prompt queue."
     OK "Manually verify: with daemon enforcing default-deny, run 'curl example.com'"
-    OK "in another terminal — a top-level Allow/Block/Dismiss dialog should appear."
+    OK "in another terminal — a top-level Allow/Block dialog should appear (one per process)."
 else
     H "✗ Some Phase 2/3/4/5/6.1/6.2/6.3 tests had failures"
     WARN "T1 default-deny:        $TEST1"
@@ -3777,7 +3777,7 @@ cat <<EOF
 
   Suggested commit + snapshot:
     git add linux/ amwall-core/
-    git commit -m "linux: Phase 6.3 — connect-prompt dialog (Allow/Block/Dismiss queue)"
+    git commit -m "linux: Phase 6.3 — connect-prompt dialog (per-comm whole-app prompts)"
     # then snapshot the VM as 'phase-6.3-connect-prompt'
 
   Try the prompt (rules.toml is empty by default → everything denies):
@@ -3831,7 +3831,7 @@ cat <<EOF
   Phase 6 progress (Qt6 GUI, Windows-amwall feature parity):
     - 6.1 ✓ — foundation: QMainWindow + tray + close-to-tray
     - 6.2 ✓ — status dashboard + DbusClient + real File/View/Help menus
-    - 6.3 ✓ — connect-prompt dialog (Allow/Block/Dismiss queue + dedup)
+    - 6.3 ✓ — connect-prompt dialog (per-comm Allow/Block, whole-app wildcards)
     - 6.4 — User-rules tab + Rule editor dialog (4 tabs); restores Edit menu
     - 6.5 — Connections tab (live /proc/net walk)
     - 6.6 — Packets log tab (ConnectAttempt history view; signal already wired)
