@@ -133,6 +133,30 @@
 #                              can't validate from a Linux VM and needs a
 #                              Windows checkout to land safely. Lands as
 #                              a separate commit.
+#   - Phase 6.10: Offline + frozen builds
+#               vendoring     → linux/vendor/ + linux/amwall-ebpf/vendor/
+#                              hold every crate source pinned by their
+#                              respective Cargo.lock. Per-workspace
+#                              .cargo/config.toml redirects [source.crates-io]
+#                              at the local mirror.
+#               cargo flags   → both `cargo build` invocations and the
+#                              `cargo deb` step run with --frozen --offline
+#                              (--offline only for cargo-deb, since it
+#                              passes through to cargo metadata). Crates.io
+#                              outage / dep yank / transitive version
+#                              drift cannot change what we build.
+#                              `cargo install` for dev tools (bpf-linker,
+#                              cargo-deb, aya-tool, bindgen-cli) STAYS
+#                              online — those are bootstrap tooling, not
+#                              part of the frozen project graph, and
+#                              vendoring them would balloon the repo
+#                              another ~500 MB.
+#               re-vendor     → when any Cargo.toml changes, run
+#                              `cargo vendor --versioned-dirs vendor`
+#                              from each workspace dir and commit the
+#                              diff alongside the Cargo.toml change.
+#                              --frozen will hard-fail at build time
+#                              if the lockfile is stale.
 #
 # Replay-from-snapshot — every step is idempotent. APT install -y on
 # already-installed packages is a no-op. Rustup steps are gated. The
@@ -759,10 +783,15 @@ else
 fi
 export PHASE_631_STATUS
 
-H "Building amwall-ebpf (slow — pulls aya-ebpf, rebuilds core)"
+H "Building amwall-ebpf (slow — rebuilds core, no network)"
 INFO "Expect 2-5 minutes the first time."
 INFO "Cargo features: ${EBPF_CARGO_FEATURES:-<none>}"
-if (cd linux/amwall-ebpf && cargo build --release $EBPF_CARGO_FEATURES 2>&1 | sed 's/^/    /'); then
+# Phase 6.10: --frozen --offline pins resolution to the committed
+# Cargo.lock and forbids network access. Sources come exclusively
+# from linux/amwall-ebpf/vendor/ (wired up via .cargo/config.toml).
+# A drift between Cargo.toml and Cargo.lock will hard-fail here
+# rather than silently re-resolving, which is the whole point.
+if (cd linux/amwall-ebpf && cargo build --release --frozen --offline $EBPF_CARGO_FEATURES 2>&1 | sed 's/^/    /'); then
     EBPF_BIN="$REPO_DIR/linux/amwall-ebpf/target/bpfel-unknown-none/release/amwall-ebpf"
     if [ ! -f "$EBPF_BIN" ]; then
         WARN "BPF ELF not produced at expected path: $EBPF_BIN"
@@ -777,7 +806,9 @@ fi
 H "Building Rust userspace (amwall-daemon + amwall-cli, release)"
 INFO "Phase 6.1 dropped iced/wgpu/winit/cosmic-text — much faster build now."
 INFO "First-time release compile of tokio + zbus + clap + aya: ~3-5 min."
-if (cd linux && cargo build --release 2>&1 | sed 's/^/    /'); then
+# Phase 6.10: --frozen --offline — same rationale as the ebpf build
+# above. Sources resolved exclusively from linux/vendor/.
+if (cd linux && cargo build --release --frozen --offline 2>&1 | sed 's/^/    /'); then
     OK "Rust userspace built (release)."
 else
     WARN "userspace build failed — see output above."
@@ -813,8 +844,11 @@ CLI_BIN="$REPO_DIR/linux/target/release/amwall-cli"
 GUI_BIN="$QT_GUI_BIN"
 
 H "Building .deb package (cargo-deb)"
-INFO "Packaging release binaries + debian/ scaffold (--no-build)..."
-if (cd linux/amwall-daemon && cargo deb --no-build 2>&1 | sed 's/^/    /'); then
+INFO "Packaging release binaries + debian/ scaffold (--no-build --offline)..."
+# Phase 6.10: --offline for the underlying cargo metadata call
+# cargo-deb runs to resolve asset paths. Combined with --no-build,
+# nothing here touches the network or rebuilds.
+if (cd linux/amwall-daemon && cargo deb --no-build --offline 2>&1 | sed 's/^/    /'); then
     DEB_FILE=$(ls "$REPO_DIR/linux/target/debian/"amwall_*.deb 2>/dev/null | head -1)
     if [ -z "$DEB_FILE" ]; then
         WARN ".deb produced but couldn't find it under linux/target/debian/"
