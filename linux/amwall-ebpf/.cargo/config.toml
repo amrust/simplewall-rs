@@ -1,24 +1,20 @@
-# BPF target + vendored-sources mode for the amwall-ebpf crate.
+# BPF target settings for amwall-ebpf.
 #
 # [build] / [unstable] — the BPF program builds for bpfel-unknown-none
-# under nightly's build-std=core (no std on the kernel side). These
-# two stanzas pre-date Phase 6.10 vendoring and remain unchanged.
+# under nightly's build-std=core (no std on the kernel side).
 #
-# [source.*] — Phase 6.10. aya-ebpf and its transitive deps live in
-# linux/amwall-ebpf/vendor/. Path is relative to this config file, so
-# `vendor` → linux/amwall-ebpf/vendor/. Re-vendor with:
-#   cargo vendor --versioned-dirs vendor
-# from linux/amwall-ebpf/. (See linux/.cargo/config.toml for the full
-# rationale on why we vendor.)
+# Phase 6.10 attempted to add [source.*] vendored-sources here too,
+# but `cargo vendor` doesn't see build-std's sysroot deps (proc_macro
+# → rustc-literal-escaper et al.), so a `--frozen --offline` build
+# hard-failed looking for crates we never had a chance to vendor.
+# The fix lives in linux-build.sh: the ebpf build uses --locked only,
+# pinning resolution to Cargo.lock but allowing network. The
+# userspace workspace (linux/.cargo/config.toml) is the one that
+# benefits from full offline mode — that's where 207 MB / 173 crates
+# of vendor pays off.
 
 [build]
 target = "bpfel-unknown-none"
 
 [unstable]
 build-std = ["core"]
-
-[source.crates-io]
-replace-with = "vendored-sources"
-
-[source.vendored-sources]
-directory = "vendor"

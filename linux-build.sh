@@ -133,30 +133,36 @@
 #                              can't validate from a Linux VM and needs a
 #                              Windows checkout to land safely. Lands as
 #                              a separate commit.
-#   - Phase 6.10: Offline + frozen builds
-#               vendoring     → linux/vendor/ + linux/amwall-ebpf/vendor/
-#                              hold every crate source pinned by their
-#                              respective Cargo.lock. Per-workspace
-#                              .cargo/config.toml redirects [source.crates-io]
-#                              at the local mirror.
-#               cargo flags   → both `cargo build` invocations and the
-#                              `cargo deb` step run with --frozen --offline
-#                              (--offline only for cargo-deb, since it
-#                              passes through to cargo metadata). Crates.io
-#                              outage / dep yank / transitive version
-#                              drift cannot change what we build.
-#                              `cargo install` for dev tools (bpf-linker,
-#                              cargo-deb, aya-tool, bindgen-cli) STAYS
-#                              online — those are bootstrap tooling, not
-#                              part of the frozen project graph, and
-#                              vendoring them would balloon the repo
-#                              another ~500 MB.
-#               re-vendor     → when any Cargo.toml changes, run
-#                              `cargo vendor --versioned-dirs vendor`
-#                              from each workspace dir and commit the
-#                              diff alongside the Cargo.toml change.
-#                              --frozen will hard-fail at build time
-#                              if the lockfile is stale.
+#   - Phase 6.10: Offline + frozen builds (userspace) / locked (ebpf)
+#               vendoring     → linux/vendor/ holds every userspace
+#                              crate source pinned by linux/Cargo.lock.
+#                              linux/.cargo/config.toml redirects
+#                              [source.crates-io] at that mirror.
+#               userspace     → `cargo build --release --frozen --offline`
+#                              and `cargo deb --no-build --offline`.
+#                              Crates.io outage / dep yank / transitive
+#                              version drift cannot change what we
+#                              build.
+#               ebpf          → `cargo build --release --locked` (no
+#                              vendor, no --offline). build-std=core
+#                              pulls nightly sysroot deps cargo vendor
+#                              can't see, so --frozen --offline
+#                              hard-fails on missing rustc-literal-
+#                              escaper et al. --locked still pins
+#                              resolution to Cargo.lock; small (~23
+#                              crate) network fetch on first build.
+#               `cargo install` for dev tools (bpf-linker, cargo-deb,
+#                              aya-tool, bindgen-cli) STAYS online —
+#                              bootstrap tooling, not part of the
+#                              frozen project graph, and vendoring
+#                              them would balloon the repo another
+#                              ~500 MB.
+#               re-vendor     → when a userspace Cargo.toml changes,
+#                              run `cargo vendor --versioned-dirs vendor`
+#                              from linux/ and commit the diff alongside
+#                              the Cargo.toml change. --frozen will
+#                              hard-fail at build time if the lockfile
+#                              is stale.
 #
 # Replay-from-snapshot — every step is idempotent. APT install -y on
 # already-installed packages is a no-op. Rustup steps are gated. The
@@ -825,15 +831,20 @@ else
 fi
 export PHASE_631_STATUS
 
-H "Building amwall-ebpf (slow — rebuilds core, no network)"
+H "Building amwall-ebpf (slow — rebuilds core)"
 INFO "Expect 2-5 minutes the first time."
 INFO "Cargo features: ${EBPF_CARGO_FEATURES:-<none>}"
-# Phase 6.10: --frozen --offline pins resolution to the committed
-# Cargo.lock and forbids network access. Sources come exclusively
-# from linux/amwall-ebpf/vendor/ (wired up via .cargo/config.toml).
-# A drift between Cargo.toml and Cargo.lock will hard-fail here
-# rather than silently re-resolving, which is the whole point.
-if (cd linux/amwall-ebpf && cargo build --release --frozen --offline $EBPF_CARGO_FEATURES 2>&1 | sed 's/^/    /'); then
+# Phase 6.10: --locked pins resolution to the committed Cargo.lock
+# but DOES allow network access. The ebpf workspace is not vendored
+# because build-std=core pulls nightly sysroot deps (proc_macro →
+# rustc-literal-escaper et al.) that `cargo vendor` doesn't see —
+# replacing crates-io with a vendor mirror caused --frozen --offline
+# to hard-fail looking for crates we never had a chance to vendor.
+# The big win for offline mode is the userspace workspace below
+# (207 MB / 173 crates of vendor); the ebpf side has only ~23 small
+# crates so the network round-trip is cheap and not worth the
+# brittleness.
+if (cd linux/amwall-ebpf && cargo build --release --locked $EBPF_CARGO_FEATURES 2>&1 | sed 's/^/    /'); then
     EBPF_BIN="$REPO_DIR/linux/amwall-ebpf/target/bpfel-unknown-none/release/amwall-ebpf"
     if [ ! -f "$EBPF_BIN" ]; then
         WARN "BPF ELF not produced at expected path: $EBPF_BIN"

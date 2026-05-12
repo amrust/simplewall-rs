@@ -34,5 +34,6 @@ linux/amwall-daemon/debian/postrm    text eol=lf
 # reclone (and silently break `--frozen --offline`). `-text` forces
 # git to treat the entire vendor tree as binary: no eol conversion,
 # byte-perfect on every platform.
+# (Only linux/vendor exists — the ebpf workspace's vendor was
+# removed because cargo vendor can't see build-std sysroot deps.)
 linux/vendor/**             -text
-linux/amwall-ebpf/vendor/** -text
