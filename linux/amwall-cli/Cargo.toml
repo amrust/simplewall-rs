@@ -1,0 +1,12 @@
+[package]
+name = "amwall-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+amwall-core.workspace = true
+anyhow = "1"
+clap = { version = "4", features = ["derive", "env"] }
+zbus = "4"

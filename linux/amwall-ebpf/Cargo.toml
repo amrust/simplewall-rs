@@ -1,0 +1,41 @@
+# Real BPF program. Builds for bpfel-unknown-none on nightly with
+# rust-src + build-std=core. bpf-linker handles LLVM-IR → BPF bytecode.
+[package]
+name = "amwall-ebpf"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+publish = false
+
+[dependencies]
+aya-ebpf = "0.1"
+
+[features]
+# Phase 6.3.1: BPF walks task->group_leader->comm using vmlinux.rs
+# bindings emitted by aya-tool from /sys/kernel/btf/vmlinux. Enabled by
+# linux-build.sh whenever aya-tool ran successfully; disabled (per-thread
+# comm fallback) otherwise. The cfg gates both the `mod vmlinux;` line
+# and the actual walk, so vmlinux.rs need not exist when the feature is off.
+task_walk = []
+
+[[bin]]
+name = "amwall-ebpf"
+path = "src/main.rs"
+
+[profile.dev]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
+lto = true
+panic = "abort"
+incremental = false
+codegen-units = 1
+rpath = false
+
+[profile.release]
+lto = true
+panic = "abort"
+codegen-units = 1
+
+[workspace]

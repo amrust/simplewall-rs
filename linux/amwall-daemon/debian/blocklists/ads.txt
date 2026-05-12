@@ -1,0 +1,9 @@
+# ads.txt — common ad-network / tracker IPs.
+# Most ad delivery uses huge CDN ranges that rotate; this is a
+# starter list. For real coverage use a DNS-level blocker
+# (Pi-hole, dnscrypt-proxy with blocklists) on top of amwall.
+#
+# Google DoubleClick (one of many addresses)
+142.250.79.130
+# Facebook tracker / Pixel
+157.240.22.35

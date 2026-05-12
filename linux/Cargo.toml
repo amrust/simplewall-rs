@@ -1,0 +1,34 @@
+# linux/ — amwall Linux workspace.
+#
+# amwall-ebpf is intentionally NOT a workspace member. BPF crates need
+# their own toolchain (nightly + rust-src) and target (bpfel-unknown-none),
+# which conflicts with the userspace crates. It's built standalone:
+#     cd amwall-ebpf && cargo build
+#
+# amwall-core is NOT a workspace member either — Phase 5 hoisted it
+# to the repo root (../amwall-core) so the Windows crate can later
+# adopt it. Linux workspace members reference it via
+# [workspace.dependencies] below, so per-crate Cargo.tomls keep using
+# `amwall-core.workspace = true` unchanged.
+#
+# See linuxproposal.md for the full architecture.
+
+[workspace]
+resolver = "2"
+members = [
+    "amwall-daemon",
+    "amwall-cli",
+]
+exclude = ["amwall-ebpf"]
+# Phase 6.1: amwall-gui is no longer a Rust crate — it's a C++/Qt6
+# project under linux/amwall-gui-qt/, built by CMake. See that
+# directory's CMakeLists.txt.
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/amrust/amwall"
+
+[workspace.dependencies]
+amwall-core = { path = "../amwall-core" }

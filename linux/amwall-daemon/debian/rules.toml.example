@@ -1,0 +1,20 @@
+# /etc/amwall/rules.toml — amwall firewall rules.
+#
+# IPv4 outbound connect() is denied by default. Add allow rules below
+# to grant access per process. ip="any" and port=0 are wildcards. comm
+# is the kernel's TASK_COMM_NAME of the calling process (max 15 chars).
+#
+# The daemon mtime-polls this file every 100 ms and reloads on change.
+# amwall-cli --dbus and amwall-gui write through to here.
+#
+# [[rule]]
+# comm = "firefox"
+# ip = "any"
+# port = 443
+# action = "allow"
+#
+# [[rule]]
+# comm = "firefox"
+# ip = "any"
+# port = 80
+# action = "allow"

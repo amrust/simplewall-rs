@@ -1,0 +1,88 @@
+[package]
+name = "amwall-daemon"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "amwall firewall daemon — BPF LSM enforcement + D-Bus interface"
+
+[dependencies]
+amwall-core.workspace = true
+aya = "0.13"
+anyhow = "1"
+ctrlc = "3"
+# Phase 6.9 — blocklist State (de)serialization to /etc/amwall/blocklists.toml.
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+# zbus with tokio backend so we can drive its async work inside the
+# daemon's tokio runtime (avoids mixing async-io and tokio reactors).
+zbus = { version = "4", default-features = false, features = ["tokio"] }
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "sync", "time"] }
+
+# ─── cargo-deb metadata ──────────────────────────────────────────────
+# Builds a single .deb that bundles all four binaries (daemon, cli,
+# gui, ebpf blob) plus the system bus policy, polkit action policy,
+# systemd unit, .desktop file, and a starter rules.toml.
+#
+# Run from this directory:
+#     cargo deb --no-build
+# Output: ../target/debian/amwall_<version>_amd64.deb
+#
+# IMPORTANT: --no-build is REQUIRED. cargo-deb's auto-build only
+# recognizes asset paths that literally start with "target/release/".
+# Workspace-relative paths like "../target/release/..." trigger
+# cosmetic "will not be built" warnings, and in auto-build mode
+# would silently produce a hollow .deb. Build the workspace first
+# (`cd linux && cargo build --release`), then `cargo deb --no-build`
+# from this directory.
+
+[package.metadata.deb]
+name = "amwall"
+priority = "optional"
+section = "net"
+maintainer = "amwall contributors <noreply@amwall.local>"
+copyright = "2026, amwall contributors"
+extended-description = """\
+amwall is a per-application Linux firewall built on BPF LSM. The
+amwall-daemon loads a BPF program that intercepts every IPv4 socket
+connect() in the kernel and enforces allow/deny rules keyed on the
+process comm + destination IP + destination port. amwall-gui is an
+Iced popup that lets the user approve new connection attempts in real
+time. amwall-cli is a headless rule manager. Rules persist to
+/etc/amwall/rules.toml. Privileged operations (rule modification) are
+gated by polkit (action 'org.amwall.Daemon1.modify-rules')."""
+depends = "$auto, dbus, policykit-1, libqt6widgets6, libqt6dbus6"
+assets = [
+    ["../target/release/amwall-daemon", "usr/bin/amwall-daemon", "755"],
+    ["../target/release/amwall-cli",    "usr/bin/amwall-cli",    "755"],
+    ["../amwall-gui-qt/build/amwall-gui", "usr/bin/amwall-gui",  "755"],
+    ["../amwall-ebpf/target/bpfel-unknown-none/release/amwall-ebpf",
+     "usr/lib/amwall/amwall-ebpf.bpf", "644"],
+    ["debian/org.amwall.Daemon1.conf",
+     "etc/dbus-1/system.d/org.amwall.Daemon1.conf", "644"],
+    ["debian/org.amwall.Daemon1.policy",
+     "usr/share/polkit-1/actions/org.amwall.Daemon1.policy", "644"],
+    ["debian/amwall-daemon.service",
+     "lib/systemd/system/amwall-daemon.service", "644"],
+    ["debian/amwall.desktop",
+     "usr/share/applications/amwall.desktop", "644"],
+    ["debian/rules.toml.example",
+     "etc/amwall/rules.toml", "644"],
+    # Phase 6.9 — built-in blocklists. Each is a plain-text file
+    # of one IPv4 or IPv6 address per line; "#" introduces a
+    # comment. Daemon scans /usr/share/amwall/blocklists/*.txt
+    # at startup and on D-Bus toggle. Enabled list names live
+    # in /etc/amwall/blocklists.toml (created on first toggle).
+    ["debian/blocklists/telemetry.txt",
+     "usr/share/amwall/blocklists/telemetry.txt", "644"],
+    ["debian/blocklists/ads.txt",
+     "usr/share/amwall/blocklists/ads.txt", "644"],
+    ["debian/blocklists/malware.txt",
+     "usr/share/amwall/blocklists/malware.txt", "644"],
+]
+conf-files = [
+    "/etc/amwall/rules.toml",
+    "/etc/dbus-1/system.d/org.amwall.Daemon1.conf",
+    "/usr/share/polkit-1/actions/org.amwall.Daemon1.policy",
+]
+maintainer-scripts = "debian/"

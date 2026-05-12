@@ -1,0 +1,14 @@
+[package]
+name = "amwall-core"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/amrust/amwall"
+description = "Shared rule types and TOML I/O for amwall (Linux + Windows)"
+
+[lib]
+
+[dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"

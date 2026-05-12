@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+if [ -x /usr/bin/systemctl ]; then
+    systemctl daemon-reload || true
+    systemctl reload dbus 2>/dev/null || true
+fi
+
+install -d -m 0755 /etc/amwall
+
+# Don't auto-start; user opts in:
+#   sudo systemctl enable --now amwall-daemon
+
+exit 0

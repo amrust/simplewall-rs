@@ -1,0 +1,12 @@
+# telemetry.txt — known telemetry/phone-home endpoints.
+# These addresses rotate over time; treat as a starter list and
+# extend with addresses from your own DNS logs.
+#
+# Microsoft "Connected User Experiences and Telemetry"
+13.107.4.50
+64.4.54.254
+65.55.252.43
+65.55.252.63
+# Apple iOS analytics
+17.248.144.10
+17.248.144.50

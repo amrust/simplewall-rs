@@ -1,0 +1,20 @@
+[Unit]
+Description=amwall firewall daemon (BPF LSM)
+Documentation=https://github.com/amrust/amwall
+After=dbus.service network.target
+Requires=dbus.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/amwall-daemon
+Environment="AMWALL_EBPF_PATH=/usr/lib/amwall/amwall-ebpf.bpf"
+Environment="AMWALL_RULES_PATH=/etc/amwall/rules.toml"
+Restart=on-failure
+RestartSec=5
+# BPF LSM load needs CAP_BPF + CAP_SYS_ADMIN + CAP_NET_ADMIN + CAP_PERFMON.
+# Running as root is the path of least friction; capability narrowing
+# is a follow-up.
+User=root
+
+[Install]
+WantedBy=multi-user.target

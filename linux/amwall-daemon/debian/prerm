@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+if [ -x /usr/bin/systemctl ] \
+   && systemctl is-active --quiet amwall-daemon 2>/dev/null; then
+    systemctl stop amwall-daemon || true
+fi
+
+exit 0

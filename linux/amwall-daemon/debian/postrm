@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+if [ -x /usr/bin/systemctl ]; then
+    systemctl daemon-reload || true
+    systemctl reload dbus 2>/dev/null || true
+fi
+
+# /etc/amwall/rules.toml is a conf-file; dpkg preserves user edits on
+# upgrade and prompts on purge. Don't delete it here.
+
+exit 0

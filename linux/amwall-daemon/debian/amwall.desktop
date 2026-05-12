@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=amwall
+GenericName=Application firewall
+Comment=Per-application firewall (Allow/Deny popups)
+Exec=/usr/bin/amwall-gui
+Icon=network-firewall
+Categories=System;Security;Network;
+Terminal=false
+StartupNotify=true
+Keywords=firewall;network;security;

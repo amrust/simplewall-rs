@@ -3,6 +3,23 @@
 **/*.rs.bk
 Cargo.lock.bak
 
+# Linux port build artifacts (post-migration from monolithic script).
+# Source lives under linux/ as real files; these dirs are regenerated
+# on every cargo/cmake invocation.
+linux/**/target/
+linux/amwall-gui-qt/build/
+# Generated from /sys/kernel/btf/vmlinux by aya-tool at build time —
+# kernel-version-specific, regenerated on every linux-build.sh run.
+linux/amwall-ebpf/src/vmlinux.rs
+
+# Bootstrap script's tee log + paste-back files used during dev iteration.
+amwall-run.log
+mintlog.txt
+
+# One-shot migration helpers (kept locally for reference but never shipped).
+.migrate_extract.py
+.migrate_slim.py
+
 # Editor / IDE
 # `.vscode/` is intentionally tracked — we ship project-specific
 # build tasks (Ctrl+Shift+B builds the MSI installer, the
