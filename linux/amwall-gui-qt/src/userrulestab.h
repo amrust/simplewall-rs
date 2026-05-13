@@ -36,6 +36,7 @@ private slots:
     void onEditRule();
     void onDeleteRule();
     void onTableActivated();   // double-click / Enter
+    void onTableContextMenu(const QPoint &pos);  // right-click → Properties/Allow/Block/Remove/Copy
 
 private:
     void rebuildTable();

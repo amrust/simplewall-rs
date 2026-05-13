@@ -3,10 +3,13 @@
 #include "ruleeditor.h"
 
 #include <QAbstractItemView>
+#include <QApplication>
+#include <QClipboard>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QItemSelectionModel>
 #include <QLabel>
+#include <QMenu>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSignalBlocker>
@@ -62,6 +65,12 @@ UserRulesTab::UserRulesTab(DbusClient *dbus, QWidget *parent)
             this, &UserRulesTab::onSelectionChanged);
     connect(m_table, &QTableWidget::cellDoubleClicked,
             this, &UserRulesTab::onTableActivated);
+
+    // Right-click anywhere in the table → Properties/Allow/Block/Remove/Copy
+    // popup (same shape as Win32 amwall's apps_context_menu).
+    m_table->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_table, &QTableWidget::customContextMenuRequested,
+            this, &UserRulesTab::onTableContextMenu);
 
     // ─── Buttons ─────────────────────────────────────────────────
     auto *buttons = new QHBoxLayout;
@@ -248,4 +257,95 @@ void UserRulesTab::onDeleteRule() {
 
 void UserRulesTab::onTableActivated() {
     onEditRule();
+}
+
+void UserRulesTab::onTableContextMenu(const QPoint &pos) {
+    // Match Win32 amwall's apps_context_menu shape:
+    //   Properties (default, bold) — opens RuleEditorDialog
+    //   ─────
+    //   Allow / Block — toggle action, current one is checked
+    //   ─────
+    //   Remove — delete the rule (same confirmation as Delete button)
+    //   ─────
+    //   Copy — rule summary as text to the clipboard
+    //
+    // If the user right-clicks empty space (no row under cursor), we
+    // bail out — every item in this menu acts on a specific rule.
+    const QModelIndex idx = m_table->indexAt(pos);
+    if (!idx.isValid()) return;
+
+    // Selecting the row under the cursor before opening the menu
+    // gives a clear visual binding — the user sees which rule the
+    // menu items will affect. Matches every other Qt table context
+    // menu in this app.
+    m_table->selectRow(idx.row());
+
+    RuleEntry r;
+    if (!currentRule(&r)) return;
+
+    QMenu menu(this);
+
+    // Properties — opens edit dialog. Default item (bold) so Enter
+    // triggers it; mirrors Win32 amwall where Properties is the
+    // primary action.
+    QAction *propsAct = menu.addAction(
+        style()->standardIcon(QStyle::SP_FileDialogDetailedView),
+        tr("&Properties..."));
+    menu.setDefaultAction(propsAct);
+
+    menu.addSeparator();
+
+    // Allow / Block — toggle action. The current action gets a
+    // checkmark; clicking the OTHER one flips the rule. Clicking
+    // the already-checked one is harmless (daemon's allow/deny is
+    // an upsert keyed on (comm, ip, port)), so we leave both
+    // clickable rather than graying the current.
+    QAction *allowAct = menu.addAction(tr("&Allow"));
+    allowAct->setCheckable(true);
+    allowAct->setChecked(r.action == QStringLiteral("allow"));
+    if (allowAct->isChecked()) {
+        allowAct->setIcon(style()->standardIcon(QStyle::SP_DialogApplyButton));
+    }
+
+    QAction *blockAct = menu.addAction(tr("&Block"));
+    blockAct->setCheckable(true);
+    blockAct->setChecked(r.action == QStringLiteral("deny"));
+    if (blockAct->isChecked()) {
+        blockAct->setIcon(style()->standardIcon(QStyle::SP_DialogCancelButton));
+    }
+
+    menu.addSeparator();
+
+    QAction *removeAct = menu.addAction(
+        style()->standardIcon(QStyle::SP_TrashIcon),
+        tr("&Remove"));
+
+    menu.addSeparator();
+
+    QAction *copyAct = menu.addAction(
+        style()->standardIcon(QStyle::SP_FileIcon),
+        tr("&Copy"));
+
+    QAction *chosen = menu.exec(m_table->viewport()->mapToGlobal(pos));
+    if (!chosen) return;  // dismissed without picking
+
+    if (chosen == propsAct) {
+        onEditRule();
+    } else if (chosen == allowAct) {
+        m_dbus->allow(r.comm, r.ip, r.port);
+    } else if (chosen == blockAct) {
+        m_dbus->deny(r.comm, r.ip, r.port);
+    } else if (chosen == removeAct) {
+        onDeleteRule();
+    } else if (chosen == copyAct) {
+        // Single-line summary, tab-separated so it pastes usefully
+        // into a spreadsheet or log line. Port "any" matches what's
+        // shown in the table for the 0 sentinel.
+        const QString portText = r.port == 0
+            ? QStringLiteral("any")
+            : QString::number(r.port);
+        const QString summary = QStringLiteral("%1\t%2\t%3\t%4")
+            .arg(r.comm, r.action, r.ip, portText);
+        QApplication::clipboard()->setText(summary);
+    }
 }
