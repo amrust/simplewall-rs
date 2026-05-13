@@ -214,11 +214,35 @@ fn do_reset(rules_arg: Option<PathBuf>, yes: bool, keep_rules: bool, keep_config
     if !keep_rules {
         // Atomic truncate via empty-file write. Daemon mtime poll
         // catches it within ~100 ms and rebuilds its BPF map empty.
-        std::fs::write(&rules_path, b"")
-            .with_context(|| format!(
-                "truncating {} (need sudo for /etc/amwall/?)",
-                rules_path.display()))?;
-        eprintln!("  ✓ truncated {}", rules_path.display());
+        // A missing file (ENOENT) is treated as success — the goal
+        // of reset is "no rules", and a non-existent rules.toml
+        // already satisfies that. This makes the linux-build.sh
+        // pre-install hook safe on a fresh VM where /etc/amwall/
+        // doesn't exist yet (it gets created by dpkg). For real
+        // permission errors (EACCES on an existing /etc/amwall/),
+        // the message is now accurate instead of speculating about
+        // sudo.
+        match std::fs::write(&rules_path, b"") {
+            Ok(()) => {
+                eprintln!("  ✓ truncated {}", rules_path.display());
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                eprintln!(
+                    "  - {} did not exist (nothing to truncate)",
+                    rules_path.display());
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => {
+                return Err(e).with_context(|| format!(
+                    "truncating {} — needs sudo or write access to \
+                     /etc/amwall/ (a prior `sudo amwall-gui` run can \
+                     leave the dir root-owned with mode 0700)",
+                    rules_path.display()));
+            }
+            Err(e) => {
+                return Err(e).with_context(|| format!(
+                    "truncating {}", rules_path.display()));
+            }
+        }
     }
     if !keep_config {
         if let Some(p) = user_cfg {
