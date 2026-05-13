@@ -201,9 +201,26 @@ void MainWindow::setupTrayIcon() {
 
 void MainWindow::loadSettings() {
     QSettings s;  // uses Org=amwall, App=amwall (set in main.cpp)
-    bool aot = s.value("view/alwaysOnTop", false).toBool();
+    const bool aot = s.value("view/alwaysOnTop", false).toBool();
+    const bool sm  = s.value("general/startMinimized", false).toBool();
+    const bool cq  = s.value("general/confirmQuit", false).toBool();
+    qInfo().noquote()
+        << "MainWindow::loadSettings from" << s.fileName()
+        << "→ aot=" << aot << "startMin=" << sm << "confirmQuit=" << cq;
+
     if (aot && m_alwaysOnTopAction) {
-        m_alwaysOnTopAction->setChecked(true);  // triggers onAlwaysOnTopToggled
+        // Apply the WindowStaysOnTopHint flag DIRECTLY rather than
+        // going through setChecked(true) → onAlwaysOnTopToggled.
+        // The toggle handler calls show() at the end (necessary to
+        // recover from setWindowFlags' hide-on-X11 side-effect on
+        // already-visible windows), and that show() would race
+        // ahead of main.cpp's `if (!startMinimized) show()` check,
+        // making startMinimized never take effect when alwaysOnTop
+        // is also on. Block the toggled signal so the menu state
+        // and the flag stay in sync without firing the handler.
+        QSignalBlocker block(m_alwaysOnTopAction);
+        m_alwaysOnTopAction->setChecked(true);
+        setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
     }
 }
 
@@ -269,7 +286,23 @@ void MainWindow::onAlwaysOnTopToggled(bool on) {
         f &= ~Qt::WindowStaysOnTopHint;
     }
     setWindowFlags(f);
-    QSettings().setValue("view/alwaysOnTop", on);
+
+    // Explicit sync() and a named QSettings so the qInfo log line
+    // surfaces both the file path and the actual write status. The
+    // rvalue temporary form (`QSettings().setValue(...)`) relied on
+    // destructor sync, which leaves no log trail if it silently
+    // fails — e.g., the EACCES case where a prior `sudo amwall-gui`
+    // run left ~/.config/amwall root-owned. SettingsDialog's save
+    // path already does this; matching here so every QSettings
+    // mutation in the GUI is symmetrically traced.
+    QSettings s;
+    s.setValue("view/alwaysOnTop", on);
+    s.sync();
+    qInfo().noquote()
+        << "MainWindow::onAlwaysOnTopToggled wrote to" << s.fileName()
+        << "→ alwaysOnTop=" << on
+        << "(status=" << int(s.status()) << ")";
+
     show();  // re-realize the window with the new flags
 }
 

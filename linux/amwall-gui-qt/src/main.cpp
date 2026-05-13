@@ -13,6 +13,7 @@
 //   --help,    -h    print usage and exit
 
 #include <QApplication>
+#include <QDebug>
 #include <QSettings>
 
 #include <cstdio>
@@ -62,7 +63,13 @@ int main(int argc, char *argv[]) {
     // Settings → general/startMinimized: skip the initial show() so the
     // tray icon is the only visible artifact. The user can still get
     // the window via tray click or "View → Show window".
-    if (!QSettings().value("general/startMinimized", false).toBool()) {
+    QSettings s;
+    const bool startMin = s.value("general/startMinimized", false).toBool();
+    qInfo().noquote()
+        << "main.cpp startup-show check: QSettings file=" << s.fileName()
+        << "general/startMinimized=" << startMin
+        << "→" << (startMin ? "STAY HIDDEN (tray only)" : "show()");
+    if (!startMin) {
         w.show();
     }
 
