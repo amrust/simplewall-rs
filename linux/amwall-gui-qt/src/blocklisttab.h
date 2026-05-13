@@ -28,6 +28,7 @@ public slots:
 
 private slots:
     void onItemChanged(int row, int col);
+    void onTableContextMenu(const QPoint &pos);  // right-click → Enable/Disable/Copy
 
 private:
     DbusClient   *m_dbus  = nullptr;

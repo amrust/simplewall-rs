@@ -3,9 +3,12 @@
 #include "dbusclient.h"
 
 #include <QAbstractItemView>
+#include <QApplication>
+#include <QClipboard>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
+#include <QMenu>
 #include <QPushButton>
 #include <QSignalBlocker>
 #include <QStyle>
@@ -83,6 +86,14 @@ BlocklistTab::BlocklistTab(DbusClient *dbus, QWidget *parent)
         connect(m_dbus, &DbusClient::stateChanged,
                 this, &BlocklistTab::refresh);
     }
+
+    // Right-click anywhere in the table → Enable/Disable/Copy popup,
+    // same shape as the User Rules tab's context menu (Allow/Block/Copy
+    // mapping).
+    m_table->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_table, &QTableWidget::customContextMenuRequested,
+            this, &BlocklistTab::onTableContextMenu);
+
     refresh();
 }
 
@@ -143,4 +154,63 @@ void BlocklistTab::onItemChanged(int row, int col) {
     // refresh() will fire when DbusClient emits stateChanged from
     // the async-reply handler, so we don't need to manually re-sync
     // here — that would race the daemon's TOML write.
+}
+
+void BlocklistTab::onTableContextMenu(const QPoint &pos) {
+    // Same shape as UserRulesTab::onTableContextMenu — Enable/Disable
+    // mirrors Allow/Block, current state gets a check, clicking the
+    // other side fires the existing setBlocklistEnabled path (which
+    // is polkit-gated daemon-side). Right-click on empty space → no
+    // menu, every item acts on a specific list.
+    const QModelIndex idx = m_table->indexAt(pos);
+    if (!idx.isValid()) return;
+
+    const int row = idx.row();
+    m_table->selectRow(row);
+
+    auto *enItem = m_table->item(row, COL_ENABLED);
+    if (!enItem) return;
+    const QString name = enItem->data(Qt::UserRole).toString();
+    if (name.isEmpty()) return;
+    const bool isEnabled = (enItem->checkState() == Qt::Checked);
+
+    QMenu menu(this);
+
+    QAction *enableAct = menu.addAction(tr("&Enable"));
+    enableAct->setCheckable(true);
+    enableAct->setChecked(isEnabled);
+    if (isEnabled) {
+        enableAct->setIcon(style()->standardIcon(QStyle::SP_DialogApplyButton));
+    }
+
+    QAction *disableAct = menu.addAction(tr("&Disable"));
+    disableAct->setCheckable(true);
+    disableAct->setChecked(!isEnabled);
+    if (!isEnabled) {
+        disableAct->setIcon(style()->standardIcon(QStyle::SP_DialogCancelButton));
+    }
+
+    menu.addSeparator();
+
+    QAction *copyAct = menu.addAction(
+        style()->standardIcon(QStyle::SP_FileIcon),
+        tr("&Copy name"));
+
+    QAction *chosen = menu.exec(m_table->viewport()->mapToGlobal(pos));
+    if (!chosen) return;
+
+    if (chosen == enableAct) {
+        if (!isEnabled) {
+            // Drive the same path as the in-row checkbox click —
+            // mutate the checkbox state and let onItemChanged handle
+            // the D-Bus call so we don't duplicate the polkit flow.
+            enItem->setCheckState(Qt::Checked);
+        }
+    } else if (chosen == disableAct) {
+        if (isEnabled) {
+            enItem->setCheckState(Qt::Unchecked);
+        }
+    } else if (chosen == copyAct) {
+        QApplication::clipboard()->setText(name);
+    }
 }
