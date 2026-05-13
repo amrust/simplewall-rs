@@ -3,18 +3,35 @@
 # [build] / [unstable] — the BPF program builds for bpfel-unknown-none
 # under nightly's build-std=core (no std on the kernel side).
 #
-# Phase 6.10 attempted to add [source.*] vendored-sources here too,
-# but `cargo vendor` doesn't see build-std's sysroot deps (proc_macro
-# → rustc-literal-escaper et al.), so a `--frozen --offline` build
-# hard-failed looking for crates we never had a chance to vendor.
-# The fix lives in linux-build.sh: the ebpf build uses --locked only,
-# pinning resolution to Cargo.lock but allowing network. The
-# userspace workspace (linux/.cargo/config.toml) is the one that
-# benefits from full offline mode — that's where 207 MB / 173 crates
-# of vendor pays off.
+# [source.*] — override the vendored-sources replacement that the
+# userspace workspace's linux/.cargo/config.toml installs. Cargo
+# merges configs up the directory tree, so without this override
+# ebpf inherits `replace-with = "vendored-sources"` pointing at
+# linux/vendor/ — which doesn't contain aya-ebpf (different
+# workspace, different dep tree) and fails the build with
+# "no matching package named aya-ebpf found".
+#
+# Why ebpf can't use the vendor mirror in the first place:
+# build-std=core pulls nightly sysroot deps (proc_macro →
+# rustc-literal-escaper et al.) that `cargo vendor` can't see when
+# it runs, so the mirror would be incomplete and --frozen --offline
+# would hard-fail looking for those crates. Pointing the override
+# at the real crates.io index lets the small (~23 crate) ebpf dep
+# pull go online; --locked still pins resolution to
+# linux/amwall-ebpf/Cargo.lock so reproducibility is preserved.
+#
+# `replace-with = "crates-io"` self-references and cycles, so we
+# define a new source name (`ebpf-upstream-registry`) and point
+# replace-with at that.
 
 [build]
 target = "bpfel-unknown-none"
 
 [unstable]
 build-std = ["core"]
+
+[source.crates-io]
+replace-with = "ebpf-upstream-registry"
+
+[source.ebpf-upstream-registry]
+registry = "sparse+https://index.crates.io/"
