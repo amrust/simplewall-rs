@@ -56,6 +56,7 @@ private slots:
 private:
     void setupCentralWidget();
     void setupMenuBar();
+    void setupToolBar();
     void setupStatusBar();
     void setupTrayIcon();
     void loadSettings();

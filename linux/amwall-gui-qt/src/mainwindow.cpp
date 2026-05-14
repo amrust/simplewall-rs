@@ -23,6 +23,7 @@
 #include <QStatusBar>
 #include <QStyle>
 #include <QTabWidget>
+#include <QToolBar>
 #include <QtGlobal>
 
 #ifndef AMWALL_VERSION
@@ -44,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setupCentralWidget();
     setupStatusBar();
     setupMenuBar();
+    setupToolBar();
     setupTrayIcon();
     loadSettings();
 
@@ -73,8 +75,9 @@ void MainWindow::setupCentralWidget() {
     m_tabs->addTab(m_connections, tr("&Connections"));
     m_tabs->addTab(m_packetsLog,  tr("&Packets log"));
     // "Show in User Rules" in the Apps context menu jumps tabs.
-    // No filtering of the User Rules table — the user can scroll
-    // and the comm is in the first column so it's quick to find.
+    // (User Rules has its own search bar in the header now, so a
+    // focused-search hand-off would be straightforward to add later
+    // if the bare tab-jump turns out to be insufficient.)
     connect(m_apps, &AppsTab::showInRulesRequested,
             this, [this](const QString &) {
                 if (m_tabs && m_userRules) {
@@ -174,6 +177,61 @@ void MainWindow::setupMenuBar() {
     }
 }
 
+void MainWindow::setupToolBar() {
+    // Toolbar with the actions a user reaches for most often, in
+    // the order they map to: enforcement state (master toggle —
+    // primary affordance), refresh, add rule, settings. Mirrors
+    // Win32 amwall's IDM_TRAY_START / IDM_REFRESH / IDM_NEWRULE /
+    // IDM_SETTINGS rebar layout.
+    auto *tb = addToolBar(tr("Main toolbar"));
+    tb->setObjectName(QStringLiteral("mainToolBar"));  // QSettings key
+    tb->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    tb->setMovable(false);  // dock-fixed; users don't expect Qt-style
+                            // detachable toolbars on a tray app.
+
+    // Master enforcement toggle — primary action. Reuses the same
+    // onToggleEnforcement slot and the same label/icon swap logic
+    // (onEnforcementChanged keeps all three copies in sync).
+    m_enforcementToolbarAction = tb->addAction(
+        style()->standardIcon(QStyle::SP_MediaPause),
+        tr("&Disable filters"));
+    m_enforcementToolbarAction->setToolTip(
+        tr("Pause / resume firewall enforcement (Ctrl+Shift+D).\n"
+           "When disabled, every outbound connection is ALLOWED at "
+           "the kernel level until you re-enable."));
+    connect(m_enforcementToolbarAction, &QAction::triggered,
+            this, &MainWindow::onToggleEnforcement);
+
+    tb->addSeparator();
+
+    auto *refreshAct = tb->addAction(
+        style()->standardIcon(QStyle::SP_BrowserReload),
+        tr("&Refresh"));
+    refreshAct->setShortcut(QKeySequence(QKeySequence::Refresh));
+    refreshAct->setToolTip(
+        tr("Re-poll the daemon (F5). Rule list, blocklists, and "
+           "connection table all rebuild."));
+    connect(refreshAct, &QAction::triggered, m_dbus, &DbusClient::refresh);
+
+    auto *addRuleAct = tb->addAction(
+        style()->standardIcon(QStyle::SP_FileDialogNewFolder),
+        tr("&Add rule..."));
+    addRuleAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_N));
+    addRuleAct->setToolTip(
+        tr("Add a new allow/deny rule (Ctrl+N). Switches to the "
+           "User Rules tab and opens the rule-editor dialog."));
+    connect(addRuleAct, &QAction::triggered,
+            this, &MainWindow::onAddRuleFromMenu);
+
+    auto *settingsAct = tb->addAction(
+        style()->standardIcon(QStyle::SP_FileDialogDetailedView),
+        tr("&Settings..."));
+    settingsAct->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Comma));
+    settingsAct->setToolTip(
+        tr("Open the preferences dialog (Ctrl+,)."));
+    connect(settingsAct, &QAction::triggered, this, &MainWindow::onSettings);
+}
+
 void MainWindow::setupStatusBar() {
     // Permanent widgets stay pinned (vs the transient showMessage
     // area which is reserved for hover tooltips and short status
@@ -226,7 +284,24 @@ void MainWindow::setupTrayIcon() {
     connect(m_enforcementTrayAction, &QAction::triggered,
             this, &MainWindow::onToggleEnforcement);
     m_trayMenu->addSeparator();
-    m_quitAction = m_trayMenu->addAction(tr("&Quit"));
+
+    // Refresh + Settings exposed in the tray so common actions don't
+    // require popping the main window. Mirrors Win32 amwall's tray
+    // menu (which has both Refresh and Settings shortcuts).
+    auto *trayRefresh = m_trayMenu->addAction(
+        style()->standardIcon(QStyle::SP_BrowserReload),
+        tr("&Refresh"));
+    connect(trayRefresh, &QAction::triggered, m_dbus, &DbusClient::refresh);
+
+    auto *traySettings = m_trayMenu->addAction(
+        style()->standardIcon(QStyle::SP_FileDialogDetailedView),
+        tr("&Settings..."));
+    connect(traySettings, &QAction::triggered, this, &MainWindow::onSettings);
+
+    m_trayMenu->addSeparator();
+    m_quitAction = m_trayMenu->addAction(
+        style()->standardIcon(QStyle::SP_DialogCloseButton),
+        tr("&Quit"));
     connect(m_quitAction, &QAction::triggered, this, &MainWindow::onQuit);
     m_trayIcon->setContextMenu(m_trayMenu);
 
