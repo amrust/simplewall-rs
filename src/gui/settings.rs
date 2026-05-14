@@ -147,6 +147,16 @@ pub struct Settings {
     pub start_minimized: bool,
     pub skip_uac_warning: bool,
     pub check_updates: bool,
+    /// GitHub release tag the user most recently dismissed an
+    /// auto-check "update available" popup for. Empty = nothing
+    /// dismissed. Auto-check (startup + hourly `TIMER_UPDATE_CHECK`)
+    /// stays silent when `latest == update_dismissed_tag`, so a user
+    /// who hit Yes or No on the popup once isn't pestered every hour
+    /// about the same release. Manual `Help -> Check for updates`
+    /// ignores this and always pops up — the user explicitly asked.
+    /// When a strictly-newer tag ships, `dismissed != latest` again
+    /// and the auto-popup resumes.
+    pub update_dismissed_tag: String,
     /// Selected language code (e.g. "en", "ru"). Empty = system default.
     pub language: String,
     /// Last `[ProductLanguage]` LCID we saw written by the MSI installer
@@ -252,6 +262,7 @@ impl Default for Settings {
             start_minimized: false,
             skip_uac_warning: false,
             check_updates: true,
+            update_dismissed_tag: String::new(),
             language: String::new(),
             install_lcid_seen: 0,
             font_face: String::new(),
@@ -362,6 +373,7 @@ impl Settings {
         kv(&mut buf, "start_minimized", self.start_minimized);
         kv(&mut buf, "skip_uac_warning", self.skip_uac_warning);
         kv(&mut buf, "check_updates", self.check_updates);
+        kv_str(&mut buf, "update_dismissed_tag", &self.update_dismissed_tag);
         kv_str(&mut buf, "language", &self.language);
         kv_u32(&mut buf, "install_lcid_seen", self.install_lcid_seen);
         kv_str(&mut buf, "font_face", &self.font_face);
@@ -424,6 +436,10 @@ fn apply_kv(s: &mut Settings, key: &str, value: &str) {
     match key {
         "language" => {
             s.language = value.to_string();
+            return;
+        }
+        "update_dismissed_tag" => {
+            s.update_dismissed_tag = value.to_string();
             return;
         }
         "blocklist_spy" => {

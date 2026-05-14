@@ -70,15 +70,18 @@ pub struct UpdateInfo {
 const REPO_OWNER: &str = "amrust";
 const REPO_NAME: &str = "amwall";
 
-/// Auto-check variant — fires from `gui::run` at startup. Posts
+/// Auto-check variant — fires from `gui::run` at startup AND from
+/// the hourly `TIMER_UPDATE_CHECK` tick. Posts
 /// `WM_USER_UPDATE_AVAILABLE` only when a newer release exists;
-/// stays silent on "up to date" or "couldn't reach GitHub".
-/// Designed so a user with `Settings.check_updates` on never
-/// gets a "we couldn't check today" popup blocking their
-/// launch — auto-check failures are noise, manual-check
-/// failures are signal.
-pub fn check_async(main_hwnd: HWND, current_version: &str) {
-    spawn_check(main_hwnd, current_version, false);
+/// stays silent on "up to date" or "couldn't reach GitHub", and
+/// also stays silent when the user has already seen-and-dismissed
+/// the exact tag that's currently latest (`dismissed_tag`).
+///
+/// Auto-check failures are noise; manual-check failures are signal —
+/// don't surface "we couldn't ping GitHub today" to a user whose
+/// only crime was launching the app or waiting an hour.
+pub fn check_async(main_hwnd: HWND, current_version: &str, dismissed_tag: Option<&str>) {
+    spawn_check(main_hwnd, current_version, dismissed_tag, false);
 }
 
 /// Manual-check variant — fires from the `Help -> Check for
@@ -94,12 +97,22 @@ pub fn check_async(main_hwnd: HWND, current_version: &str) {
 /// they asked. Mirrors the upstream simplewall menu entry's
 /// expected behaviour: clicking "Check for updates" should
 /// say something, not silently open the releases page.
+///
+/// `dismissed_tag` is deliberately ignored here — the manual
+/// path always shows the popup even if the user previously
+/// dismissed this exact tag from an automatic popup.
 pub fn check_async_manual(main_hwnd: HWND, current_version: &str) {
-    spawn_check(main_hwnd, current_version, true);
+    spawn_check(main_hwnd, current_version, None, true);
 }
 
-fn spawn_check(main_hwnd: HWND, current_version: &str, manual: bool) {
+fn spawn_check(
+    main_hwnd: HWND,
+    current_version: &str,
+    dismissed_tag: Option<&str>,
+    manual: bool,
+) {
     let current = current_version.to_string();
+    let dismissed = dismissed_tag.map(|s| s.to_string());
     // PostMessage is thread-safe; pass the HWND as a usize so the
     // closure is Send.
     let hwnd_raw = main_hwnd.0 as usize;
@@ -122,6 +135,15 @@ fn spawn_check(main_hwnd: HWND, current_version: &str, manual: bool) {
             return;
         };
         let newer = is_strictly_newer(&latest, &current);
+        // Auto-check + a newer release we've already shown the
+        // popup for → stay silent. Without this gate, the hourly
+        // timer would re-popup the same tag every hour until the
+        // user installed (or a strictly-newer release shipped),
+        // which is the spammy behaviour the dismissed-tag pref
+        // exists to prevent.
+        if newer && !manual && dismissed.as_deref() == Some(latest.as_str()) {
+            return;
+        }
         let msg = if newer {
             WM_USER_UPDATE_AVAILABLE
         } else if manual {

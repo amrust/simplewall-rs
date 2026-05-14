@@ -449,6 +449,16 @@ const RESIZE_CLEANUP_MS: u32 = 100;
 const TIMER_GROUP_COLLAPSE_REPAINT: usize = 9004;
 const GROUP_COLLAPSE_REPAINT_MS: u32 = 100;
 
+/// Hourly auto-check timer for new GitHub releases. Fires every
+/// 60 minutes once the window is up; the WM_TIMER branch calls
+/// `update_check::check_async` (same path as the startup check),
+/// which posts `WM_USER_UPDATE_AVAILABLE` if a newer tag exists
+/// and the user hasn't already dismissed it (see
+/// `Settings.update_dismissed_tag`). Stays silent on no-update or
+/// on transient network failures — only signal, no noise.
+const TIMER_UPDATE_CHECK: usize = 9006;
+const UPDATE_CHECK_INTERVAL_MS: u32 = 60 * 60 * 1000;
+
 /// `LVN_GROUPINFO` — sent by a list-view control when a group's
 /// state has changed (collapsed, expanded, …). Not exposed as a
 /// public constant in windows-rs 0.54, so we hardcode it: the value
@@ -976,6 +986,29 @@ unsafe extern "system" fn wnd_proc(
                 if let Some(state) = unsafe { state_ref(hwnd) } {
                     expire_timed_apps(hwnd, state);
                 }
+            } else if wparam.0 == TIMER_UPDATE_CHECK {
+                // Hourly auto-check: re-runs the same worker the
+                // startup auto-check uses, with the currently-
+                // persisted dismissed tag so the popup doesn't
+                // re-fire for a release the user already saw and
+                // dismissed (Yes-opens-page or No-dismisses both
+                // write update_dismissed_tag — see on_update_available).
+                if let Some(state) = unsafe { state_ref(hwnd) } {
+                    if state.app.settings.borrow().check_updates {
+                        let dismissed =
+                            state.app.settings.borrow().update_dismissed_tag.clone();
+                        let dismissed_opt = if dismissed.is_empty() {
+                            None
+                        } else {
+                            Some(dismissed.as_str())
+                        };
+                        super::update_check::check_async(
+                            hwnd,
+                            env!("CARGO_PKG_VERSION"),
+                            dismissed_opt,
+                        );
+                    }
+                }
             } else if wparam.0 == TIMER_GROUP_COLLAPSE_REPAINT {
                 // One-shot — disarm before any further work so a
                 // re-arm during repaint doesn't recurse.
@@ -1287,8 +1320,18 @@ fn on_create(hwnd: HWND) -> Result<(), String> {
     // just offers to open the releases page in the user's
     // browser. Gated by `Settings.check_updates` (default on,
     // matches upstream simplewall's `IsCheckUpdates`).
+    //
+    // The dismissed-tag pref is read here on the GUI thread and
+    // handed off to the worker thread so the worker doesn't have
+    // to grab the settings borrow. Same pattern used by the
+    // hourly TIMER_UPDATE_CHECK tick — see WM_TIMER below.
     if state.app.settings.borrow().check_updates {
-        super::update_check::check_async(hwnd, env!("CARGO_PKG_VERSION"));
+        let dismissed = state.app.settings.borrow().update_dismissed_tag.clone();
+        let dismissed_opt = if dismissed.is_empty() { None } else { Some(dismissed.as_str()) };
+        super::update_check::check_async(hwnd, env!("CARGO_PKG_VERSION"), dismissed_opt);
+        unsafe {
+            SetTimer(hwnd, TIMER_UPDATE_CHECK, UPDATE_CHECK_INTERVAL_MS, None);
+        }
     }
 
     Ok(())
@@ -2122,6 +2165,27 @@ fn on_update_available(hwnd: HWND, wparam: WPARAM) {
                 windows::core::PCWSTR::null(),
                 windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL,
             );
+        }
+    }
+
+    // Whichever way the user closed the dialog (Yes-opens-page,
+    // No-dismisses, Esc), record that this tag has been seen so
+    // the hourly TIMER_UPDATE_CHECK doesn't pop the same popup
+    // every hour for a release the user already chose to act
+    // on — or chose not to. Manual Help -> Check for updates is
+    // unaffected (check_async_manual passes None as dismissed,
+    // so the popup re-appears for the same tag whenever asked).
+    if let Some(state) = unsafe { state_ref(hwnd) } {
+        let mut s = state.app.settings.borrow_mut();
+        if s.update_dismissed_tag != info.latest_tag {
+            s.update_dismissed_tag = info.latest_tag.clone();
+            let path = state.app.settings_path.borrow().clone();
+            if let Err(e) = s.save(&path) {
+                eprintln!(
+                    "amwall: failed to persist update_dismissed_tag={}: {e}",
+                    info.latest_tag,
+                );
+            }
         }
     }
 }
