@@ -4,6 +4,7 @@
 use std::cell::RefCell;
 use std::path::PathBuf;
 
+use crate::internal_rules_state::InternalRulesState;
 use crate::profile::Profile;
 
 use super::settings::Settings;
@@ -40,4 +41,16 @@ pub struct App {
     /// Path settings persist to —
     /// `%APPDATA%\amwall\settings.txt` by default.
     pub settings_path: RefCell<PathBuf>,
+    /// User overrides for the bundled rules in `internal_profile`
+    /// (system rules, blocklist rules, preset custom rules). The
+    /// `is_enabled` flag on a rule inside `internal_profile` is
+    /// fixed at compile time; this map lets the user flip the
+    /// effective state per-rule and have that survive restarts.
+    /// Mutated by the rules-tab checkbox handler, saved to
+    /// `internal_rules_state_path` after each change.
+    pub internal_rules_state: RefCell<InternalRulesState>,
+    /// Path the overrides persist to —
+    /// `%APPDATA%\amwall\internal_rules_state.txt` by default,
+    /// alongside `settings.txt` and `profile.xml`.
+    pub internal_rules_state_path: RefCell<PathBuf>,
 }

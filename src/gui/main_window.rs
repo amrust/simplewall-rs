@@ -41,7 +41,7 @@ use windows::Win32::UI::Controls::{
     LVM_DELETEALLITEMS, LVM_ENSUREVISIBLE, LVM_GETCOUNTPERPAGE, LVM_GETITEM, LVM_GETITEMCOUNT,
     LVM_GETNEXTITEM, LVM_GETTOPINDEX, LVM_INSERTCOLUMNW,
     LVM_INSERTITEMW, LVM_SETCOLUMNWIDTH, LVM_SETEXTENDEDLISTVIEWSTYLE, LVM_SETIMAGELIST,
-    LVM_SETITEMSTATE, LVM_SETITEMTEXTW, LVN_COLUMNCLICK, LVN_KEYDOWN, LVSIL_SMALL,
+    LVM_SETITEMSTATE, LVM_SETITEMTEXTW, LVN_COLUMNCLICK, LVN_ITEMCHANGED, LVN_KEYDOWN, LVSIL_SMALL,
     LVIS_SELECTED, LVNI_SELECTED, LVS_EX_CHECKBOXES, LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT,
     LVS_REPORT, LVS_SHAREIMAGELISTS,
     CDDS_ITEMPREPAINT, CDDS_PREPAINT, CDRF_DODEFAULT, CDRF_NEWFONT, CDRF_NOTIFYITEMDRAW,
@@ -348,6 +348,14 @@ struct WndState {
     /// Sends new IPs to the DNS worker. `None` until the worker
     /// spawns at WM_CREATE.
     dns_tx: std::cell::RefCell<Option<std::sync::mpsc::Sender<std::net::IpAddr>>>,
+    /// Number of preset rows in the User Rules tab, refreshed at
+    /// the end of every `populate_user_rules`. Rows 0..preset_count
+    /// come from `internal_profile.custom_rules` (bundled presets,
+    /// toggle via overrides); rows >=preset_count come from
+    /// `profile.custom_rules` (user-added, toggle via in-place
+    /// `is_enabled`). The toggle dispatcher uses this boundary to
+    /// route checkbox clicks to the correct mutator.
+    user_rules_preset_count: Cell<usize>,
 }
 
 impl WndState {
@@ -399,6 +407,7 @@ impl WndState {
             tray_added: Cell::new(false),
             taskbar_created_msg: Cell::new(0),
             app_icon_cache: super::app_icons::IconCache::new(),
+            user_rules_preset_count: Cell::new(0),
             dns_cache: std::sync::Arc::new(std::sync::Mutex::new(
                 std::collections::HashMap::new(),
             )),
@@ -852,6 +861,47 @@ unsafe extern "system" fn wnd_proc(
                     on_apps_delete_selected(hwnd, id);
                 } else if kd.wVKey == ('A' as u16) && ctrl_is_down() {
                     on_apps_select_all(hwnd, id);
+                }
+            }
+            // LVN_ITEMCHANGED: checkbox state-image change on an
+            // Apps / Rules listview. We discriminate user clicks
+            // from our own populate inserts via the old-state-image
+            // value: a fresh insert lands with old state image = 0
+            // ("no state"), whereas a real click flips from 1<->2.
+            // Without this gate, every populator round-trip would
+            // re-fire the toggle handler and instantly re-write
+            // settings / overrides we just rendered from.
+            if nmhdr.code == LVN_ITEMCHANGED
+                && (nmhdr.idFrom == IDC_APPS_PROFILE as usize
+                    || nmhdr.idFrom == IDC_APPS_SERVICE as usize
+                    || nmhdr.idFrom == IDC_APPS_UWP as usize
+                    || nmhdr.idFrom == IDC_RULES_BLOCKLIST as usize
+                    || nmhdr.idFrom == IDC_RULES_SYSTEM as usize
+                    || nmhdr.idFrom == IDC_RULES_CUSTOM as usize)
+            {
+                let nmlv = unsafe {
+                    &*(lparam.0 as *const windows::Win32::UI::Controls::NMLISTVIEW)
+                };
+                let old_image =
+                    (nmlv.uOldState & LVIS_STATEIMAGEMASK.0) >> 12;
+                let new_image =
+                    (nmlv.uNewState & LVIS_STATEIMAGEMASK.0) >> 12;
+                let state_image_changed = old_image != new_image;
+                // old_image == 0 means "fresh insert" — comctl
+                // synthesises a 0->{1,2} transition for every row
+                // we add during populate. We only act when the row
+                // already had a real checkbox state, so this gate
+                // also filters out the change LVM_DELETEALLITEMS
+                // generates per row at the start of every refill.
+                let is_user_click = old_image != 0 && state_image_changed;
+                if is_user_click {
+                    let new_checked = new_image == 2;
+                    on_listview_checkbox_toggle(
+                        hwnd,
+                        nmhdr.idFrom as i32,
+                        nmlv.iItem,
+                        new_checked,
+                    );
                 }
             }
             // LVN_GROUPINFO fires whenever a group's state changes —
@@ -3490,6 +3540,177 @@ fn rgb_packed(r: u8, g: u8, b: u8) -> u32 {
 /// Toggle sort direction if it's the same column, otherwise
 /// switch to that column with a descending default (so a fresh
 /// click on Added shows latest-first).
+/// Handle a user click on a listview checkbox. Routes to the
+/// correct mutator based on which tab the row belongs to:
+///
+///   - Apps Profile / Service / UWP: flip
+///     `profile.apps[i].is_enabled`, save the user profile.
+///   - User Rules (preset row, idx < preset_count): flip the
+///     override in `internal_rules_state` (kind = Custom),
+///     save the override file.
+///   - User Rules (user-added, idx >= preset_count): flip
+///     `profile.custom_rules[i].is_enabled`, save the profile.
+///   - System Rules: flip the override in `internal_rules_state`
+///     (kind = System), save the override file.
+///   - Blocklist: same as System but kind = Blocklist. The
+///     install pipeline currently ignores per-rule blocklist
+///     overrides (per-category Settings → Blocklist tri-state is
+///     the canonical control), but persisting the toggle keeps
+///     the UI honest — the row moves between Enabled and Disabled
+///     groups, and a future fine-grained blocklist apply will
+///     pick the overrides up without extra wiring.
+///
+/// After the mutation: re-populate the tab so the row moves into
+/// the right group (Enabled / Disabled), and fire
+/// `reinstall_filters_if_active` so the change takes effect
+/// without the user having to click Disable+Enable manually —
+/// matches upstream simplewall's auto-reapply UX.
+fn on_listview_checkbox_toggle(hwnd: HWND, listview_id: i32, row: i32, new_enabled: bool) {
+    use crate::internal_rules_state::RuleKind;
+
+    let state = match unsafe { state_ref(hwnd) } {
+        Some(s) => s,
+        None => return,
+    };
+    if row < 0 {
+        return;
+    }
+
+    let mut profile_dirty = false;
+    let mut overrides_dirty = false;
+    let mut repopulate_apps_id: Option<i32> = None;
+    let mut repopulate_user_rules = false;
+    let mut repopulate_internal_id: Option<i32> = None;
+
+    match listview_id {
+        IDC_APPS_PROFILE | IDC_APPS_SERVICE | IDC_APPS_UWP => {
+            // The Apps tabs render whichever app list applies to
+            // the tab (profile.apps for Profile; the Services /
+            // UWP enumerations for the other two). Only the
+            // Profile tab maps a checkbox click to a writeable
+            // profile entry — the Services / UWP rows describe
+            // ambient OS state and aren't represented in
+            // profile.apps until the user explicitly Allows /
+            // Blocks them, at which point the populator surfaces
+            // them in Profile. Forward Service / UWP clicks to
+            // the Add-to-profile path (out of scope for v1.1.7,
+            // matches pre-1.1.7 inert checkbox behaviour for
+            // those tabs).
+            if listview_id == IDC_APPS_PROFILE {
+                let mut profile = state.app.profile.borrow_mut();
+                if let Some(app) = profile.apps.get_mut(row as usize) {
+                    if app.is_enabled != new_enabled {
+                        app.is_enabled = new_enabled;
+                        profile_dirty = true;
+                    }
+                }
+            }
+            repopulate_apps_id = Some(listview_id);
+        }
+        IDC_RULES_CUSTOM => {
+            let preset_count = state.user_rules_preset_count.get();
+            let row_usize = row as usize;
+            if row_usize < preset_count {
+                // Preset row: look up by display index in the
+                // bundled `internal_profile.custom_rules` (we
+                // render presets in declaration order and the
+                // search filter prunes them; reach the same row
+                // by re-applying the same filter here so the
+                // index matches what the user sees).
+                let filter = state.search_text.borrow().clone();
+                let target = state
+                    .app
+                    .internal_profile
+                    .custom_rules
+                    .iter()
+                    .filter(|r| search_match(&r.name, &filter))
+                    .nth(row_usize);
+                if let Some(rule) = target {
+                    let mut overrides = state.app.internal_rules_state.borrow_mut();
+                    overrides.set(
+                        RuleKind::Custom,
+                        &rule.name,
+                        new_enabled,
+                        rule.is_enabled,
+                    );
+                    overrides_dirty = true;
+                }
+            } else {
+                // User-added row: index into profile.custom_rules
+                // via the same filter walk.
+                let filter = state.search_text.borrow().clone();
+                let user_row = row_usize - preset_count;
+                let mut profile = state.app.profile.borrow_mut();
+                let visible_indices: Vec<usize> = profile
+                    .custom_rules
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, r)| search_match(&r.name, &filter))
+                    .map(|(i, _)| i)
+                    .collect();
+                if let Some(&real_idx) = visible_indices.get(user_row) {
+                    if let Some(rule) = profile.custom_rules.get_mut(real_idx) {
+                        if rule.is_enabled != new_enabled {
+                            rule.is_enabled = new_enabled;
+                            profile_dirty = true;
+                        }
+                    }
+                }
+            }
+            repopulate_user_rules = true;
+        }
+        IDC_RULES_SYSTEM | IDC_RULES_BLOCKLIST => {
+            let (rules, kind) = if listview_id == IDC_RULES_SYSTEM {
+                (&state.app.internal_profile.system_rules, RuleKind::System)
+            } else {
+                (
+                    &state.app.internal_profile.blocklist_rules,
+                    RuleKind::Blocklist,
+                )
+            };
+            let filter = state.search_text.borrow().clone();
+            let target = rules
+                .iter()
+                .filter(|r| search_match(&r.name, &filter))
+                .nth(row as usize);
+            if let Some(rule) = target {
+                let mut overrides = state.app.internal_rules_state.borrow_mut();
+                overrides.set(kind, &rule.name, new_enabled, rule.is_enabled);
+                overrides_dirty = true;
+            }
+            repopulate_internal_id = Some(listview_id);
+        }
+        _ => {}
+    }
+
+    if profile_dirty {
+        save_profile_to_disk(state);
+    }
+    if overrides_dirty {
+        let path = state.app.internal_rules_state_path.borrow().clone();
+        let overrides = state.app.internal_rules_state.borrow();
+        if let Err(e) = overrides.save(&path) {
+            eprintln!(
+                "amwall: failed to persist internal_rules_state to {}: {e}",
+                path.display(),
+            );
+        }
+    }
+    if let Some(id) = repopulate_apps_id {
+        let _ = id;
+        populate_apps_tab(state);
+    }
+    if repopulate_user_rules {
+        populate_user_rules(state);
+    }
+    if let Some(id) = repopulate_internal_id {
+        populate_internal_rules(state, id);
+    }
+    if profile_dirty || overrides_dirty {
+        reinstall_filters_if_active(hwnd, state);
+    }
+}
+
 fn on_apps_column_click(hwnd: HWND, column: i32) {
     let state = match unsafe { state_ref(hwnd) } {
         Some(s) => s,
@@ -4383,6 +4604,7 @@ fn on_enable_filters(hwnd: HWND) {
             &engine,
             &state.app.profile.borrow(),
             Some(&state.app.internal_profile),
+            Some(&state.app.internal_rules_state.borrow()),
             &blocklist,
             &global_rules,
             persistent,
@@ -4475,6 +4697,7 @@ fn reinstall_filters_if_active(hwnd: HWND, state: &WndState) {
         &engine,
         &state.app.profile.borrow(),
         Some(&state.app.internal_profile),
+        Some(&state.app.internal_rules_state.borrow()),
         &blocklist,
         &global_rules,
         persistent,
@@ -6173,7 +6396,8 @@ fn end_listview_refill(lv: HWND, saved: SavedScroll, new_count: i32) {
 /// System rules / Connections / Log tabs follow their own
 /// populators (Apps from `profile.apps`; the rest are M6+).
 fn populate_user_rules(state: &WndState) {
-    use crate::profile::{Action, Direction};
+    use crate::internal_rules_state::RuleKind;
+    use crate::profile::Action;
 
     // Index 5 in TAB_LISTVIEW_IDS is IDC_RULES_CUSTOM.
     let lv = state.listviews[5].get();
@@ -6184,8 +6408,55 @@ fn populate_user_rules(state: &WndState) {
     let saved = begin_listview_refill(lv);
 
     let profile = state.app.profile.borrow();
+    let overrides = state.app.internal_rules_state.borrow();
     let filter = state.search_text.borrow().clone();
     let mut row = 0i32;
+    let mut preset_visible: usize = 0;
+
+    // First pass: bundled preset user rules (the simplewall-style
+    // protocol presets — DNS protocol, FTP, HTTP, ICMPv4/6,
+    // IMAP/POP3/SMTP, QUIC, SSH, Telnet). Their bundled is_enabled
+    // is the default; the user can flip each through the checkbox,
+    // and the override persists in `internal_rules_state.txt`.
+    // Render them first so they always sit above user-added rules
+    // in each group — the row index they occupy (0..preset_visible)
+    // is how on_rule_checkbox_toggle later tells presets from
+    // user-added rules.
+    for rule in state.app.internal_profile.custom_rules.iter() {
+        if !search_match(&rule.name, &filter) {
+            continue;
+        }
+        let idx = row as usize;
+        row += 1;
+        preset_visible += 1;
+        let mut name_buf = wide(&rule.name);
+        let effective_enabled =
+            overrides.effective_is_enabled(RuleKind::Custom, &rule.name, rule.is_enabled);
+        let state_image = if effective_enabled { 2u32 } else { 1u32 };
+        let item = LVITEMW {
+            mask: LVIF_TEXT | LVIF_STATE | LVIF_GROUPID,
+            iItem: idx as i32,
+            iSubItem: 0,
+            pszText: PWSTR(name_buf.as_mut_ptr()),
+            stateMask: LVIS_STATEIMAGEMASK,
+            state: LIST_VIEW_ITEM_STATE_FLAGS(state_image << 12),
+            iGroupId: super::listview_groups::rule_group_id_with(rule, effective_enabled),
+            ..Default::default()
+        };
+        let _ = unsafe {
+            SendMessageW(
+                lv,
+                LVM_INSERTITEMW,
+                WPARAM(0),
+                LPARAM(&item as *const _ as isize),
+            )
+        };
+        write_rule_subitems(lv, idx as i32, rule);
+    }
+
+    // Second pass: the user's own profile.custom_rules — fully
+    // editable (Properties, Remove, etc. via the context menu),
+    // toggled via the existing profile.custom_rules[i].is_enabled.
     for rule in profile.custom_rules.iter() {
         if !search_match(&rule.name, &filter) {
             continue;
@@ -6193,11 +6464,14 @@ fn populate_user_rules(state: &WndState) {
         let idx = row as usize;
         row += 1;
         let mut name_buf = wide(&rule.name);
+        let state_image = if rule.is_enabled { 2u32 } else { 1u32 };
         let item = LVITEMW {
-            mask: LVIF_TEXT | LVIF_GROUPID,
+            mask: LVIF_TEXT | LVIF_STATE | LVIF_GROUPID,
             iItem: idx as i32,
             iSubItem: 0,
             pszText: PWSTR(name_buf.as_mut_ptr()),
+            stateMask: LVIS_STATEIMAGEMASK,
+            state: LIST_VIEW_ITEM_STATE_FLAGS(state_image << 12),
             iGroupId: super::listview_groups::rule_group_id(rule),
             ..Default::default()
         };
@@ -6209,34 +6483,46 @@ fn populate_user_rules(state: &WndState) {
                 LPARAM(&item as *const _ as isize),
             )
         };
-
-        let protocol = match rule.protocol {
-            Some(1) => t!("protocol.icmp").into_owned(),
-            Some(6) => t!("protocol.tcp").into_owned(),
-            Some(17) => t!("protocol.udp").into_owned(),
-            Some(58) => t!("protocol.icmpv6").into_owned(),
-            Some(other) => other.to_string(),
-            None => t!("protocol.any").into_owned(),
-        };
-        let direction = match rule.direction {
-            Direction::Outbound => t!("direction.outbound"),
-            Direction::Inbound => t!("direction.inbound"),
-            Direction::Any => t!("direction.both"),
-            Direction::Other(_) => t!("direction.other"),
-        };
-        // M5.2 doesn't surface action in the columns (matches upstream's
-        // 3-column layout), but a future tooltip / detail pane can use it.
+        write_rule_subitems(lv, idx as i32, rule);
+        // Action column is intentionally not surfaced — same shape
+        // as upstream's 3-column User Rules layout. Reference the
+        // values so the i18n keys stay rooted; a future tooltip /
+        // detail pane can use them.
         let _ = match rule.action {
             Action::Permit => t!("action.permit"),
             Action::Block => t!("action.block"),
         };
-
-        set_subitem(lv, idx as i32, 1, &protocol);
-        set_subitem(lv, idx as i32, 2, &direction);
     }
+
+    drop(overrides);
     drop(profile);
+    state.user_rules_preset_count.set(preset_visible);
     refresh_rules_group_headers(lv);
     end_listview_refill(lv, saved, row);
+}
+
+/// Write the protocol + direction subitem columns for a rule row.
+/// Shared between the presets and user-added passes in
+/// `populate_user_rules`, and between the System / Blocklist
+/// populator path.
+fn write_rule_subitems(lv: HWND, idx: i32, rule: &crate::profile::Rule) {
+    use crate::profile::Direction;
+    let protocol = match rule.protocol {
+        Some(1) => t!("protocol.icmp").into_owned(),
+        Some(6) => t!("protocol.tcp").into_owned(),
+        Some(17) => t!("protocol.udp").into_owned(),
+        Some(58) => t!("protocol.icmpv6").into_owned(),
+        Some(other) => other.to_string(),
+        None => t!("protocol.any").into_owned(),
+    };
+    let direction = match rule.direction {
+        Direction::Outbound => t!("direction.outbound"),
+        Direction::Inbound => t!("direction.inbound"),
+        Direction::Any => t!("direction.both"),
+        Direction::Other(_) => t!("direction.other"),
+    };
+    set_subitem(lv, idx, 1, &protocol);
+    set_subitem(lv, idx, 2, &direction);
 }
 
 /// Wipe the Apps ListView (IDC_APPS_PROFILE) and re-fill from
@@ -6955,6 +7241,7 @@ fn search_match(haystack: &str, filter: &str) -> bool {
 /// `rule_configs` overrides aren't applied yet — that's M5.5 (the
 /// rules editor's "edit override" path).
 fn populate_internal_rules(state: &WndState, id: i32) {
+    use crate::internal_rules_state::RuleKind;
     use crate::profile::{Direction, Rule};
 
     let slot = match id {
@@ -6969,9 +7256,9 @@ fn populate_internal_rules(state: &WndState, id: i32) {
 
     let saved = begin_listview_refill(lv);
 
-    let rules: &[Rule] = match id {
-        IDC_RULES_BLOCKLIST => &state.app.internal_profile.blocklist_rules,
-        IDC_RULES_SYSTEM => &state.app.internal_profile.system_rules,
+    let (rules, kind): (&[Rule], RuleKind) = match id {
+        IDC_RULES_BLOCKLIST => (&state.app.internal_profile.blocklist_rules, RuleKind::Blocklist),
+        IDC_RULES_SYSTEM => (&state.app.internal_profile.system_rules, RuleKind::System),
         _ => {
             end_listview_refill(lv, saved, 0);
             return;
@@ -6979,6 +7266,7 @@ fn populate_internal_rules(state: &WndState, id: i32) {
     };
 
     let filter = state.search_text.borrow().clone();
+    let overrides = state.app.internal_rules_state.borrow();
     let mut row = 0i32;
     for rule in rules.iter() {
         if !search_match(&rule.name, &filter) {
@@ -6987,7 +7275,16 @@ fn populate_internal_rules(state: &WndState, id: i32) {
         let idx = row as usize;
         row += 1;
         let mut name_buf = wide(&rule.name);
-        let state_image = if rule.is_enabled { 2u32 } else { 1u32 };
+        // Effective state honours the user's override if present.
+        // For the Blocklist tab the override path isn't currently
+        // wired through install.rs, but reading via overrides here
+        // is still correct — the checkbox UI is consistent and a
+        // future blocklist-toggle wire-up doesn't need a populator
+        // change.
+        let effective_enabled =
+            overrides.effective_is_enabled(kind, &rule.name, rule.is_enabled);
+        let state_image = if effective_enabled { 2u32 } else { 1u32 };
+        let group_id = super::listview_groups::rule_group_id_with(rule, effective_enabled);
         let item = LVITEMW {
             mask: LVIF_TEXT | LVIF_STATE | LVIF_GROUPID,
             iItem: idx as i32,
@@ -6995,7 +7292,7 @@ fn populate_internal_rules(state: &WndState, id: i32) {
             pszText: PWSTR(name_buf.as_mut_ptr()),
             stateMask: LVIS_STATEIMAGEMASK,
             state: LIST_VIEW_ITEM_STATE_FLAGS(state_image << 12),
-            iGroupId: super::listview_groups::rule_group_id(rule),
+            iGroupId: group_id,
             ..Default::default()
         };
         let _ = unsafe {
@@ -7024,6 +7321,7 @@ fn populate_internal_rules(state: &WndState, id: i32) {
         set_subitem(lv, idx as i32, 1, &protocol);
         set_subitem(lv, idx as i32, 2, &direction);
     }
+    drop(overrides);
     refresh_rules_group_headers(lv);
     end_listview_refill(lv, saved, row);
 }

@@ -68,7 +68,16 @@ pub fn app_group_id(app: &App) -> i32 {
 
 /// Where a `Rule` belongs in the rules-tab group layout.
 pub fn rule_group_id(rule: &Rule) -> i32 {
-    if rule.is_enabled {
+    rule_group_id_with(rule, rule.is_enabled)
+}
+
+/// Same, but using a caller-supplied effective enabled state. Used
+/// by the System Rules / preset User Rules paths, which read the
+/// effective state from `InternalRulesState` overrides rather than
+/// the bundled `rule.is_enabled` — so the rule moves between the
+/// Enabled and Disabled group when the user toggles it.
+pub fn rule_group_id_with(_rule: &Rule, effective_is_enabled: bool) -> i32 {
+    if effective_is_enabled {
         GROUP_RULE_ENABLED
     } else {
         GROUP_RULE_DISABLED

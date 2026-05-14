@@ -28,6 +28,7 @@ use windows::Win32::NetworkManagement::WindowsFilteringPlatform::{
 };
 use windows::core::GUID;
 
+use crate::internal_rules_state::{InternalRulesState, RuleKind};
 use crate::profile::{Action, AddressFamily, Direction, Profile, Rule};
 use crate::rules::{self, AddrSpec, RuleClause};
 use crate::wfp::condition::{FilterCondition, IpProto};
@@ -404,6 +405,7 @@ pub fn install_profile(
         engine,
         profile,
         None,
+        None,
         &BlocklistConfig::default(),
         &GlobalRulesConfig::default(),
         persistent,
@@ -435,6 +437,13 @@ pub fn install_with_internal(
     engine: &WfpEngine,
     user_profile: &Profile,
     internal_profile: Option<&Profile>,
+    // Per-user override state for the bundled internal-profile rules
+    // (System Rules + preset User Rules). The CLI passes `None` and
+    // gets bundled defaults; the GUI passes `Some` so checkbox
+    // toggles from the rules tab actually affect what gets installed.
+    // Has no effect when `internal_profile` is `None` (there are no
+    // internal rules to override).
+    internal_rules_state: Option<&InternalRulesState>,
     blocklist: &BlocklistConfig,
     global_rules: &GlobalRulesConfig,
     persistent: bool,
@@ -479,9 +488,15 @@ pub fn install_with_internal(
     }
 
     // 2. System rules (DHCP, DNS, NetBIOS, etc.) — always Permit.
+    // The user can flip each rule's effective enabled state through
+    // the System Rules tab checkbox; that state lives in
+    // `internal_rules_state` and overlays the bundled `is_enabled`.
     if let Some(internal) = internal_profile {
         for rule in &internal.system_rules {
-            if !rule.is_enabled {
+            let enabled = internal_rules_state
+                .map(|s| s.effective_is_enabled(RuleKind::System, &rule.name, rule.is_enabled))
+                .unwrap_or(rule.is_enabled);
+            if !enabled {
                 report.rules_skipped += 1;
                 continue;
             }
@@ -498,7 +513,38 @@ pub fn install_with_internal(
             report.filters_added += added;
         }
 
+        // 2b. Preset user rules (the 9 simplewall-style protocol
+        // presets in `<rules_custom>` of profile_internal.xml — DNS
+        // protocol, FTP, HTTP, ICMPv4/6, IMAP/POP3/SMTP, QUIC, SSH,
+        // Telnet). All ship disabled-by-default and are exposed in
+        // the User Rules tab alongside the user-added rules. Same
+        // override path as system rules.
+        for rule in &internal.custom_rules {
+            let enabled = internal_rules_state
+                .map(|s| s.effective_is_enabled(RuleKind::Custom, &rule.name, rule.is_enabled))
+                .unwrap_or(rule.is_enabled);
+            if !enabled {
+                report.rules_skipped += 1;
+                continue;
+            }
+            let action = filter_action_from_rule(rule);
+            let added = install_one_rule(
+                engine,
+                persistent,
+                rule,
+                action,
+                &mut report.filter_ids.user_rules,
+            )?;
+            if added == 0 {
+                report.rules_skipped += 1;
+            }
+            report.filters_added += added;
+        }
+
         // 3. Blocklist rules — per-category mode decides the action.
+        // (Per-rule override is intentionally not threaded here:
+        // blocklist toggling is already coarser-grained via the
+        // Settings → Blocklist Spy/Update/Extra tri-state.)
         for rule in &internal.blocklist_rules {
             let action = match blocklist.action_for(&rule.name) {
                 BlocklistAction::Disable => {

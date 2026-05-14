@@ -142,6 +142,15 @@ pub fn run(default_profile_path: PathBuf, force_show: bool) -> ExitCode {
     let settings_path = settings::default_settings_path();
     let mut settings = settings::Settings::load(&settings_path);
 
+    // User overrides for bundled internal rules (System Rules,
+    // Blocklist rules, preset User Rules). Empty file on fresh
+    // install — every rule starts at its bundled `is_enabled`
+    // default; the user's checkbox clicks populate it from there.
+    let internal_rules_state_path =
+        crate::internal_rules_state::default_state_path();
+    let internal_rules_state =
+        crate::internal_rules_state::InternalRulesState::load(&internal_rules_state_path);
+
     // Install-time language override. The MSI's WriteInstallerLocale
     // custom action writes the auto-applied transform's LCID to
     // %APPDATA%\amwall\installerlocale.txt. When that value differs
@@ -205,6 +214,10 @@ pub fn run(default_profile_path: PathBuf, force_show: bool) -> ExitCode {
         internal_profile,
         settings: std::cell::RefCell::new(settings),
         settings_path: std::cell::RefCell::new(settings_path),
+        internal_rules_state: std::cell::RefCell::new(internal_rules_state),
+        internal_rules_state_path: std::cell::RefCell::new(
+            internal_rules_state_path,
+        ),
     });
 
     let hwnd = match main_window::create(app, force_show) {

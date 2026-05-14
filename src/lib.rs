@@ -3,6 +3,7 @@
 
 rust_i18n::i18n!("locales", fallback = "en");
 
+pub mod internal_rules_state;
 pub mod paths;
 pub mod profile;
 pub mod rules;

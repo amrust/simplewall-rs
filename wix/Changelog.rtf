@@ -7,6 +7,16 @@ What's new in amwall v1.1.7 (current)\par
     now statically linked, so amwall has no external CRT\par
     dependency and runs on a stock Windows install with no\par
     prereqs (binary grows by ~200 KB)\par
+  - Fix the System Rules tab checkboxes being purely cosmetic\par
+    -- clicking "Windows Update service" or any other system\par
+    rule now actually toggles its effective enabled state,\par
+    persists the choice across restarts, and re-applies the\par
+    WFP filters immediately\par
+  - Fix the User Rules tab appearing blank on a fresh install\par
+    -- the 9 simplewall-style protocol presets (DNS protocol,\par
+    FTP, HTTP, ICMPv4/6, IMAP/POP3/SMTP, QUIC, SSH, Telnet)\par
+    now show up there alongside any user-added rules, all\par
+    disabled by default and individually toggleable\par
 \par
 What's new in amwall v1.1.6\par
 \par
