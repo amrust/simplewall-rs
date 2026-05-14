@@ -14,7 +14,10 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QLibraryInfo>
+#include <QLocale>
 #include <QSettings>
+#include <QTranslator>
 
 #include <cstdio>
 #include <cstring>
@@ -55,6 +58,30 @@ int main(int argc, char *argv[]) {
     app.setOrganizationName("amwall");
     app.setOrganizationDomain("amwall.local");
     app.setDesktopFileName("amwall");
+
+    // Phase 6.10 — load the embedded translation matching the user's
+    // QLocale. qt_add_translations(...) in CMakeLists puts every .qm
+    // we ship under the resource path :/i18n/ with the file stem
+    // amwall-gui_<locale>. QTranslator::load tries the full locale
+    // first (en_US), then strips region (en), then gives up — so
+    // shipping just amwall-gui_en_US.qm is enough for now and adding
+    // amwall-gui_de.qm later "just works" for German users without
+    // any code change here. Falls through to the source strings (also
+    // English) if no matching file is found.
+    auto *qtBaseTr = new QTranslator(&app);
+    if (qtBaseTr->load(QLocale(),
+                       QStringLiteral("qtbase"),
+                       QStringLiteral("_"),
+                       QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
+        app.installTranslator(qtBaseTr);  // standard Qt strings (Cancel, OK)
+    }
+    auto *appTr = new QTranslator(&app);
+    if (appTr->load(QLocale(),
+                    QStringLiteral("amwall-gui"),
+                    QStringLiteral("_"),
+                    QStringLiteral(":/i18n"))) {
+        app.installTranslator(appTr);
+    }
 
     // Tray icon keeps the process alive after the last window closes.
     app.setQuitOnLastWindowClosed(false);

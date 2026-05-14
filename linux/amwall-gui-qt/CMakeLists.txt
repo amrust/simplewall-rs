@@ -10,17 +10,19 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-# Qt6 from qt6-base-dev on Mint 22 / Ubuntu 24.04. Components needed
-# so far: Widgets (QMainWindow, menus, tray, dashboard) + DBus
-# (talking to amwall-daemon over the system bus) + Network
-# (QHostAddress for IPv4 validation in the rule editor). Phases 6.5+
-# may add Concurrent (background worker for /proc walks) and
-# LinguistTools (translations).
-find_package(Qt6 REQUIRED COMPONENTS Widgets DBus Network)
+# Qt6 from qt6-base-dev on Mint 22 / Ubuntu 24.04. Components:
+#   Widgets       — QMainWindow, menus, tray, dashboard
+#   DBus          — talking to amwall-daemon over the system bus
+#   Network       — QHostAddress for IPv4 validation in the rule editor
+#   LinguistTools — Phase 6.10: lupdate / lrelease for tr() strings
+#                   (no actual translations shipped yet — only the
+#                   en_US source .ts so future contributors can run
+#                   `lupdate amwall-gui_*.ts` and start translating)
+find_package(Qt6 REQUIRED COMPONENTS Widgets DBus Network LinguistTools)
 
 # AMWALL_VERSION is baked into the binary so --version and the About
 # box show the same string the .deb is built with. Bumped per phase.
-add_compile_definitions(AMWALL_VERSION="0.1.0+phase6.9")
+add_compile_definitions(AMWALL_VERSION="0.1.0+phase6.10")
 
 add_executable(amwall-gui
     src/main.cpp
@@ -54,4 +56,20 @@ target_link_libraries(amwall-gui PRIVATE
     Qt6::Widgets
     Qt6::DBus
     Qt6::Network
+)
+
+# Phase 6.10 — translation infrastructure.
+#
+# qt_add_translations runs lupdate over every tr() call in our source
+# tree and emits/updates the .ts files listed; lrelease compiles each
+# .ts to a .qm at build time and embeds them as a Qt resource the
+# binary picks up at runtime via QTranslator::load("amwall-gui_xx").
+#
+# Ship just en_US for now — the source language. Adding a real locale
+# is a one-line addition here (`translations/amwall-gui_de.ts`) plus
+# someone with German to fill it in. lupdate keeps the .ts files in
+# sync with the source automatically on every build.
+qt_add_translations(amwall-gui
+    TS_FILES
+        translations/amwall-gui_en_US.ts
 )
