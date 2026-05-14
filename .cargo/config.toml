@@ -1,0 +1,27 @@
+# amwall — cargo configuration.
+# Copyright (C) 2026  amwall contributors. Licensed GPL-3.0-or-later.
+#
+# Scoped to x86_64-pc-windows-msvc so the linux/ workspace
+# (amwall-daemon, amwall-cli, amwall-gui-qt, amwall-ebpf) is
+# unaffected. Cargo configs merge UP the directory tree, so any
+# crate inside linux/ ignores the rustflags here unless it actually
+# builds for the windows-msvc triple — which none of them do.
+
+[target.x86_64-pc-windows-msvc]
+# Static-link the C runtime so the resulting amwall.exe doesn't
+# depend on VCRUNTIME140.dll / MSVCP140.dll being present on the
+# user's machine. Without this, anyone who hasn't installed
+# Microsoft's Visual C++ Redistributable hits
+# "VCRUNTIME140.dll was not found" on first launch — happened to
+# a real user reporting against v1.1.6.
+#
+# Tradeoffs of +crt-static:
+#   - Binary grows ~200 KB (the CRT code is now inlined).
+#   - No external CRT dependency: amwall.exe runs out-of-the-box
+#     on any Windows 7+ install with no prereqs.
+#   - Safe for our dep tree: we load only system DLLs (Win32
+#     APIs via windows-rs), none of which import from our CRT.
+#     If a future dep pulls in a third-party DLL that uses the
+#     dynamic CRT, allocations crossing the boundary could
+#     corrupt heap state — re-evaluate then.
+rustflags = ["-C", "target-feature=+crt-static"]

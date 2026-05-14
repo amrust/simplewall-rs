@@ -1,5 +1,14 @@
 {\rtf1\ansi\deff0\nouicompat{\fonttbl{\f0\fnil Courier New;}}\fs18
-What's new in amwall v1.1.6 (current)\par
+What's new in amwall v1.1.7 (current)\par
+\par
+  - Fix amwall.exe failing to launch with "VCRUNTIME140.dll\par
+    was not found" on Windows machines that don't have the\par
+    Visual C++ Redistributable installed. The C runtime is\par
+    now statically linked, so amwall has no external CRT\par
+    dependency and runs on a stock Windows install with no\par
+    prereqs (binary grows by ~200 KB)\par
+\par
+What's new in amwall v1.1.6\par
 \par
   - Fix tray icon stuck grayscale + "filters off" tooltip\par
     after clicking Enable filters (self-heals via NIM_ADD\par
