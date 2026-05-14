@@ -1384,6 +1384,22 @@ fn on_create(hwnd: HWND) -> Result<(), String> {
         }
     }
 
+    // First-paint jiggle. Without this, the Apps tab on a cold
+    // launch renders rows with plain backgrounds instead of the
+    // category colors (Invalid / System / Signed / Pico) that the
+    // NM_CUSTOMDRAW handler produces — comctl32 paints the
+    // listview once during initial show before our populator's
+    // signed-cache + WinVerifyTrust state has settled enough for
+    // CDDS_ITEMPREPAINT to return the right colour, and never
+    // re-paints on its own. A WM_SIZE (manual window resize)
+    // fixes it because the size handler already calls
+    // `force_active_apps_listview_jiggle`, which is exactly the
+    // synchronous InvalidateRect + RedrawWindow(RDW_UPDATENOW)
+    // pass the first paint needs. Firing it here as the last
+    // step of WM_CREATE means a fresh launch shows the same
+    // colours a post-resize launch already did.
+    force_active_apps_listview_jiggle(hwnd, state);
+
     Ok(())
 }
 

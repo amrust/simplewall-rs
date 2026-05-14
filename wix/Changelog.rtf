@@ -1,5 +1,16 @@
 {\rtf1\ansi\deff0\nouicompat{\fonttbl{\f0\fnil Courier New;}}\fs18
-What's new in amwall v1.1.9 (current)\par
+What's new in amwall v1.1.10 (current)\par
+\par
+  - Fix Apps tab not showing the category row colours\par
+    (Invalid / System / Signed / Pico) on a cold launch.\par
+    comctl32 painted the listview once during initial show\par
+    before the signed-cache had settled and then never\par
+    repainted; resizing the window fixed it because\par
+    WM_SIZE already kicks the listview repaint pipeline.\par
+    We now do the same kick as the last step of window\par
+    creation, so cold launch matches post-resize visuals\par
+\par
+What's new in amwall v1.1.9\par
 \par
   - Hotfix: v1.1.8 crashed on startup with a Rust runtime\par
     panic ("already borrowed: BorrowMutError") because the\par
