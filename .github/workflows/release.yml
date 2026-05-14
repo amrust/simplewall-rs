@@ -120,19 +120,50 @@ jobs:
           "versioned=$($msi.FullName)" >> $env:GITHUB_OUTPUT
           "stable=$stable" >> $env:GITHUB_OUTPUT
 
+      - name: Extract release notes from tag annotation
+        # The Windows MSI is produced from the main branch which
+        # also carries the Linux port work — `generate_release_notes:
+        # true` autopopulates the body from EVERY commit since the
+        # previous tag, which for v1.1.5 was 30+ commits mostly
+        # about the Mint port. That's noise for a Windows-only MSI
+        # release. We tag releases with `git tag -a v1.1.5 -m '...'`
+        # carrying a focused, Windows-user-facing description, so
+        # read that annotation back and feed it to the release body.
+        # Falls back to "no description" if the tag is lightweight
+        # (no annotation), which makes that mistake obvious and
+        # easy to fix in a re-tag.
+        id: notes
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $body = git tag -l --format='%(contents)' $tag
+          if (-not $body) {
+            $body = "No release description — the tag is lightweight. Annotate with ``git tag -a $tag -m '...'`` and re-push to get focused notes."
+          }
+          # Multi-line GitHub Actions output via the heredoc-style
+          # EOF marker; GHA enforces no-marker-in-content via a
+          # random delimiter, which we approximate with a UUID-y
+          # constant unlikely to appear in a release message.
+          $delim = "EOF_RELEASE_NOTES_d4f8a7b3"
+          "body<<$delim" >> $env:GITHUB_OUTPUT
+          $body >> $env:GITHUB_OUTPUT
+          "$delim"   >> $env:GITHUB_OUTPUT
+
       - name: Create draft release with MSI
         # `draft: true` so the user reviews the release before
         # publishing — first-time releases especially. Switch to
         # false once the workflow is proven for the project.
-        # `generate_release_notes: true` autopopulates the body
-        # from commits since the previous tag.
+        # Body comes from the annotated tag message (see prev step)
+        # instead of GitHub's auto-changelog so the Windows MSI's
+        # notes don't get spammed with unrelated commits from the
+        # in-progress Linux port.
         # Both the versioned and the stable-named MSI are
         # attached so the README's "Download" button can use
         # `releases/latest/download/amwall-x86_64.msi`.
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          generate_release_notes: true
+          body: ${{ steps.notes.outputs.body }}
           files: |
             ${{ steps.msi.outputs.versioned }}
             ${{ steps.msi.outputs.stable }}
