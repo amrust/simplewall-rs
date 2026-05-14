@@ -979,6 +979,17 @@ unsafe extern "system" fn wnd_proc(
             // Worker filled new cache entries — repaint the
             // active apps listview so freshly-verified rows
             // show their green/no-green colour.
+            //
+            // Plain InvalidateRect(bErase=false) used to be the
+            // call here, but with LVS_EX_DOUBLEBUFFER on every
+            // apps listview that turned out to not actually
+            // re-trigger our NM_CUSTOMDRAW handler on the cached
+            // double-buffer surface — colours would only land
+            // after a manual window resize (which goes through
+            // the heavier RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW
+            // path in force_active_apps_listview_jiggle). Use
+            // RedrawWindow with the same flag bundle so worker
+            // batches paint correctly on the first try.
             if let Some(state) = unsafe { state_ref(hwnd) } {
                 let tab = state.tab.get();
                 if tab.0 != 0 {
@@ -989,11 +1000,19 @@ unsafe extern "system" fn wnd_proc(
                     if (0..=2).contains(&sel) {
                         let lv = state.listviews[sel as usize].get();
                         if lv.0 != 0 {
+                            use windows::Win32::Graphics::Gdi::{
+                                RDW_ALLCHILDREN, RDW_ERASE, RDW_INVALIDATE,
+                                RDW_UPDATENOW, RedrawWindow,
+                            };
                             unsafe {
-                                let _ = windows::Win32::Graphics::Gdi::InvalidateRect(
+                                let _ = RedrawWindow(
                                     lv,
                                     None,
-                                    false,
+                                    None,
+                                    RDW_INVALIDATE
+                                        | RDW_ERASE
+                                        | RDW_ALLCHILDREN
+                                        | RDW_UPDATENOW,
                                 );
                             }
                         }

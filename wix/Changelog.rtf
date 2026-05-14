@@ -1,5 +1,18 @@
 {\rtf1\ansi\deff0\nouicompat{\fonttbl{\f0\fnil Courier New;}}\fs18
-What's new in amwall v1.1.10 (current)\par
+What's new in amwall v1.1.11 (current)\par
+\par
+  - Fix Apps tab category row colours (Invalid / System /\par
+    Signed / Pico) still not appearing on cold launch in\par
+    v1.1.10. The end-of-create jiggle ran before the\par
+    background WinVerifyTrust worker had populated the\par
+    signed cache, so the first paint had nothing to colour.\par
+    The worker's later "I have new entries, please repaint"\par
+    notification was using a too-weak InvalidateRect that\par
+    didn't pierce LVS_EX_DOUBLEBUFFER's cached surface --\par
+    upgraded to a full RedrawWindow with RDW_UPDATENOW so\par
+    rows turn green as soon as their signature is verified\par
+\par
+What's new in amwall v1.1.10\par
 \par
   - Fix Apps tab not showing the category row colours\par
     (Invalid / System / Signed / Pico) on a cold launch.\par
