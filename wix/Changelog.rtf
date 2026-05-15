@@ -1,5 +1,23 @@
 {\rtf1\ansi\deff0\nouicompat{\fonttbl{\f0\fnil Courier New;}}\fs18
-What's new in amwall v1.1.12 (current)\par
+What's new in amwall v1.1.13 (current)\par
+\par
+  - Apps tab Signed (green) row colours on cold launch:\par
+    fourth and final attempt. Per a user observation that\par
+    clicking Allow / Block on a connect prompt always\par
+    produced the green colour for the affected row, copy\par
+    that exact redraw sequence (a full populate of the\par
+    apps tab via LVM_DELETEALLITEMS + per-row\par
+    LVM_INSERTITEMW) on every batch the WinVerifyTrust\par
+    worker finishes. Mutating the listview's item array\par
+    is what makes comctl32 throw away its\par
+    LVS_EX_DOUBLEBUFFER cache and re-query our colour\par
+    handler -- earlier attempts (InvalidateRect,\par
+    RedrawWindow, MoveWindow jiggle) all failed to\par
+    invalidate the cached buffer. Rows now turn green as\par
+    soon as their signature is verified, no manual resize\par
+    or click required\par
+\par
+What's new in amwall v1.1.12\par
 \par
   - Third try at the Apps tab cold-launch row colours --\par
     v1.1.11's RedrawWindow upgrade still wasn't enough\par

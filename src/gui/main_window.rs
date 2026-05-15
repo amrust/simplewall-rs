@@ -985,24 +985,33 @@ unsafe extern "system" fn wnd_proc(
             //     too weak; LVS_EX_DOUBLEBUFFER's cached surface
             //     stayed the old non-coloured pixels.
             //   v1.1.11: RedrawWindow with RDW_INVALIDATE | RDW_ERASE
-            //     | RDW_ALLCHILDREN | RDW_UPDATENOW — also too weak.
-            //     Even an explicit synchronous repaint doesn't make
-            //     comctl32 rebuild its double-buffer; it just
-            //     re-blits the cached buffer.
+            //     | RDW_ALLCHILDREN | RDW_UPDATENOW — still too weak.
+            //   v1.1.12: force_active_apps_listview_jiggle (the
+            //     MoveWindow +1px jiggle that synthesises a WM_SIZE).
+            //     ALSO didn't work in practice — WM_SIZE alone
+            //     doesn't seem to make comctl32 throw away the
+            //     double-buffer cache for a listview whose
+            //     underlying ITEMS haven't changed.
             //
-            // What actually works: WM_SIZE-equivalent via the
-            // MoveWindow +1px-then-back jiggle in
-            // force_active_apps_listview_jiggle. comctl32 rebuilds
-            // the double-buffer cache on WM_SIZE, and only THEN
-            // re-runs CDDS_ITEMPREPAINT for every visible row,
-            // picking up the freshly-cached signed verdicts.
+            // What does work in practice (per a user test on
+            // v1.1.12 — the post-Allow/Block redraw produces the
+            // colours every time): the LVM_DELETEALLITEMS +
+            // LVM_INSERTITEMW sequence inside `populate_apps_tab`.
+            // Mutating the listview's internal item array forces
+            // comctl32 to invalidate its cache and re-run
+            // CDDS_ITEMPREPAINT per row on the next paint — and
+            // THAT path picks up the freshly-cached signed
+            // verdicts.
             //
-            // Frequency safe: the worker only posts this every
+            // Frequency cost: the worker only posts this every
             // BATCH_FOR_REFRESH (10) verifications, so even on a
-            // fresh install with hundreds of apps the jiggle fires
-            // a few dozen times total during catch-up — well below
-            // any user-visible flicker threshold given the +1/-1px
-            // delta and the existing LVS_EX_DOUBLEBUFFER.
+            // fresh install with hundreds of apps the populate
+            // fires a few dozen times during catch-up. populate
+            // is O(rows) — for a typical profile (a few dozen to
+            // a couple hundred apps) it's a ~ms-class operation,
+            // imperceptible in practice. The re-enqueue of
+            // already-cached paths to the worker is a no-op
+            // because the worker dedups against the same cache.
             if let Some(state) = unsafe { state_ref(hwnd) } {
                 let tab = state.tab.get();
                 if tab.0 != 0 {
@@ -1011,7 +1020,7 @@ unsafe extern "system" fn wnd_proc(
                     }
                     .0 as isize;
                     if (0..=2).contains(&sel) {
-                        force_active_apps_listview_jiggle(hwnd, state);
+                        populate_apps_tab(state);
                     }
                 }
             }
