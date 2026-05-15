@@ -1355,6 +1355,15 @@ fn on_create(hwnd: HWND) -> Result<(), String> {
     // dropping packets.
     detect_initial_filter_state(hwnd, state);
 
+    // If the user's last explicit choice was "filters on" but
+    // the kernel has no amwall filters (fresh install, or a
+    // pre-1.1.15 profile that ran with install_boottime_filters
+    // = false and lost its filters at last reboot), install them
+    // now so the user doesn't have to click Enable. No-op when
+    // filters were already detected as active or when the user
+    // explicitly turned them off in the previous session.
+    try_auto_enable_filters_at_startup(hwnd, state);
+
     // Register the always-visible tray icon and the
     // "TaskbarCreated" broadcast id (so we can re-register on
     // explorer.exe restart). Done after detect_initial_filter_state
@@ -1544,6 +1553,100 @@ fn detect_initial_filter_state(hwnd: HWND, state: &WndState) {
     update_enable_filters_button(state, true);
     update_titlebar_icon(hwnd, true);
     set_status_text(state.status.get(), 0, &t!("status.filters_enabled"));
+}
+
+/// Auto-install filters at startup when the user's persisted
+/// choice was "on" but the kernel has none of our filters loaded.
+/// Covers two cases:
+///   - Fresh install: settings file just created, default
+///     `filters_active_persisted = true`, nothing in the kernel.
+///   - Pre-1.1.15 user upgrading from a build that defaulted
+///     `install_boottime_filters = false`: filters got wiped at
+///     the last Windows reboot, but their persisted choice was
+///     "on" so we restore them.
+///
+/// No-op when the kernel already had filters (handled by
+/// `detect_initial_filter_state`) or when the user explicitly
+/// disabled filters in the previous session. Silent no-op when
+/// not running elevated — startup is the wrong time to pop a
+/// "needs admin" dialog (the user would see it on every boot
+/// even though they just want the GUI for inspection).
+fn try_auto_enable_filters_at_startup(hwnd: HWND, state: &WndState) {
+    use windows::Win32::UI::Shell::IsUserAnAdmin;
+    if state.filters_active.get() {
+        return;
+    }
+    if !state.app.settings.borrow().filters_active_persisted {
+        eprintln!(
+            "amwall: auto-enable filters: skipping (persisted choice was off)"
+        );
+        return;
+    }
+    if !unsafe { IsUserAnAdmin() }.as_bool() {
+        eprintln!(
+            "amwall: auto-enable filters: skipping (not elevated; would need admin to install)"
+        );
+        return;
+    }
+    eprintln!(
+        "amwall: auto-enable filters: persisted=true and kernel empty; installing now"
+    );
+    let engine = match crate::wfp::WfpEngine::open() {
+        Ok(e) => e,
+        Err(e) => {
+            eprintln!("amwall: auto-enable filters: WfpEngine::open failed: {e}");
+            return;
+        }
+    };
+    let (blocklist, global_rules, persistent) = {
+        let s = state.app.settings.borrow();
+        (
+            crate::install::BlocklistConfig {
+                spy: blocklist_mode_to_action(s.blocklist_spy),
+                update: blocklist_mode_to_action(s.blocklist_update),
+                extra: blocklist_mode_to_action(s.blocklist_extra),
+            },
+            crate::install::GlobalRulesConfig {
+                block_outbound: s.rule_block_outbound,
+                block_inbound: s.rule_block_inbound,
+                allow_loopback: s.rule_allow_loopback,
+                allow_6to4: s.rule_allow_6to4,
+                allow_windows_update: s.rule_allow_windows_update,
+                use_stealth_mode: s.use_stealth_mode,
+            },
+            s.install_boottime_filters,
+        )
+    };
+    let report = match crate::install::install_with_internal(
+        &engine,
+        &state.app.profile.borrow(),
+        Some(&state.app.internal_profile),
+        Some(&state.app.internal_rules_state.borrow()),
+        &blocklist,
+        &global_rules,
+        persistent,
+    ) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("amwall: auto-enable filters: install failed: {e}");
+            return;
+        }
+    };
+    *state.categorized_filter_ids.borrow_mut() = report.filter_ids.clone();
+    state.filters_active.set(true);
+    update_enable_filters_button(state, true);
+    update_titlebar_icon(hwnd, true);
+    refresh_amwall_filter_ids_with(&engine, state);
+    set_status_text(state.status.get(), 0, &t!("status.filters_enabled"));
+    set_status_text(
+        state.status.get(),
+        1,
+        &t!(
+            "status.filters_installed",
+            added = report.filters_added,
+            skipped = report.rules_skipped
+        ),
+    );
 }
 
 /// Swap the toolbar's "Enable filters" button between its enabled
@@ -4742,6 +4845,26 @@ fn on_enable_filters(hwnd: HWND) {
     update_enable_filters_button(state, new_active);
     update_titlebar_icon(hwnd, new_active);
     refresh_amwall_filter_ids_with(&engine, state);
+
+    // Persist the user's explicit choice so the next launch
+    // honours it (auto-enable on if true, stay off if false).
+    persist_filters_active(state, new_active);
+}
+
+/// Write `filters_active_persisted = value` to settings.txt. Same
+/// pattern as `on_first_run_wizard`'s save flow. Errors logged
+/// but non-fatal — the in-memory toggle still works for this
+/// session, only the next-launch auto-enable would miss the
+/// update.
+fn persist_filters_active(state: &WndState, value: bool) {
+    state.app.settings.borrow_mut().filters_active_persisted = value;
+    let path = state.app.settings_path.borrow().clone();
+    if let Err(e) = state.app.settings.borrow().save(&path) {
+        eprintln!(
+            "amwall: settings: save filters_active_persisted failed for {}: {e}",
+            path.display()
+        );
+    }
 }
 
 /// Re-push the user's current profile + settings into the kernel
@@ -5955,6 +6078,11 @@ fn on_emergency_reset(hwnd: HWND) {
     state.amwall_filter_ids.borrow_mut().clear();
     *state.categorized_filter_ids.borrow_mut() =
         crate::install::CategorizedFilterIds::default();
+
+    // Honour the panic-button intent across restarts: don't let
+    // the startup auto-enable silently re-install everything we
+    // just tore down.
+    persist_filters_active(state, false);
 
     // 4. Repaint the affected tabs.
     populate_apps_tab(state);

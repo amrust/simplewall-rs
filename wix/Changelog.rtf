@@ -1,5 +1,22 @@
 {\rtf1\ansi\deff0\nouicompat{\fonttbl{\f0\fnil Courier New;}}\fs18
-What's new in amwall v1.1.14 (current)\par
+What's new in amwall v1.1.15 (current)\par
+\par
+  - Filters now stay on across reboots and crashes by default.\par
+    Two changes work together: (1) "Install boot-time filters"\par
+    is now on out of the box, so the kernel keeps amwall's WFP\par
+    filters loaded across a Windows reboot instead of wiping\par
+    them at shutdown; (2) amwall remembers your last Enable /\par
+    Disable choice in settings.txt and auto-reinstalls filters\par
+    at launch when that choice was "on" but the kernel happens\par
+    to be empty (fresh install, or an upgrade from a build\par
+    that didn't ship boot-time filters on by default). Disable\par
+    filters and Emergency reset both record an explicit "off"\par
+    so an intentional shutdown stays shut down across restarts\par
+  - Fresh installs now start with filters enabled on first\par
+    launch -- no need to click Enable filters before the\par
+    notifications mode begins prompting for new connections\par
+\par
+What's new in amwall v1.1.14\par
 \par
   - Apps tab cold-launch row colours: actually fixed.\par
     The bug across v1.1.10-v1.1.13 was a message-id\par

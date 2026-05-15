@@ -192,6 +192,14 @@ pub struct Settings {
     pub rule_allow_windows_update: bool,
     pub use_stealth_mode: bool,
     pub install_boottime_filters: bool,
+    /// Remembers whether filters were enabled when the user last
+    /// closed amwall (or when they last clicked Enable / Disable).
+    /// Drives the startup auto-enable: if true and the kernel has
+    /// no amwall filters at launch, we install them silently. Set
+    /// to false by Disable filters and Emergency reset so an
+    /// explicit "off" choice survives the next launch instead of
+    /// being immediately undone.
+    pub filters_active_persisted: bool,
     pub use_certificates: bool,
     pub use_hashes: bool,
     pub use_network_resolution: bool,
@@ -278,7 +286,16 @@ impl Default for Settings {
             rule_allow_6to4: false,
             rule_allow_windows_update: false,
             use_stealth_mode: false,
-            install_boottime_filters: false,
+            // Default-on so amwall's filters survive a Windows
+            // reboot or a process crash. Without this, BFE wipes
+            // every non-persistent filter at boot and the user
+            // has to launch amwall and click Enable again.
+            install_boottime_filters: true,
+            // Default-on so a fresh install starts with filtering
+            // active on first launch (no need to click Enable).
+            // Cleared by Disable filters / Emergency reset so an
+            // explicit "off" choice is honoured next launch.
+            filters_active_persisted: true,
             use_certificates: false,
             use_hashes: false,
             use_network_resolution: false,
@@ -335,6 +352,7 @@ impl Settings {
                 return s;
             }
         };
+        let mut saw_filters_active_persisted = false;
         for (lineno, line) in content.lines().enumerate() {
             let line = line.trim();
             if line.is_empty() || line.starts_with('#') {
@@ -349,7 +367,21 @@ impl Settings {
             };
             let key = key.trim();
             let value = value.trim();
+            if key == "filters_active_persisted" {
+                saw_filters_active_persisted = true;
+            }
             apply_kv(&mut s, key, value);
+        }
+        // v1.1.15 migration: if the file predates `filters_active_persisted`,
+        // the user is upgrading from a build that defaulted
+        // `install_boottime_filters = false`. Force it on so filters
+        // survive the next reboot — matches the new default and keeps
+        // upgraded installs from silently losing filter coverage.
+        if !saw_filters_active_persisted && !s.install_boottime_filters {
+            eprintln!(
+                "amwall: settings: migrating install_boottime_filters false → true (v1.1.15)"
+            );
+            s.install_boottime_filters = true;
         }
         s
     }
@@ -394,6 +426,7 @@ impl Settings {
         );
         kv(&mut buf, "use_stealth_mode", self.use_stealth_mode);
         kv(&mut buf, "install_boottime_filters", self.install_boottime_filters);
+        kv(&mut buf, "filters_active_persisted", self.filters_active_persisted);
         kv(&mut buf, "use_certificates", self.use_certificates);
         kv(&mut buf, "use_hashes", self.use_hashes);
         kv(&mut buf, "use_network_resolution", self.use_network_resolution);
@@ -551,6 +584,7 @@ fn apply_kv(s: &mut Settings, key: &str, value: &str) {
         "rule_allow_windows_update" => s.rule_allow_windows_update = b,
         "use_stealth_mode" => s.use_stealth_mode = b,
         "install_boottime_filters" => s.install_boottime_filters = b,
+        "filters_active_persisted" => s.filters_active_persisted = b,
         "use_certificates" => s.use_certificates = b,
         "use_hashes" => s.use_hashes = b,
         "use_network_resolution" => s.use_network_resolution = b,
